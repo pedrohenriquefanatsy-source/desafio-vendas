@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/*
+ * Tokens visuais (docs/plano.md, Seção 6.4 da especificação).
+ * Neutro e profissional. Cor só com significado: ação, positivo, negativo, alerta.
+ * Contraste mínimo AA para leitura na rua.
+ */
+:root {
+  --fundo: #f5f5f4;
+  --superficie: #ffffff;
+  --borda: #e2e2df;
+  --texto: #1c1c1a;
+  --texto-suave: #57574f;
+  --acao: #1d4ed8;
+  --acao-texto: #ffffff;
+  --positivo: #15803d;
+  --negativo: #b91c1c;
+  --alerta: #a16207;
+}
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-borda: var(--borda);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-acao: var(--acao);
+  --color-acao-texto: var(--acao-texto);
+  --color-positivo: var(--positivo);
+  --color-negativo: var(--negativo);
+  --color-alerta: var(--alerta);
+  --font-sans: var(--font-inter);
+  --radius-cartao: 1rem;
+  --spacing-toque: 2.75rem; /* 44 px: alvo de toque mínimo */
+}
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
