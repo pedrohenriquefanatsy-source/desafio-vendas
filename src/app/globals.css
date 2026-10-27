@@ -16,6 +16,26 @@
   --positivo: #15803d;
   --negativo: #b91c1c;
   --alerta: #a16207;
+  color-scheme: light;
+}
+
+/* Tema escuro, conforme a configuração do celular. Mesmos papéis de cor, com contraste
+   conferido sobre a superfície escura (texto 15:1, apoio 8:1, cores de significado ≥ 6:1;
+   botão de ação claro com texto escuro, 7:1). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #121211;
+    --superficie: #1c1c1a;
+    --borda: #3a3a35;
+    --texto: #f2f2ef;
+    --texto-suave: #b4b4ab;
+    --acao: #7c9cff;
+    --acao-texto: #0b1020;
+    --positivo: #4ade80;
+    --negativo: #f87171;
+    --alerta: #fbbf24;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
