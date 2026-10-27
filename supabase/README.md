@@ -8,7 +8,15 @@ Ordem: testar no Postgres local → aplicar no projeto de **teste** → aplicar 
 | Ambiente | Projeto | Região | Uso |
 |---|---|---|---|
 | Principal | `appgestãogeladinho` (`iebzbiccuwrchgdsojgn`) | sa-east-1 (São Paulo) | Dados reais. Usado pelo site de produção na Vercel |
-| Teste | `pedrohenriquefanatsy-source's Project` (`dfzawglgkgconblqrmwf`) | us-east-1 | Testes de aceite e prévias (decisão D1, aprovada em 27/10/2026) |
+| Teste | **indefinido** | — | Ver abaixo |
+
+### Sobre o projeto `dfzawglgkgconblqrmwf` (EUA)
+
+Foi reativado em 27/10/2026 para servir de teste (D1). **Ele não está vazio:** tem outro
+sistema (parece de cobrança: `clients`, `debts`, `payments`, `negotiations`, `reguas`…),
+com 21 tabelas, 29 políticas, 60 funções e 4 usuários. **Nada foi alterado nele.**
+Não serve de teste sem decisão do dono, porque as migrations deste projeto mudariam
+privilégios padrão que o outro sistema pode usar.
 
 ## Migrations aplicadas
 
