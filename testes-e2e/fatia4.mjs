@@ -271,7 +271,7 @@ confere((await saldoProduto(p, CLASSICO)) === 7, "Aceite 12: estoque volta (clá
 await p.goto(`${BASE}/vendas/${v6.id}`);
 await p.getByRole("link", { name: "Lançar de novo, já preenchida" }).click();
 await esperarPagina(p, /^\/vendas\/nova\?copiar=/);
-await p.getByText(/Preenchida com a venda nº/).waitFor();
+await p.getByText(/Preenchida igual à venda nº/).waitFor();
 confere(/Confirmar R\$\s?25,00/.test(await texto(p)) || (await p.getByRole("button", { name: /Confirmar R\$\s?25,00/ }).count()) === 1,
   "Lançar de novo: abre com os mesmos itens (R$ 25,00, sem o desconto)");
 

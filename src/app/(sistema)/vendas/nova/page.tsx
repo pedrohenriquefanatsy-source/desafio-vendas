@@ -37,14 +37,19 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
       {typeof ok === "string" && typeof id === "string" ? (
         <div className="mb-4 flex flex-col gap-2">
           <Aviso tipo="sucesso">Venda nº {ok} registrada.</Aviso>
-          <Link href={`/vendas/${id}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
-            Ver a venda nº {ok}
-          </Link>
+          <div className="flex flex-wrap gap-x-4">
+            <Link href={`/vendas/${id}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
+              Ver a venda nº {ok}
+            </Link>
+            <Link href={`/vendas/nova?copiar=${id}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
+              Repetir esta venda
+            </Link>
+          </div>
         </div>
       ) : null}
       {base ? (
         <div className="mb-4">
-          <Aviso tipo="sucesso">Preenchida com a venda nº {base.venda.numero}. Confira e confirme.</Aviso>
+          <Aviso tipo="sucesso">Preenchida igual à venda nº {base.venda.numero}. Confira e confirme.</Aviso>
         </div>
       ) : null}
       {produtos.length === 0 ? (

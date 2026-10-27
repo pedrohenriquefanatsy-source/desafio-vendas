@@ -122,8 +122,11 @@ await pa.goto(`${BASE}/`);
 await pa.locator("dd").first().waitFor();
 const texto = await pa.locator("main").textContent();
 confere(texto.includes(NOME_DESAFIO) && /R\$\s?1\.500,00/.test(texto), "Início mostra o desafio e a meta de R$ 1.500,00");
-const dias = await pa.locator("dd").allTextContents();
-confere(dias.join(",") === "7,2,5", `Início mostra 7 dias, 2 passados, 5 faltando (mostrou ${dias.join(",")})`);
+// Desafio de 7 dias que começou anteontem: o painel mostra o período e 5 dias restantes (com hoje).
+const inicio = new Date(Date.now() - 3 * 3600 * 1000 - 2 * 86_400_000).toISOString().slice(0, 10).split("-").reverse().join("/");
+const fim = new Date(Date.now() - 3 * 3600 * 1000 + 4 * 86_400_000).toISOString().slice(0, 10).split("-").reverse().join("/");
+const limpo = texto.replace(/\s+/g, " ");
+confere(limpo.includes(`${inicio} a ${fim}`) && /Faltam \(com hoje\)\s?5 dias/.test(limpo), `Início mostra o período de 7 dias (${inicio} a ${fim}) e 5 dias restantes`);
 await semRolagemLateral(pa, "Início com desafio");
 await pa.screenshot({ path: `${CAPTURAS}/06-inicio-desafio.png`, fullPage: true });
 

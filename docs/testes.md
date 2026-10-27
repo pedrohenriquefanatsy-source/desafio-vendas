@@ -238,3 +238,46 @@ Sem mudança no banco.
   | Total das vendas ativas | R$ 395,50 | `sum(total) filter (where situacao = 'ativa')` = 395,50 |
   | Saldo de caixa (CSV) | R$ 120,10, em 58 linhas | `sum(valor)` de `lancamentos_caixa` = 120,10, 58 linhas |
 
+## Fatia 8 — Auditoria, acabamento, tema escuro e revisão de usabilidade (27/10/2026)
+
+### Banco (`supabase/testes/fatia8.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou (completo, inclusive as tentativas de apagar e de alterar sem filtro) |
+| Supabase de teste | Passou, sem os comandos de apagar e de alterar sem filtro (o Supabase pede confirmação para eles; ficam só no Postgres local, com as mesmas regras). **46 tabelas e views** recusadas para usuário não logado |
+| Supabase principal | Migration dos itens de compra na auditoria aplicada |
+
+- **Aceite 17** (permissões): outro membro não muda preço de venda, taxa da forma, custo do insumo nem a meta; não cadastra produto; não cancela venda, compra ou despesa de outra pessoa; ninguém apaga vendas, compras, despesas, recebimentos, estoque ou caixa; membro não lê a auditoria; usuário não logado não lê nenhuma tabela ou view nem chama função. **Passou.**
+- Auditoria: o cancelamento aparece com antes "ativa", depois "cancelada" e quem cancelou; itens de compra e movimentos de estoque também. **Passou.**
+
+### Telas no navegador em 375 px
+
+- `testes-e2e/fatia8.mjs`: **22 de 22.** A auditoria aparece só para o administrador e mostra o antes e o depois, inclusive de um cancelamento. O membro não a vê nem pelo endereço. "Como calculamos" explica as contas. Início, Nova venda, Estoque e Caixa ficam corretos no tema escuro: fundo escuro, texto claro, sem rolagem lateral e alvos ≥ 44 px.
+- **Rodada completa** com o sistema inteiro, da fatia 1 à 8: 29 + 25 + 32 + 29 + 26 + 16 + 22 + 22 = **201 verificações**, todas passando. O teste da fatia 1 foi atualizado para o painel novo do Início, que mostra o período e os dias que faltam no lugar dos três contadores antigos.
+
+Revisão de usabilidade (Nielsen e Leis de UX) em `docs/revisao-ux.md`.
+
+## Resumo dos 18 testes de aceite (Seção 10)
+
+| # | Teste | Resultado | Onde está a prova |
+|---|---|---|---|
+| 1 | Receita com g, kg, cx e und; custo conferido à mão | Passou (17,403 a fornada; 0,725125 a unidade) | Fatia 2: banco e telas |
+| 2 | Reprodução da planilha (custos e MC da Cakenoura) | Passou (custos 1,45/2,32/2,08/2,95/3,77; MC 5,05/5,18/5,92/5,05/8,23) | Fatia 2: banco |
+| 3 | Mudança de preço de insumo: custo atual muda, vendas passadas não | Passou | Fatias 2, 3 e 4 |
+| 4 | Produção: insumos baixam e produto entra, na mesma transação | Passou | Fatia 3: banco e telas |
+| 5 | Estoque insuficiente: produção bloqueada e o que falta | Passou | Fatia 3: banco e telas |
+| 6 | Venda com vários itens e kit | Passou (total 24,00; MC 16,00; componentes e embalagem do kit baixados) | Fatia 4: banco e telas |
+| 7 | Venda pendente e parcial | Passou | Fatia 4: banco e telas |
+| 8 | Encomenda: estoque só na entrega | Passou | Fatia 4: banco e telas |
+| 9 | Doação: baixa estoque, entra no custo, sem receita | Passou | Fatia 4: banco e telas |
+| 10 | Despesa com reembolso | Passou | Fatia 5: banco e telas |
+| 11 | Aporte | Passou | Fatia 5: banco e telas |
+| 12 | Cancelamento com histórico na auditoria | Passou | Fatias 4 e 8 |
+| 13 | Meta: progresso, falta e ritmo conferidos à mão | Passou (10,0%; falta 90,00; ritmo 18,00) | Fatia 6: banco e telas |
+| 14 | Duplicidade (duplo toque e reenvio) | Passou | Fatia 4: banco e telas |
+| 15 | Concorrência no último item | Passou (a 2ª venda esperou e recebeu o aviso) | Fatia 4: Postgres local, duas sessões |
+| 16 | Totais do XLSX batem com o SQL | Passou (31 vendas; R$ 467,50; caixa R$ 120,10) | Fatia 7 |
+| 17 | Permissões | Passou | Fatias 1 a 8, consolidado na 8 |
+| 18 | Celular (375 px): venda, despesa, produção, estoque | Passou (201 verificações, sem rolagem lateral, alvos ≥ 44 px, claro e escuro) | Fatias 1 a 8 |
+

@@ -194,11 +194,10 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
             </div>
           </details>
         ) : null}
-        {!ativa ? (
-          <LinkBotao href={`/vendas/nova?copiar=${v.id}`} variante="secundario">
-            Lançar de novo, já preenchida
-          </LinkBotao>
-        ) : null}
+        {/* Corrigir = cancelar e lançar de novo já preenchida (D11); ativa: repetir a mesma venda. */}
+        <LinkBotao href={`/vendas/nova?copiar=${v.id}`} variante="secundario">
+          {ativa ? "Repetir esta venda" : "Lançar de novo, já preenchida"}
+        </LinkBotao>
         {ativa && !podeCancelar ? (
           <p className="text-xs text-texto-suave">
             Para cancelar, peça ao administrador. Quem lançou só cancela nos primeiros {PRAZO_MINUTOS} minutos.
