@@ -9,6 +9,6 @@
 ## Situação
 
 - Checkpoint 1 (diagnóstico) e Checkpoint 2 (plano) **aprovados** em 27/10/2026. Decisão D2 aprovada.
-- D1 (projeto Supabase separado para teste) ainda **sem resposta**.
+- D1 aprovada: projeto de teste `dfzawglgkgconblqrmwf` (limpo em 27/10/2026). Ver `supabase/README.md`.
 - Supabase principal: `appgestãogeladinho` (`iebzbiccuwrchgdsojgn`, sa-east-1).
 - Implementação segue as fatias da Seção 4 de `docs/plano.md`.

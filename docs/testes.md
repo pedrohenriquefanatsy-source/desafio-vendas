@@ -17,3 +17,7 @@ aceite da Seção 10 da especificação entram na Etapa 5.
 | Script `supabase/scripts/limpar-projeto-teste.sql` sem a trava de confirmação: deve recusar | Postgres 16 local | Passou |
 | O mesmo script com a trava: remove tabelas, views, políticas, gatilhos, funções, procedimentos, sequências, tipos, usuários e histórico de migrations; mantém extensões funcionando | Postgres 16 local | Passou (0 objetos restantes; `gen_random_uuid()` da extensão continua funcionando) |
 | Rodar o script de novo | Postgres 16 local | Passou |
+| Projeto de teste depois da limpeza | Supabase teste (consulta) | Passou: 0 objetos, funções, tipos, políticas, usuários e migrations em `public` |
+| Migration `privilegios_authenticated` num banco que imita o principal e noutro que imita o teste: `authenticated` lê e inclui, não faz TRUNCATE; `anon` não lê; sequência utilizável; rodar 2 vezes | Postgres 16 local | Passou nos dois |
+| Privilégios padrão iguais nos dois projetos depois da migration | Supabase principal e teste (consulta) | Passou: listas idênticas |
+| *Advisors* de segurança | Supabase principal e teste | Passou: nenhum alerta |
