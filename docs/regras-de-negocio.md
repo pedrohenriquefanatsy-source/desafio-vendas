@@ -316,6 +316,19 @@
 - Antes disso: a **demanda estimada** que o administrador informar para o desafio
   (Mais → Desafio e meta), sempre rotulada "estimativa". Sem estimativa, fica em branco.
 
-## 11. Cálculos das próximas fatias
+## 11. Exportação (fatia 7)
 
-- Exportação (fatia 7): os números vêm do banco, não da tela.
+- Mais → Exportar: escolher o que exportar, período, produto e participante → XLSX ou CSV.
+- 14 exportações: vendas, itens das vendas, recebimentos, produtos e preços, receitas,
+  insumos e estoque, compras (um item por linha), movimentações de estoque, produção,
+  despesas, reembolsos, fluxo de caixa, metas e indicadores, resultado por dia.
+- Os dados saem **do Supabase**, lidos com a permissão de quem pediu (não da tela). Sem login
+  ou com usuário inativo, nada sai.
+- A **primeira coluna é sempre o ID** do registro.
+- **XLSX**: números como número, datas como data da planilha (dd/mm/aaaa e dd/mm/aaaa hh:mm,
+  no horário de Fortaleza), cabeçalho congelado.
+- **CSV**: separado por ";" e com vírgula decimal (o Excel em português abre direto), datas
+  como 2026-10-27 e 2026-10-27 14:05 (Fortaleza), UTF-8 com acentos.
+- Filtros só onde fazem sentido: período nas listas com data (o dia é o de Fortaleza);
+  produto em vendas, itens, estoque e produção; participante em vendas, compras, despesas e
+  reembolsos. O período vem preenchido com as datas do desafio.

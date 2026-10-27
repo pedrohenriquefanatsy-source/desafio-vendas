@@ -22,6 +22,8 @@ export default async function Mais() {
         <ItemLista href="/mais/insumos" titulo="Insumos" apoio="O que você compra, com o preço pago" />
         <ItemLista href="/mais/desafios" titulo="Desafio e meta" apoio="Datas, meta de resultado e situação" />
         <ItemLista href="/mais/formas-pagamento" titulo="Formas de pagamento" apoio="Pix, dinheiro, cartão e taxas" />
+        <ItemLista href="/compras" titulo="Compras" apoio="Compras de insumos e embalagens" />
+        <ItemLista href="/mais/exportar" titulo="Exportar" apoio="Planilha XLSX ou CSV de vendas, caixa, estoque…" />
         <ItemLista
           href="/mais/participantes"
           titulo="Participantes"

@@ -218,3 +218,23 @@ O teste lê os números do Início e refaz as contas à mão antes e depois de u
 
 A despesa baixou o realizado em exatamente 10,00. Há 2 gráficos e a mesma informação em tabela, e a projeção aparece rotulada. O administrador salva uma demanda estimada, e o Estoque mostra "~N dias (estimativa)". Sem rolagem lateral e alvos de toque ≥ 44 px.
 
+## Fatia 7 — Exportação XLSX e CSV (27/10/2026)
+
+Sem mudança no banco.
+
+- `npm test`: 10 testes. Os 3 novos cobrem o CSV (";", vírgula decimal, aspas e fuso de Fortaleza) e o XLSX (número como número, data como série da planilha com formato de data, 14:05 em Fortaleza, texto escapado, célula vazia).
+- Telas no navegador (`testes-e2e/fatia7.mjs`, Supabase de teste): **22 de 22 verificações passaram.**
+  - A exportação de vendas baixada pela tela tem o ID na primeira coluna, o total como número e a data e hora como data.
+  - O CSV do caixa sai com a coluna Valor.
+  - As 14 exportações baixam em XLSX e CSV.
+  - Um período sem dados devolve só o cabeçalho.
+  - Sem login, nada sai (redireciona para o login).
+- **Aceite 16** (totais do XLSX batem com o SQL). **Passou.**
+
+  | Conta | Somado dos arquivos | Consulta SQL no Supabase de teste |
+  |---|---|---|
+  | Vendas (linhas) | 31 | 31 |
+  | Total de todas as vendas | R$ 467,50 | `sum(total)` = 467,50 |
+  | Total das vendas ativas | R$ 395,50 | `sum(total) filter (where situacao = 'ativa')` = 395,50 |
+  | Saldo de caixa (CSV) | R$ 120,10, em 58 linhas | `sum(valor)` de `lancamentos_caixa` = 120,10, 58 linhas |
+
