@@ -26,6 +26,8 @@ export function Formulario({
   textoEnviando = "Salvando…",
   limparAoSalvar = false,
   variante = "primario",
+  desabilitado = false,
+  botaoFixo = false,
   className = "flex flex-col gap-4",
 }: {
   acao: Acao;
@@ -34,6 +36,8 @@ export function Formulario({
   textoEnviando?: string;
   limparAoSalvar?: boolean;
   variante?: "primario" | "secundario" | "perigo";
+  desabilitado?: boolean; // ex.: nova venda sem produto escolhido
+  botaoFixo?: boolean; // botão sempre visível, acima da barra inferior (nova venda)
   className?: string;
 }) {
   const formulario = useRef<HTMLFormElement>(null);
@@ -61,7 +65,9 @@ export function Formulario({
     if (enviando.current) return; // segundo toque antes da resposta: ignora
     enviando.current = true;
     if (!chave.current) chave.current = crypto.randomUUID();
-    const dados = new FormData(evento.currentTarget);
+    // O botão "confirmar mesmo assim" envia confirmar=1, com a mesma chave (não duplica).
+    const botao = (evento.nativeEvent as SubmitEvent).submitter;
+    const dados = new FormData(evento.currentTarget, botao instanceof HTMLButtonElement && botao.name ? botao : undefined);
     dados.set("chave", chave.current);
     startTransition(() => enviar(dados));
   }
@@ -79,6 +85,11 @@ export function Formulario({
               ))}
             </ul>
           ) : null}
+          {resultado.confirmar ? (
+            <button type="submit" name="confirmar" value="1" disabled={pendente} className={classeBotao("secundario", "w-full")}>
+              {resultado.confirmar}
+            </button>
+          ) : null}
           {resultado.links?.length ? (
             <div className="grid grid-cols-2 gap-2">
               {resultado.links.map((l) => (
@@ -91,9 +102,11 @@ export function Formulario({
         </div>
       ) : null}
       {resultado?.ok && resultado.mensagem ? <Aviso tipo="sucesso">{resultado.mensagem}</Aviso> : null}
-      <button type="submit" disabled={pendente} aria-busy={pendente} className={classeBotao(variante, "w-full")}>
-        {pendente ? textoEnviando : textoBotao}
-      </button>
+      <div className={botaoFixo ? "sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-10 -mx-4 bg-fundo/95 px-4 py-2" : undefined}>
+        <button type="submit" disabled={pendente || desabilitado} aria-busy={pendente} className={classeBotao(variante, "w-full")}>
+          {pendente ? textoEnviando : textoBotao}
+        </button>
+      </div>
     </form>
   );
 }

@@ -606,6 +606,48 @@ export type Database = {
         }
         Relationships: []
       }
+      recebimentos: {
+        Row: {
+          chave_idempotencia: string | null
+          criado_em: string
+          criado_por: string | null
+          estorno_de: string | null
+          forma_pagamento_id: string
+          id: string
+          recebido_em: string
+          taxa_percentual: number
+          taxa_valor: number
+          valor: number
+          venda_id: string
+        }
+        Insert: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          estorno_de?: string | null
+          forma_pagamento_id: string
+          id?: string
+          recebido_em?: string
+          taxa_percentual?: number
+          taxa_valor?: number
+          valor: number
+          venda_id: string
+        }
+        Update: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          estorno_de?: string | null
+          forma_pagamento_id?: string
+          id?: string
+          recebido_em?: string
+          taxa_percentual?: number
+          taxa_valor?: number
+          valor?: number
+          venda_id?: string
+        }
+        Relationships: []
+      }
       receita_itens: {
         Row: {
           alterado_em: string | null
@@ -798,6 +840,162 @@ export type Database = {
         }
         Relationships: []
       }
+      venda_itens: {
+        Row: {
+          custo_unitario_momento: number | null
+          desconto_rateado: number
+          id: string
+          margem_contribuicao: number | null
+          ordem: number
+          preco_unitario: number
+          quantidade: number
+          taxa_rateada: number
+          valor_bruto: number
+          valor_liquido: number
+          variacao_id: string
+          venda_id: string
+        }
+        Insert: {
+          custo_unitario_momento?: number | null
+          desconto_rateado?: number
+          id?: string
+          margem_contribuicao?: number | null
+          ordem?: number
+          preco_unitario: number
+          quantidade: number
+          taxa_rateada?: number
+          valor_bruto: number
+          valor_liquido: number
+          variacao_id: string
+          venda_id: string
+        }
+        Update: {
+          custo_unitario_momento?: number | null
+          desconto_rateado?: number
+          id?: string
+          margem_contribuicao?: number | null
+          ordem?: number
+          preco_unitario?: number
+          quantidade?: number
+          taxa_rateada?: number
+          valor_bruto?: number
+          valor_liquido?: number
+          variacao_id?: string
+          venda_id?: string
+        }
+        Relationships: []
+      }
+      vendas: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_idempotencia: string
+          cliente: string | null
+          criado_em: string
+          criado_por: string | null
+          data_hora: string
+          desafio_id: string | null
+          desconto: number
+          entrega_prevista: string | null
+          entregue_em: string | null
+          estoque_baixado: boolean
+          estoque_negativo_confirmado: boolean
+          forma_pagamento_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          numero: number
+          observacao: string | null
+          participante_id: string
+          recebido: number
+          reconhecida_em: string | null
+          situacao: Database["public"]["Enums"]["situacao_registro"]
+          situacao_entrega:
+            | Database["public"]["Enums"]["situacao_entrega"]
+            | null
+          situacao_pagamento:
+            | Database["public"]["Enums"]["situacao_pagamento"]
+            | null
+          subtotal: number
+          taxa_percentual: number
+          tipo: Database["public"]["Enums"]["tipo_venda"]
+          total: number
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia: string
+          cliente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_hora?: string
+          desafio_id?: string | null
+          desconto?: number
+          entrega_prevista?: string | null
+          entregue_em?: string | null
+          estoque_baixado?: boolean
+          estoque_negativo_confirmado?: boolean
+          forma_pagamento_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: never
+          observacao?: string | null
+          participante_id: string
+          recebido?: number
+          reconhecida_em?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          situacao_entrega?:
+            | Database["public"]["Enums"]["situacao_entrega"]
+            | null
+          situacao_pagamento?:
+            | Database["public"]["Enums"]["situacao_pagamento"]
+            | null
+          subtotal: number
+          taxa_percentual?: number
+          tipo: Database["public"]["Enums"]["tipo_venda"]
+          total: number
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia?: string
+          cliente?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_hora?: string
+          desafio_id?: string | null
+          desconto?: number
+          entrega_prevista?: string | null
+          entregue_em?: string | null
+          estoque_baixado?: boolean
+          estoque_negativo_confirmado?: boolean
+          forma_pagamento_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          numero?: never
+          observacao?: string | null
+          participante_id?: string
+          recebido?: number
+          reconhecida_em?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          situacao_entrega?:
+            | Database["public"]["Enums"]["situacao_entrega"]
+            | null
+          situacao_pagamento?:
+            | Database["public"]["Enums"]["situacao_pagamento"]
+            | null
+          subtotal?: number
+          taxa_percentual?: number
+          tipo?: Database["public"]["Enums"]["tipo_venda"]
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_custo_embalagens: {
@@ -957,12 +1155,74 @@ export type Database = {
         }
         Relationships: []
       }
+      v_produtos_venda: {
+        Row: {
+          apelidos: string[] | null
+          categoria: string | null
+          custo_unitario: number | null
+          estoque: number | null
+          nome: string | null
+          ordem: number | null
+          ordem_produto: number | null
+          preco_venda: number | null
+          produto: string | null
+          produto_id: string | null
+          tipo: Database["public"]["Enums"]["tipo_produto"] | null
+          variacao: string | null
+          variacao_id: string | null
+          vendidos: number | null
+        }
+        Relationships: []
+      }
       v_unidades_insumo: {
         Row: {
           insumo_id: string | null
           personalizada: boolean | null
           quantidade_em_base: number | null
           unidade: string | null
+        }
+        Relationships: []
+      }
+      v_vendas: {
+        Row: {
+          a_receber: number | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          cliente: string | null
+          criado_em: string | null
+          criado_por: string | null
+          data_hora: string | null
+          desafio_id: string | null
+          desconto: number | null
+          dia: string | null
+          entrega_prevista: string | null
+          entregue_em: string | null
+          estoque_negativo_confirmado: boolean | null
+          forma_pagamento: string | null
+          forma_pagamento_id: string | null
+          id: string | null
+          itens_resumo: string | null
+          margem_total: number | null
+          motivo_cancelamento: string | null
+          numero: number | null
+          observacao: string | null
+          participante: string | null
+          participante_id: string | null
+          recebido: number | null
+          reconhecida_em: string | null
+          sem_custo: boolean | null
+          situacao: Database["public"]["Enums"]["situacao_registro"] | null
+          situacao_entrega:
+            | Database["public"]["Enums"]["situacao_entrega"]
+            | null
+          situacao_pagamento:
+            | Database["public"]["Enums"]["situacao_pagamento"]
+            | null
+          subtotal: number | null
+          taxa_percentual: number | null
+          tipo: Database["public"]["Enums"]["tipo_venda"] | null
+          total: number | null
+          variacoes: string[] | null
         }
         Relationships: []
       }
@@ -995,6 +1255,10 @@ export type Database = {
         Args: { p_motivo: string; p_producao: string }
         Returns: undefined
       }
+      cancelar_venda: {
+        Args: { p_motivo: string; p_venda: string }
+        Returns: undefined
+      }
       concluir_producao: {
         Args: {
           p_producao: string
@@ -1008,6 +1272,11 @@ export type Database = {
         Returns: undefined
       }
       definir_meu_nome: { Args: { p_nome: string }; Returns: undefined }
+      entregar_encomenda: {
+        Args: { p_confirmar_estoque?: boolean; p_venda: string }
+        Returns: Json
+      }
+      marcar_encomenda_pronta: { Args: { p_venda: string }; Returns: undefined }
       planejar_producao: {
         Args: {
           p_chave: string
@@ -1040,12 +1309,38 @@ export type Database = {
         }
         Returns: undefined
       }
+      registrar_recebimento: {
+        Args: {
+          p_chave: string
+          p_forma: string
+          p_valor: number
+          p_venda: string
+        }
+        Returns: undefined
+      }
+      registrar_venda: {
+        Args: {
+          p_chave: string
+          p_cliente?: string
+          p_confirmar_estoque?: boolean
+          p_desconto?: number
+          p_entrega_prevista?: string
+          p_forma?: string
+          p_itens: Json
+          p_observacao?: string
+          p_tipo: Database["public"]["Enums"]["tipo_venda"]
+          p_valor_recebido?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       dimensao: "massa" | "volume" | "contagem"
       pago_por: "caixa" | "participante"
       papel: "administrador" | "membro"
       situacao_desafio: "planejado" | "em_andamento" | "encerrado"
+      situacao_entrega: "aguardando" | "pronta" | "entregue"
+      situacao_pagamento: "paga" | "parcial" | "pendente"
       situacao_producao: "planejada" | "concluida" | "cancelada"
       situacao_registro: "ativa" | "cancelada"
       tipo_insumo: "ingrediente" | "embalagem" | "outro"
@@ -1068,6 +1363,7 @@ export type Database = {
         | "ajuste"
         | "estorno"
       tipo_produto: "simples" | "kit"
+      tipo_venda: "venda" | "encomenda" | "doacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1199,6 +1495,8 @@ export const Constants = {
       pago_por: ["caixa", "participante"],
       papel: ["administrador", "membro"],
       situacao_desafio: ["planejado", "em_andamento", "encerrado"],
+      situacao_entrega: ["aguardando", "pronta", "entregue"],
+      situacao_pagamento: ["paga", "parcial", "pendente"],
       situacao_producao: ["planejada", "concluida", "cancelada"],
       situacao_registro: ["ativa", "cancelada"],
       tipo_insumo: ["ingrediente", "embalagem", "outro"],
@@ -1223,6 +1521,7 @@ export const Constants = {
         "estorno",
       ],
       tipo_produto: ["simples", "kit"],
+      tipo_venda: ["venda", "encomenda", "doacao"],
     },
   },
 } as const

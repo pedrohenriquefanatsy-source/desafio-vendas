@@ -118,3 +118,49 @@ Cadastro de farinha, leite condensado (cx de 395 g) e pote; receita que rende 10
 
 7 testes, todos passaram (novos: saldo "2,5 kg", "1,185 L", "18 und"; data e hora "27/10, 14:05" em Fortaleza).
 
+## Fatia 4 — Vendas, recebimentos, encomendas, doações e cancelamento (27/10/2026)
+
+### Banco (`supabase/testes/fatia4.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou (todas), 4 rodadas seguidas, junto com as fatias 1 a 3 num banco novo |
+| Supabase de teste | Passou (versão sem o comando de apagar fora de bloco) |
+| Supabase principal | Passou (verificação curta: venda com desconto, MC, estoque, cancelamento, gravação direta recusada, `anon` não lê). Funções e views conferidas: idênticas às do teste e do Postgres local |
+
+Cenário: Clássico (custo 1,50, preço 6,50), Avelã (2,50 / 7,50), Casadinha = 1 Clássico + 1 Avelã + caixa de 1,00 (5,00 / 12,00); Pix 0% e cartão 4%.
+- **Aceite 6** (vários itens e kit): 2 Clássico + 1 Casadinha, desconto 1,00 → subtotal 25,00, total 24,00, paga; desconto rateado 0,52 e 0,48; estoque clássico 10 → 7, avelã 10 → 9, caixa do kit 5 → 4 (o kit não tem estoque próprio); MC 9,48 + 6,52 = **16,00**; caixa +24,00. Cartão 4%: 1 Avelã → taxa 0,30, MC **4,70**, caixa +7,50 −0,30. **Passou.**
+- **Aceite 7** (pendente e parcial): pendente não entra no caixa, a receber 6,50; recebe 3,00 → parcial, caixa +3,00, falta 3,50; receber 5,00 é recusado ("passa do que falta receber (3.50)"); recebe 3,50 → paga. Parcial na hora (pagou 5,00 de 15,00) → falta 10,00. **Passou.**
+- **Aceite 8** (encomenda): sem data é recusada; com data, não baixa o estoque, fica fora do resultado e aceita sinal; pronta → entregue baixa 2 e reconhece MC **10,00**; entregar de novo não baixa de novo. **Passou.**
+- **Aceite 9** (doação): total 0, sem forma nem recebimento, baixa o estoque, MC **−1,50**, caixa não muda; doação com pagamento é recusada. **Passou.**
+- **Aceite 12** (cancelamento): outro membro não cancela; sem motivo é recusado; o dono cancela → estoque volta (3 clássicos, 1 avelã, 1 caixa), caixa −24,00, itens e recebimentos guardados, auditoria com antes "ativa" e depois "cancelada"; cancelar de novo não estorna em dobro; venda no cartão estorna 7,50 e devolve a taxa. **Passou.**
+- **Aceite 14** (duplicidade): mesma chave devolve a mesma venda; uma venda só; estoque e caixa não dobram; recebimento reenviado não dobra. **Passou.**
+- **Aceite 3** (vendas passadas): farinha sobe → custo atual do clássico 1,50 → 2,50; a venda anterior mantém custo 1,50 e MC 9,48. **Passou.**
+- **Aceite 15** (concorrência, Postgres local, duas sessões): 1 bolo em estoque, duas vendas ao mesmo tempo → a 1ª passou; a 2ª esperou a trava e voltou com o aviso "Bolo C4: disponível 0, necessário 1". 1 venda gravada. **Passou.**
+- Outras: falta de produto avisa sem gravar e, confirmada, grava com estoque negativo e o aviso; sem forma, desconto maior que o valor, recebido maior que o total e venda sem itens são recusados com mensagem; preço editado na hora (6,00 → MC 4,50); valor recebido nulo = paga pelo total do banco; ninguém grava direto em vendas, itens ou recebimentos; inativo não vende; `anon` não lê; saldo de estoque = soma do livro; caixa das vendas = recebimentos − taxas.
+
+### Telas no navegador em 375 px (`testes-e2e/fatia4.mjs`, Supabase de teste)
+
+**29 de 29 verificações passaram.** Nas rodadas anteriores:
+- 1 falha real, corrigida: depois de receber, entregar ou cancelar, o formulário some e a confirmação sumia junto. Agora ela aparece no topo da venda.
+- Falhas do próprio teste, também corrigidas: ele não esperava a venda seguinte terminar, lia a tela ainda carregando e somava dados de rodadas anteriores.
+
+Cardápio montado pelas telas (insumos, receita, 2 produtos, kit com caixa, compra, 2 produções). Venda de 1 item em 3 toques (＋ → produto → Confirmar). Aceite 6: 2 Clássico + 1 Casadinha com desconto 1,00 → total **R$ 24,00** antes de confirmar, **MC R$ 21,80** no detalhe, desconto rateado R$ 0,52, estoque 6 e 9. Aceite 7: pendente aparece em "A receber" (R$ 7,50); recebe 3,00 → falta 4,50; o valor do saldo já vem preenchido e quita. Aceite 8: encomenda não baixa o estoque, aparece em "Encomendas", margem "na entrega"; entregue baixa 2. Aceite 9: doação R$ 0,00 com MC −R$ 0,30, baixa o estoque. D8: 7 avelãs com 6 em estoque → aviso "precisa 7 und, tem 6" e "Vender mesmo assim" → estoque −1. Aceite 14: duplo toque no Confirmar → uma venda só. Aceite 12: cancelar com motivo "Cliente desistiu" → estoque volta; "Lançar de novo, já preenchida" abre com os mesmos itens. Membro não vê cancelar na venda de outra pessoa e vê na própria. Sem rolagem lateral e alvos de toque ≥ 44 px. Os testes de tela das fatias 2 (25/25) e 3 (32/32) foram rodados de novo e passaram.
+
+
+### Como repetir a concorrência e conferir a igualdade entre ambientes
+
+- Concorrência (só no Postgres local): `supabase/testes/concorrencia/preparar.sql`, depois
+  `sessao-1.sql` e `sessao-2.sql` em dois terminais ao mesmo tempo. Esperado: a sessão 1
+  devolve `"ok": true`; a 2 espera e devolve `"ok": false` com a falta do bolo.
+- Igualdade entre local, teste e principal (o resultado tem de ser igual nos três):
+
+```sql
+select
+  (select md5(string_agg(p.proname || md5(p.prosrc), ',' order by p.proname))
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public', 'privado')) as funcoes,
+  (select md5(string_agg(c.relname || pg_get_viewdef(c.oid), ',' order by c.relname))
+     from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'v') as views;
+```
+
+Em 27/10/2026, depois da fatia 4: funções `153e6d43…`, views `b32fbc4b…` nos três.

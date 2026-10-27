@@ -5,8 +5,9 @@ type ErroBanco = { code?: string; message?: string } | null | undefined;
 
 export type Resultado =
   | { ok: true; mensagem?: string }
-  // itens: detalhes do erro (ex.: o que falta e quanto); links: o que fazer a seguir.
-  | { ok: false; erro: string; itens?: string[]; links?: { href: string; texto: string }[] };
+  // itens: detalhes do erro (ex.: o que falta e quanto); links: o que fazer a seguir;
+  // confirmar: texto do botão para enviar de novo assim mesmo (ex.: "Vender mesmo assim").
+  | { ok: false; erro: string; itens?: string[]; links?: { href: string; texto: string }[]; confirmar?: string };
 
 const SEM_CONEXAO =
   "Sem conexão com o servidor. Nada foi salvo. Confira o sinal e toque de novo.";

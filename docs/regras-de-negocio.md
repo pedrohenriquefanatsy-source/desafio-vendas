@@ -162,11 +162,84 @@
   **ninguém grava direto** (nem o administrador). Só pelas funções do banco, que conferem quem
   pode o quê. Usuário não logado não lê nada.
 
-## 8. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
+## 8. Vendas, recebimentos, encomendas e doações (fatia 4)
+
+### Registrar uma venda
+
+- Itens: produto (variação), quantidade e preço. O preço vem do cadastro e pode ser mudado
+  na hora ("Mais opções"). Um mesmo envio pode ter vários produtos e kits.
+- **Subtotal** = Σ (quantidade × preço). **Total** = subtotal − desconto. O desconto é da venda
+  inteira e é **rateado** entre os itens pelo valor de cada um (arredondado em centavos; o
+  último item fica com a diferença, para a soma bater).
+  Ex. testado: 2 × 6,50 + 1 × 12,00 = 25,00, desconto 1,00 → 0,52 no primeiro item e 0,48 no kit.
+- Tudo é calculado pelo banco, numa transação: o celular mostra só uma prévia do total.
+- **Forma de pagamento** obrigatória (menos na doação). A taxa da forma (%) fica gravada na venda.
+- **Paga / Pendente / Parcial**: paga = recebe o total agora; pendente = não recebe nada agora;
+  parcial = recebe o valor informado. Pendente ou parcial exige o nome do cliente (para saber
+  de quem cobrar).
+
+### Custo e margem congelados
+
+- No momento em que a venda é **reconhecida** (venda e doação: na hora; encomenda: na
+  entrega, D7), cada item guarda o custo unitário daquele momento e a margem:
+  - **Taxa do item** = valor líquido × taxa da forma (arredondada em centavos).
+  - **MC do item** = valor líquido − custo do momento × quantidade − taxa do item.
+- Mudar o preço de um insumo depois **não muda** vendas passadas (teste de aceite 3).
+- Produto sem custo cadastrado: a venda é registrada, mas a margem fica em branco e a tela avisa.
+
+### Estoque
+
+- Produto simples: sai ele mesmo. **Kit**: saem os produtos que o formam (ex.: casadinha =
+  1 clássico + 1 avelã) e as **embalagens próprias do kit** (D10). O kit não tem estoque
+  próprio; a tela mostra quantos kits os componentes formam.
+- **Falta de produto pronto (D8)**: a venda **não é bloqueada**. O banco avisa o que falta
+  ("precisa 7, tem 6") sem gravar nada; se a pessoa confirmar ("Vender mesmo assim"), a venda
+  entra, o estoque pode ficar negativo e o aviso fica registrado na venda.
+- Duas pessoas vendendo o último item ao mesmo tempo: a segunda espera a primeira terminar e
+  recebe o aviso (trava de linha; teste de aceite 15).
+
+### Recebimentos
+
+- Venda ≠ dinheiro. Cada recebimento é um registro próprio: entra no caixa o valor e sai a
+  taxa da forma usada (se houver). Uma venda pode ter vários recebimentos, até o total.
+- **A receber** = total − recebido (só vendas ativas; doação nunca tem).
+- Situação: **paga** (recebido = total), **parcial** (recebeu parte), **pendente** (nada).
+- A margem conta desde a venda; o caixa só quando o dinheiro entra.
+
+### Encomenda
+
+- Venda com data de entrega (hoje ou depois). Situações: aguardando produção → pronta → entregue.
+- O dinheiro entra no caixa quando é recebido (pode ter sinal). **Estoque e resultado só na
+  entrega** (D7): ao marcar entregue, o banco baixa o estoque e congela custo e margem.
+
+### Doação ou brinde
+
+- Total zero, sem forma de pagamento e sem recebimento. Baixa o estoque e o custo entra no
+  resultado como margem negativa (ex.: −1,50 para um produto de custo 1,50).
+
+### Cancelar ou corrigir
+
+- Nada é apagado. Cancelar exige motivo e: devolve ao estoque exatamente o que saiu, estorna
+  cada recebimento (o dinheiro e a taxa voltam no caixa) e marca a venda como cancelada.
+  Cancelar duas vezes não estorna em dobro. A auditoria guarda o antes e o depois.
+- Quem cancela: o administrador sempre; quem lançou, em até 30 minutos (D11).
+- **Corrigir** = cancelar e "Lançar de novo, já preenchida" (abre a nova venda com os mesmos
+  itens, forma, cliente e observação).
+
+### Envio repetido
+
+- Cada formulário tem uma chave única. Duplo toque ou reenvio depois de falha devolvem a
+  mesma venda (teste de aceite 14). O mesmo vale para recebimentos.
+
+### Consulta
+
+- Vendas por chips (Hoje, Todas, A receber, Encomendas, Doações, Canceladas), com contagem, e
+  filtros por dia, produto, quem vendeu e forma de pagamento. "Dia" é a data em Fortaleza.
+
+## 9. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
 
 Detalhados em `docs/plano.md`, Seção 2.7. Resumo:
 
-- MC do item vendido = valor líquido − custo do momento × quantidade − taxa rateada.
 - Resultado = Σ MC das vendas reconhecidas − custo de doações e perdas − despesas.
 - Saldo de caixa = soma do livro de caixa (só dinheiro que entrou ou saiu).
 - Ritmo necessário por dia = (meta − realizado) ÷ dias restantes (contando hoje).
