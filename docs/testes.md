@@ -14,3 +14,6 @@ aceite da Seção 10 da especificação entram na Etapa 5.
 | Função nova não fica executável por `anon` nem `authenticated` até um `GRANT` explícito | Postgres 16 local | **Falhou na 1ª versão** (o `PUBLIC` mantinha EXECUTE). Corrigido com a revogação global; passou na 2ª |
 | Migrations aplicadas no principal | Supabase principal (consulta) | Passou: tabela removida; privilégios padrão de `public` sem `anon`; funções só com `postgres` e `service_role` |
 | `npm run typecheck`, `npm run lint`, `npm run build` | Local | Passou |
+| Script `supabase/scripts/limpar-projeto-teste.sql` sem a trava de confirmação: deve recusar | Postgres 16 local | Passou |
+| O mesmo script com a trava: remove tabelas, views, políticas, gatilhos, funções, procedimentos, sequências, tipos, usuários e histórico de migrations; mantém extensões funcionando | Postgres 16 local | Passou (0 objetos restantes; `gen_random_uuid()` da extensão continua funcionando) |
+| Rodar o script de novo | Postgres 16 local | Passou |
