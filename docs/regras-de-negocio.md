@@ -90,7 +90,79 @@
 - Insumos, receitas, produtos e variações não se apagam (desativa). Itens de receita, embalagens e componentes de kit podem ser removidos pelo administrador (fica na auditoria).
 - O tipo do produto (simples/kit) não muda depois de criado.
 
-## 7. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
+## 7. Compras, estoque e produção (fatia 3)
+
+### Livro de estoque
+
+- Todo movimento de estoque é uma linha num livro único: compra, uso na produção, produto
+  produzido, venda, doação, perda, ajuste de contagem e cancelamento. Ninguém apaga nem
+  altera uma linha.
+- O saldo de cada insumo e de cada produto pronto é a soma do livro. Uma tabela de saldos é
+  mantida pelo banco a cada movimento (ninguém digita saldo) e serve para travar o item
+  quando duas pessoas mexem nele ao mesmo tempo. Os testes conferem que saldo = soma do livro.
+- Insumo fica na unidade base (g, ml ou und). A tela mostra "2,5 kg" ou "1,2 L" quando passa de 1000.
+- O estoque não fica negativo: produção e perda que levariam a negativo são recusadas, com
+  a quantidade que falta. (Venda sem produto lançado avisa sem bloquear: fatia 4, D8.)
+
+### Compra
+
+- Cada item: insumo, quantidade, unidade (as que o banco sabe converter) e **quanto custou
+  no total**. O total da compra é a soma dos itens.
+- O custo atual do insumo passa a ser o da **última compra** (D9): valor ÷ quantidade em
+  unidade base. Ex.: 3 cx de leite condensado (395 g cada) por R$ 23,70 → R$ 0,02/g. O
+  histórico de custo registra a compra que mudou o preço.
+- **Paga pelo caixa**: sai do caixa na hora. **Paga do bolso de um participante**: não mexe
+  no caixa; fica "a reembolsar" para aquela pessoa (telas de reembolso na fatia 5).
+- Compra **não entra no resultado**. O custo entra quando o produto é vendido (Seção 4.5).
+- Cancelar: devolve o estoque e, se foi pelo caixa, o dinheiro. Exige motivo. Se parte do
+  insumo já foi usada, o cancelamento é recusado e a orientação é corrigir a contagem.
+  Membro cancela a própria compra em até 30 minutos; depois disso, só o administrador (D11).
+
+### Produção
+
+- **Planejada**: só um plano (produto e número de fornadas). Não mexe no estoque. Qualquer
+  participante ativo cancela uma planejada.
+- **Concluir**, numa única transação: trava os insumos (sempre na mesma ordem, para duas
+  produções ao mesmo tempo não se travarem), confere se há tudo, e:
+  - se **falta** algum insumo ou embalagem: **nada é gravado** e a tela mostra, para cada um,
+    quanto precisa, quanto tem e quanto falta, com os botões "Registrar compra" (já
+    preenchida com o que falta) e "Ajustar estoque";
+  - se **há tudo**: baixa os insumos da receita × fornadas e as embalagens × unidades boas
+    (D10), dá entrada nas unidades boas como produto pronto e registra as perdidas.
+- Necessidade de insumo = quantidade na receita (em unidade base) × fornadas + embalagens por
+  unidade × unidades boas.
+- **Custo de cada unidade boa** = custo variável unitário do momento (receita ÷ rendimento +
+  embalagens). Ele fica gravado no movimento; mudar o preço depois não muda o que já foi produzido.
+- **Unidade perdida na produção**: custo só da parte da receita (a embalagem dela não foi
+  usada). Entra no resultado como perda.
+- Ex. testado: receita com 500 g de farinha (R$ 0,006/g), 1 cx de leite condensado (395 g a
+  R$ 0,02/g) e 4 ovos (R$ 0,52), rende 10, 1 pote de R$ 0,50 por unidade → custo da unidade
+  = (3,00 + 7,90 + 2,08) ÷ 10 + 0,50 = **R$ 1,798**; perdida = **R$ 1,298**.
+- Concluir duas vezes (reenvio) não baixa duas vezes.
+
+### Quanto dá para produzir e lista de compras
+
+- **Fornadas possíveis** = para cada insumo da receita (e embalagem, contando o rendimento da
+  fornada), saldo ÷ quanto a fornada usa, arredondado para baixo; vale o menor. O insumo
+  desse menor valor é o que **limita**.
+- **Lista de compras** = (o que as produções planejadas precisam + estoque mínimo) − saldo,
+  só quando dá mais que zero. Custo estimado com o último preço de cada insumo.
+
+### Ajuste de contagem e perda
+
+- **Ajuste**: a pessoa conta e informa o total que tem; o banco lança a diferença (+ ou −),
+  com o motivo. É correção de registro: **não entra no resultado**.
+- **Perda** (estragou, caiu, venceu): baixa o estoque, com o motivo; o custo (atual) entra
+  no resultado como perda. Não pode ser maior que o estoque registrado.
+- Membro e administrador fazem os dois; o motivo é obrigatório e fica no histórico do item.
+
+### Permissões
+
+- Compras, livro de estoque, saldos, produções e livro de caixa: participantes ativos leem;
+  **ninguém grava direto** (nem o administrador). Só pelas funções do banco, que conferem quem
+  pode o quê. Usuário não logado não lê nada.
+
+## 8. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
 
 Detalhados em `docs/plano.md`, Seção 2.7. Resumo:
 

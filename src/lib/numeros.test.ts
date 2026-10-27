@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lerNumero, formatarReais, formatarPercentual, partesReais, formatarQuantidade, formatarCustoUnidade } from "./numeros.ts";
-import { formatarData, hojeIso } from "./datas.ts";
+import { lerNumero, formatarReais, formatarPercentual, partesReais, formatarQuantidade, formatarSaldo, formatarCustoUnidade } from "./numeros.ts";
+import { formatarData, formatarDataHora, hojeIso } from "./datas.ts";
 
 test("lerNumero aceita os formatos que a pessoa digita", () => {
   assert.equal(lerNumero("6,50"), 6.5);
@@ -49,4 +49,18 @@ test("quantidades e custo por unidade base", () => {
   assert.equal(formatarCustoUnidade(0.0048, "g").replace(/\s/g, " "), "R$ 0,0048/g");
   assert.equal(formatarCustoUnidade(0.52, "und").replace(/\s/g, " "), "R$ 0,52/und");
   assert.equal(formatarCustoUnidade(null, "g"), "sem preço");
+});
+
+test("saldo de estoque com unidade legível", () => {
+  assert.equal(formatarSaldo(2500, "g"), "2,5 kg");
+  assert.equal(formatarSaldo(395, "g"), "395 g");
+  assert.equal(formatarSaldo(1185, "ml"), "1,185 L");
+  assert.equal(formatarSaldo(18, "und"), "18 und");
+  assert.equal(formatarSaldo(-2, "und"), "-2 und");
+  assert.equal(formatarSaldo(null, "g"), "—");
+});
+
+test("data e hora no fuso de Fortaleza", () => {
+  assert.equal(formatarDataHora("2026-10-27T17:05:00Z"), "27/10, 14:05");
+  assert.equal(formatarDataHora(null), "—");
 });

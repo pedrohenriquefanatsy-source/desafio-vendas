@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useRef, type FormEvent, type ReactNode } from "react";
+import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { Aviso, classeBotao } from "./ui";
 import type { Resultado } from "@/servicos/erros";
@@ -68,7 +69,27 @@ export function Formulario({
   return (
     <form ref={formulario} onSubmit={aoEnviar} className={className}>
       {children}
-      {resultado && !resultado.ok ? <Aviso tipo="erro">{resultado.erro}</Aviso> : null}
+      {resultado && !resultado.ok ? (
+        <div className="flex flex-col gap-2">
+          <Aviso tipo="erro">{resultado.erro}</Aviso>
+          {resultado.itens?.length ? (
+            <ul className="list-disc rounded-xl border border-borda p-3 pl-7 text-sm">
+              {resultado.itens.map((i) => (
+                <li key={i}>{i}</li>
+              ))}
+            </ul>
+          ) : null}
+          {resultado.links?.length ? (
+            <div className="grid grid-cols-2 gap-2">
+              {resultado.links.map((l) => (
+                <Link key={l.href} href={l.href} className={classeBotao("secundario", "text-sm")}>
+                  {l.texto}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {resultado?.ok && resultado.mensagem ? <Aviso tipo="sucesso">{resultado.mensagem}</Aviso> : null}
       <button type="submit" disabled={pendente} aria-busy={pendente} className={classeBotao(variante, "w-full")}>
         {pendente ? textoEnviando : textoBotao}

@@ -12,3 +12,11 @@ export function formatarData(iso: string | null | undefined): string {
 export function hojeIso(agora: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: FUSO }).format(agora);
 }
+
+const dataHora = new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+// Instante do banco (timestamptz) → "27/10, 14:05" no horário de Fortaleza.
+export function formatarDataHora(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return dataHora.format(new Date(iso));
+}

@@ -166,3 +166,24 @@ export function Interruptor({ rotulo, id, ...props }: ComponentProps<"input"> & 
   );
 }
 
+
+// Abas como links (cada aba tem endereço próprio; voltar no celular funciona).
+export function Abas({ abas, atual }: { abas: { valor: string; rotulo: string; href: string; contagem?: number }[]; atual: string }) {
+  return (
+    <nav aria-label="Seções" className="mb-4 flex gap-2 overflow-x-auto">
+      {abas.map((a) => (
+        <Link
+          key={a.valor}
+          href={a.href}
+          aria-current={a.valor === atual ? "page" : undefined}
+          className={`inline-flex min-h-toque shrink-0 items-center gap-1 rounded-full border px-4 text-sm font-medium ${
+            a.valor === atual ? "border-acao bg-acao text-acao-texto" : "border-borda bg-superficie text-texto"
+          }`}
+        >
+          {a.rotulo}
+          {a.contagem ? <span className="tabular-nums opacity-80">({a.contagem})</span> : null}
+        </Link>
+      ))}
+    </nav>
+  );
+}

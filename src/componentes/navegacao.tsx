@@ -16,6 +16,7 @@ const ITENS = [
 function ativo(caminho: string, href: string) {
   if (href === "/") return caminho === "/";
   if (href === "/vendas") return caminho === "/vendas" || (caminho.startsWith("/vendas/") && caminho !== "/vendas/nova");
+  if (href === "/estoque" && (caminho === "/compras" || caminho.startsWith("/compras/"))) return true;
   return caminho === href || caminho.startsWith(`${href}/`);
 }
 

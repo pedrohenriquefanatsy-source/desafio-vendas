@@ -89,3 +89,32 @@ Cadastro de 5 insumos pelas telas (farinha em g com preço por kg; leite condens
 ### Regras de leitura de números (`npm test`)
 
 5 testes, todos passaram (inclui quantidades "0,4", "462,15" e custo por unidade "R$ 0,0048/g").
+
+## Fatia 3 — Compras, estoque e produção (27/10/2026)
+
+### Banco (`supabase/testes/fatia3.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou (todas), junto com `fatia1.sql` e `fatia2.sql` num banco novo com todas as migrations |
+| Supabase de teste | Passou. Sem o comando de apagar (o Supabase pede confirmação para ele); esse rodou só no Postgres local |
+| Supabase principal | Passou (compra, reenvio, inativo, gravação direta recusada, aceites 4 e 5, quanto dá para produzir, lista de compras, saldo = livro, `anon` não lê) |
+
+- **Aceite 4** (concluir produção): 2 fornadas, 18 boas e 2 perdidas → farinha 2000 → 1000 g, leite condensado 1185 → 395 g, ovos 30 → 22, potes 20 → 2 (só as boas), 18 bolos prontos; custo da unidade boa **1,798**, perdida **1,298**; tudo no mesmo instante (mesma transação); concluir de novo não baixa duas vezes. **Passou.**
+- **Aceite 5** (estoque insuficiente): outras 2 fornadas → bloqueado, lista "leite condensado: precisa 790 g, tem 395, falta 395" e "potes: falta 18"; **nenhum movimento gravado**, produção segue planejada. **Passou.**
+- **Aceite 3** (parte de estoque): farinha comprada a R$ 8/kg → custo atual da unidade de 1,798 para 1,898; o que já foi produzido mantém 1,798. **Passou.** (A parte "vendas anteriores não mudam" entra na fatia 4.)
+- **Concorrência** (Postgres local, duas sessões ao mesmo tempo, farinha para só 1 fornada): a 1ª concluiu; a 2ª esperou a trava e foi bloqueada com "disponível 0, falta 500 g". Estoque final 0, nunca negativo. **Passou.**
+- Outras: compra pelo caixa (R$ 61,30) baixa o caixa; reenvio com a mesma chave não duplica compra, estoque nem caixa; compra do bolso não mexe no caixa e fica no nome de quem pagou; histórico de custo aponta a compra; unidade sem conversão, compra sem itens e data futura recusadas com mensagem; inativo não registra nem lê; ninguém grava direto em estoque, saldo, caixa ou compras; quanto dá para produzir (o pote limita: 0 fornadas); lista de compras (planejado + mínimo); ajuste por contagem (−2, motivo obrigatório, reenvio não repete); perda (maior que o estoque é recusada); membro não cancela compra de outra pessoa; prazo de 30 minutos; compra já usada não pode ser cancelada; cancelar compra pelo caixa devolve o dinheiro uma vez só; planejada cancelada sai da lista de compras; concluída não se cancela; auditoria registra compras, produções e movimentos.
+
+### Telas no navegador em 375 px (`testes-e2e/fatia3.mjs`, Supabase de teste)
+
+**32 de 32 verificações passaram** (4ª rodada). Nas anteriores:
+- 1 falha real, corrigida: ao concluir uma produção, ela sai da lista e a confirmação sumia junto; agora a tela volta para a aba Produção com "Produção concluída" no topo.
+- 3 falhas do próprio teste, também corrigidas: ele esperava os itens numa ordem fixa e lia uma mensagem antiga.
+
+Cadastro de farinha, leite condensado (cx de 395 g) e pote; receita que rende 10; bolo com 1 pote por unidade. Compra com 3 itens em kg, cx e und (total R$ 18,90 antes de salvar) → estoque 1 kg, 395 g, 10 und. Produção de 2 fornadas planejada; lista de compras mostra o leite e os potes que faltam. Concluir → **bloqueado**, com "faltam 395 g (precisa 790, tem 395)" e "faltam 10 und". O botão "Registrar compra" abre a compra já preenchida com 395 g e 10 und. Depois da compra, concluir → **20 bolos prontos**, insumos zerados. Contagem da farinha +200 g com motivo; histórico do item mostra compra, uso na produção e ajuste. Perda de 1 bolo → 19. Membro: compra do próprio bolso ("Do bolso de Membro Teste"), cancela dentro de 30 minutos (a farinha volta a 200 g) e não vê "Cancelar" na compra de outra pessoa. Sem rolagem lateral e alvos de toque ≥ 44 px em todas as telas verificadas. Os testes de tela das fatias 1 (29/29) e 2 (25/25) foram rodados de novo e passaram.
+
+### Regras de leitura de números e datas (`npm test`)
+
+7 testes, todos passaram (novos: saldo "2,5 kg", "1,185 L", "18 und"; data e hora "27/10, 14:05" em Fortaleza).
+

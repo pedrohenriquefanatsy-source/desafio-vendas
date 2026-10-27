@@ -35,6 +35,8 @@ mesmo dia: 0 tabelas, funções, tipos, políticas, usuários e migrations no sc
 | `20261027140000_unidades_e_insumos.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027140100_receitas_e_produtos.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027140200_custeio.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
+| `20261027150000_estoque_compras_producao.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
+| `20261027150100_indices_e_politica_perfis.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 
 As aplicadas pelo SQL Editor **não aparecem** no histórico de migrations do Supabase
 (`supabase_migrations`), porque a confirmação pedida pela integração não chegou a tempo.
@@ -49,9 +51,12 @@ O efeito foi conferido por consulta.
 
 ### Alertas aceitos de propósito
 
-- `admin_atualizar_participante`, `definir_meu_nome` e `definir_custo_insumo` são funções da
-  API usadas pelas telas (alerta 0029). Cada uma confere quem está chamando antes de fazer
-  qualquer coisa.
+- `admin_atualizar_participante`, `definir_meu_nome`, `definir_custo_insumo` e as funções da
+  fatia 3 (`registrar_compra`, `cancelar_compra`, `planejar_producao`, `concluir_producao`,
+  `cancelar_producao`, `ajustar_estoque`, `registrar_perda`) são funções da API usadas pelas
+  telas (alerta 0029). Cada uma confere quem está chamando antes de fazer qualquer coisa; é
+  por elas que o estoque e o caixa são gravados, já que a gravação direta é proibida.
+- "Unused index" (informativo): índices novos ainda sem uso porque as tabelas estão vazias.
 - "Leaked password protection" (alerta de Auth): opcional; ligar no painel em
   Authentication → Policies/Passwords, se disponível no plano.
 
@@ -60,7 +65,9 @@ O efeito foi conferido por consulta.
 - `testes/fatia1.sql`: testes do banco, desfazem tudo no fim. Rodar no Postgres local
   (`testes/simulacao-supabase-local.sql` antes das migrations) ou no projeto de teste.
 - `testes/fatia2.sql`: idem, com os testes de aceite 1 e 2.
+- `testes/fatia3.sql`: idem, com os testes de aceite 3 (parte de estoque), 4 e 5.
 - `testes/preparar-e2e-fatia1.sql` e `testes/preparar-e2e-fatia2.sql`: deixam o projeto de teste
-  pronto para `testes-e2e/fatia1.mjs` e `testes-e2e/fatia2.mjs` sem apagar nada.
+  pronto para `testes-e2e/fatia1.mjs` e `testes-e2e/fatia2.mjs` (e `fatia3.mjs`, que usa o
+  mesmo preparo da fatia 2) sem apagar nada.
 - Comandos com "apagar" (delete/drop) fora de blocos fazem a integração do Supabase pedir
   confirmação; nos testes remotos eles ficam de fora e rodam só no Postgres local.

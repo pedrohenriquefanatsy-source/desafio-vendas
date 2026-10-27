@@ -50,3 +50,12 @@ export function formatarCustoUnidade(valor: number | string | null | undefined, 
   if (valor == null || valor === "") return "sem preço";
   return `${custoMiudo.format(Number(valor))}/${unidade}`;
 }
+
+// Saldo de estoque com unidade legível: 2500 g → "2,5 kg"; 395 g → "395 g"; 18 und → "18 und".
+export function formatarSaldo(valor: number | string | null | undefined, unidade: string | null | undefined): string {
+  if (valor == null || valor === "") return "—";
+  const n = Number(valor);
+  if (unidade === "g" && Math.abs(n) >= 1000) return `${quantidade.format(n / 1000)} kg`;
+  if (unidade === "ml" && Math.abs(n) >= 1000) return `${quantidade.format(n / 1000)} L`;
+  return `${quantidade.format(n)} ${unidade ?? ""}`.trim();
+}

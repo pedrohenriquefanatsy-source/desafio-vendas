@@ -30,7 +30,7 @@ export type Database = {
           acao: string
           antes?: Json | null
           depois?: Json | null
-          em: string
+          em?: string
           id?: never
           registro_id: string
           tabela: string
@@ -45,6 +45,99 @@ export type Database = {
           registro_id?: string
           tabela?: string
           usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      compra_itens: {
+        Row: {
+          compra_id: string
+          custo_por_base: number
+          id: string
+          insumo_id: string
+          quantidade: number
+          quantidade_base: number
+          unidade: string
+          valor: number
+        }
+        Insert: {
+          compra_id: string
+          custo_por_base: number
+          id?: string
+          insumo_id: string
+          quantidade: number
+          quantidade_base: number
+          unidade: string
+          valor: number
+        }
+        Update: {
+          compra_id?: string
+          custo_por_base?: number
+          id?: string
+          insumo_id?: string
+          quantidade?: number
+          quantidade_base?: number
+          unidade?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      compras: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_idempotencia: string
+          criado_em: string
+          criado_por: string | null
+          data: string
+          desafio_id: string | null
+          fornecedor: string | null
+          id: string
+          motivo_cancelamento: string | null
+          observacao: string | null
+          pago_por: Database["public"]["Enums"]["pago_por"]
+          participante_id: string | null
+          situacao: Database["public"]["Enums"]["situacao_registro"]
+          total: number
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          fornecedor?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          pago_por: Database["public"]["Enums"]["pago_por"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          total: number
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia?: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          fornecedor?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          pago_por?: Database["public"]["Enums"]["pago_por"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          total?: number
         }
         Relationships: []
       }
@@ -114,7 +207,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number
-          taxa_percentual: number
+          taxa_percentual?: number
         }
         Update: {
           alterado_em?: string | null
@@ -164,6 +257,7 @@ export type Database = {
       }
       insumo_custos_historico: {
         Row: {
+          compra_id: string | null
           custo_por_base: number | null
           id: number
           insumo_id: string
@@ -174,16 +268,18 @@ export type Database = {
           unidade_referencia: string | null
         }
         Insert: {
+          compra_id?: string | null
           custo_por_base?: number | null
           id?: never
           insumo_id: string
-          origem: string
+          origem?: string
           preco_referencia?: number | null
-          registrado_em: string
+          registrado_em?: string
           registrado_por?: string | null
           unidade_referencia?: string | null
         }
         Update: {
+          compra_id?: string | null
           custo_por_base?: number | null
           id?: never
           insumo_id?: string
@@ -282,6 +378,87 @@ export type Database = {
         }
         Relationships: []
       }
+      lancamentos_caixa: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          desafio_id: string | null
+          descricao: string | null
+          id: number
+          origem_id: string | null
+          origem_tipo: string | null
+          tipo: Database["public"]["Enums"]["tipo_lancamento_caixa"]
+          valor: number
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          descricao?: string | null
+          id?: never
+          origem_id?: string | null
+          origem_tipo?: string | null
+          tipo: Database["public"]["Enums"]["tipo_lancamento_caixa"]
+          valor: number
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          descricao?: string | null
+          id?: never
+          origem_id?: string | null
+          origem_tipo?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_lancamento_caixa"]
+          valor?: number
+        }
+        Relationships: []
+      }
+      movimentos_estoque: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          custo_unitario: number | null
+          desafio_id: string | null
+          id: number
+          insumo_id: string | null
+          justificativa: string | null
+          origem_id: string | null
+          origem_tipo: string | null
+          quantidade_base: number
+          tipo: Database["public"]["Enums"]["tipo_movimento"]
+          variacao_id: string | null
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          custo_unitario?: number | null
+          desafio_id?: string | null
+          id?: never
+          insumo_id?: string | null
+          justificativa?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          quantidade_base: number
+          tipo: Database["public"]["Enums"]["tipo_movimento"]
+          variacao_id?: string | null
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          custo_unitario?: number | null
+          desafio_id?: string | null
+          id?: never
+          insumo_id?: string | null
+          justificativa?: string | null
+          origem_id?: string | null
+          origem_tipo?: string | null
+          quantidade_base?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimento"]
+          variacao_id?: string | null
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           alterado_em: string | null
@@ -299,9 +476,9 @@ export type Database = {
           ativo?: boolean
           criado_em?: string
           criado_por?: string | null
-          id?: string
+          id: string
           nome?: string | null
-          papel: Database["public"]["Enums"]["papel"]
+          papel?: Database["public"]["Enums"]["papel"]
         }
         Update: {
           alterado_em?: string | null
@@ -312,6 +489,78 @@ export type Database = {
           id?: string
           nome?: string | null
           papel?: Database["public"]["Enums"]["papel"]
+        }
+        Relationships: []
+      }
+      producoes: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_idempotencia: string
+          concluida_em: string | null
+          concluida_por: string | null
+          criado_em: string
+          criado_por: string | null
+          data_planejada: string | null
+          desafio_id: string | null
+          fornadas: number
+          id: string
+          motivo_cancelamento: string | null
+          observacao: string | null
+          receita_id: string
+          situacao: Database["public"]["Enums"]["situacao_producao"]
+          unidades_perdidas: number | null
+          unidades_previstas: number
+          unidades_produzidas: number | null
+          variacao_id: string
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_planejada?: string | null
+          desafio_id?: string | null
+          fornadas: number
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          receita_id: string
+          situacao?: Database["public"]["Enums"]["situacao_producao"]
+          unidades_perdidas?: number | null
+          unidades_previstas: number
+          unidades_produzidas?: number | null
+          variacao_id: string
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia?: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_planejada?: string | null
+          desafio_id?: string | null
+          fornadas?: number
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          receita_id?: string
+          situacao?: Database["public"]["Enums"]["situacao_producao"]
+          unidades_perdidas?: number | null
+          unidades_previstas?: number
+          unidades_produzidas?: number | null
+          variacao_id?: string
         }
         Relationships: []
       }
@@ -429,6 +678,27 @@ export type Database = {
         }
         Relationships: []
       }
+      saldos_estoque: {
+        Row: {
+          id: number
+          insumo_id: string | null
+          saldo: number
+          variacao_id: string | null
+        }
+        Insert: {
+          id?: never
+          insumo_id?: string | null
+          saldo?: number
+          variacao_id?: string | null
+        }
+        Update: {
+          id?: never
+          insumo_id?: string | null
+          saldo?: number
+          variacao_id?: string | null
+        }
+        Relationships: []
+      }
       unidades: {
         Row: {
           codigo: string
@@ -507,7 +777,7 @@ export type Database = {
           criado_em?: string
           criado_por?: string | null
           id?: string
-          nome: string
+          nome?: string
           ordem?: number
           preco_venda: number
           produto_id: string
@@ -618,6 +888,50 @@ export type Database = {
         }
         Relationships: []
       }
+      v_estoque_insumos: {
+        Row: {
+          abaixo_minimo: boolean | null
+          ativo: boolean | null
+          custo_atual: number | null
+          estoque_minimo: number | null
+          insumo_id: string | null
+          nome: string | null
+          saldo: number | null
+          tipo: Database["public"]["Enums"]["tipo_insumo"] | null
+          unidade_base: string | null
+          valor_estoque: number | null
+        }
+        Relationships: []
+      }
+      v_estoque_produtos: {
+        Row: {
+          ativa: boolean | null
+          custo_unitario: number | null
+          produto: string | null
+          produto_id: string | null
+          saldo: number | null
+          tipo: Database["public"]["Enums"]["tipo_produto"] | null
+          valor_estoque: number | null
+          variacao: string | null
+          variacao_id: string | null
+        }
+        Relationships: []
+      }
+      v_lista_compras: {
+        Row: {
+          custo_atual: number | null
+          custo_estimado: number | null
+          estoque_minimo: number | null
+          falta: number | null
+          insumo_id: string | null
+          necessario_planejado: number | null
+          nome: string | null
+          saldo: number | null
+          tipo: Database["public"]["Enums"]["tipo_insumo"] | null
+          unidade_base: string | null
+        }
+        Relationships: []
+      }
       v_margem_formas: {
         Row: {
           forma_pagamento: string | null
@@ -625,6 +939,20 @@ export type Database = {
           mc_unitaria: number | null
           taxa_percentual: number | null
           taxa_valor: number | null
+          variacao_id: string | null
+        }
+        Relationships: []
+      }
+      v_producao_possivel: {
+        Row: {
+          ativa: boolean | null
+          fornadas_possiveis: number | null
+          insumo_limitante: string | null
+          produto: string | null
+          receita_id: string | null
+          rendimento_unidades: number | null
+          unidades_possiveis: number | null
+          variacao: string | null
           variacao_id: string | null
         }
         Relationships: []
@@ -641,17 +969,104 @@ export type Database = {
     }
     Functions: {
       admin_atualizar_participante: {
-        Args: { p_ativo: boolean; p_id: string; p_nome: string; p_papel: Database["public"]["Enums"]["papel"] }
+        Args: {
+          p_ativo: boolean
+          p_id: string
+          p_nome: string
+          p_papel: Database["public"]["Enums"]["papel"]
+        }
         Returns: undefined
       }
-      definir_custo_insumo: { Args: { p_insumo: string; p_preco: number; p_unidade: string }; Returns: undefined }
+      ajustar_estoque: {
+        Args: {
+          p_chave: string
+          p_contado: number
+          p_insumo: string
+          p_justificativa: string
+          p_variacao: string
+        }
+        Returns: number
+      }
+      cancelar_compra: {
+        Args: { p_compra: string; p_motivo: string }
+        Returns: undefined
+      }
+      cancelar_producao: {
+        Args: { p_motivo: string; p_producao: string }
+        Returns: undefined
+      }
+      concluir_producao: {
+        Args: {
+          p_producao: string
+          p_unidades_boas: number
+          p_unidades_perdidas?: number
+        }
+        Returns: Json
+      }
+      definir_custo_insumo: {
+        Args: { p_insumo: string; p_preco: number; p_unidade: string }
+        Returns: undefined
+      }
       definir_meu_nome: { Args: { p_nome: string }; Returns: undefined }
+      planejar_producao: {
+        Args: {
+          p_chave: string
+          p_data?: string
+          p_fornadas: number
+          p_observacao?: string
+          p_variacao: string
+        }
+        Returns: string
+      }
+      registrar_compra: {
+        Args: {
+          p_chave: string
+          p_data?: string
+          p_fornecedor?: string
+          p_itens: Json
+          p_observacao?: string
+          p_pago_por: Database["public"]["Enums"]["pago_por"]
+        }
+        Returns: string
+      }
+      registrar_perda: {
+        Args: {
+          p_chave: string
+          p_insumo: string
+          p_motivo: string
+          p_quantidade: number
+          p_unidade: string
+          p_variacao: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       dimensao: "massa" | "volume" | "contagem"
+      pago_por: "caixa" | "participante"
       papel: "administrador" | "membro"
       situacao_desafio: "planejado" | "em_andamento" | "encerrado"
+      situacao_producao: "planejada" | "concluida" | "cancelada"
+      situacao_registro: "ativa" | "cancelada"
       tipo_insumo: "ingrediente" | "embalagem" | "outro"
+      tipo_lancamento_caixa:
+        | "recebimento"
+        | "taxa"
+        | "compra"
+        | "despesa"
+        | "reembolso"
+        | "aporte"
+        | "ajuste"
+        | "estorno"
+      tipo_movimento:
+        | "compra"
+        | "consumo_producao"
+        | "entrada_producao"
+        | "venda"
+        | "doacao"
+        | "perda"
+        | "ajuste"
+        | "estorno"
       tipo_produto: "simples" | "kit"
     }
     CompositeTypes: {
@@ -693,6 +1108,56 @@ export type Tables<
       : never
     : never
 
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -709,3 +1174,55 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      dimensao: ["massa", "volume", "contagem"],
+      pago_por: ["caixa", "participante"],
+      papel: ["administrador", "membro"],
+      situacao_desafio: ["planejado", "em_andamento", "encerrado"],
+      situacao_producao: ["planejada", "concluida", "cancelada"],
+      situacao_registro: ["ativa", "cancelada"],
+      tipo_insumo: ["ingrediente", "embalagem", "outro"],
+      tipo_lancamento_caixa: [
+        "recebimento",
+        "taxa",
+        "compra",
+        "despesa",
+        "reembolso",
+        "aporte",
+        "ajuste",
+        "estorno",
+      ],
+      tipo_movimento: [
+        "compra",
+        "consumo_producao",
+        "entrada_producao",
+        "venda",
+        "doacao",
+        "perda",
+        "ajuste",
+        "estorno",
+      ],
+      tipo_produto: ["simples", "kit"],
+    },
+  },
+} as const
