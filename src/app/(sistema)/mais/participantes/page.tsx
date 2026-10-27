@@ -1,5 +1,6 @@
 import { Cartao, Campo, Interruptor, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
+import { ItemEditavel } from "@/componentes/item-editavel";
 import { exigirParticipante, ehAdmin } from "@/servicos/sessao";
 import { listarParticipantes, NOMES_PAPEL } from "@/servicos/participantes";
 import { salvarParticipante } from "../acoes";
@@ -22,16 +23,18 @@ export default async function Participantes() {
         Participantes
       </TituloPagina>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {participantes.map((p) =>
           admin ? (
-            <Cartao key={p.id}>
+            <ItemEditavel
+              key={p.id}
+              aberto={!p.ativo}
+              titulo={`${p.nome ?? "Sem nome ainda"}${p.id === perfil.id ? " (você)" : ""}`}
+              apoio={NOMES_PAPEL[p.papel]}
+              direita={p.ativo ? <Selo tom="positivo">Ativo</Selo> : <Selo tom="alerta">Aguardando</Selo>}
+            >
               <Formulario acao={salvarParticipante} textoBotao="Salvar" className="flex flex-col gap-3">
                 <input type="hidden" name="id" value={p.id} />
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{p.nome ?? "Sem nome ainda"}{p.id === perfil.id ? " (você)" : ""}</span>
-                  {p.ativo ? <Selo tom="positivo">Ativo</Selo> : <Selo tom="alerta">Aguardando</Selo>}
-                </div>
                 <Campo id={`nome-${p.id}`} name="nome" rotulo="Nome" defaultValue={p.nome ?? ""} maxLength={60} />
                 <Selecao id={`papel-${p.id}`} name="papel" rotulo="Papel" defaultValue={p.papel}>
                   <option value="membro">{NOMES_PAPEL.membro}</option>
@@ -39,7 +42,7 @@ export default async function Participantes() {
                 </Selecao>
                 <Interruptor id={`ativo-${p.id}`} name="ativo" rotulo="Acesso liberado" defaultChecked={p.ativo} />
               </Formulario>
-            </Cartao>
+            </ItemEditavel>
           ) : (
             <Cartao key={p.id} className="flex items-center justify-between">
               <span className="font-medium">{p.nome ?? "Sem nome ainda"}</span>

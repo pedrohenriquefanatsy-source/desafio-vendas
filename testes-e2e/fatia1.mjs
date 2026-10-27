@@ -5,8 +5,9 @@
 //   E2E_ADMIN_EMAIL=... E2E_ADMIN_SENHA=... E2E_MEMBRO_EMAIL=... E2E_MEMBRO_SENHA=... \
 //   PASTA_CAPTURAS=/caminho node testes-e2e/fatia1.mjs
 //
-// Pré-condição: no banco de teste existem só esses dois usuários, o admin (primeiro
-// criado, ativo, sem nome) e o membro (desativado, sem nome), e nenhum desafio.
+// Pré-condição (rode antes supabase/testes/preparar-e2e-fatia1.sql no banco de TESTE):
+// admin ativo e sem nome, membro desativado e sem nome, nenhum desafio em andamento
+// ou planejado. Nada é apagado: cada rodada usa nomes únicos.
 import { createRequire } from "node:module";
 // O Playwright do ambiente é instalado globalmente; `require` o encontra.
 const { chromium } = createRequire(import.meta.url)("playwright");
@@ -20,6 +21,9 @@ if (!admin.email || !admin.senha || !membro.email || !membro.senha) {
   throw new Error("Defina E2E_ADMIN_EMAIL, E2E_ADMIN_SENHA, E2E_MEMBRO_EMAIL e E2E_MEMBRO_SENHA.");
 }
 mkdirSync(CAPTURAS, { recursive: true });
+const SUFIXO = new Date().toISOString().slice(11, 19).replace(/:/g, "");
+const NOME_DESAFIO = `Desafio TESTE ${SUFIXO}`;
+const NOME_FORMA = `Cartão TESTE ${SUFIXO}`;
 
 const resultados = [];
 function confere(condicao, descricao) {
@@ -95,7 +99,7 @@ await alvosDeToque(pa, "Início vazio");
 await pa.screenshot({ path: `${CAPTURAS}/04-inicio-vazio.png`, fullPage: true });
 
 await pa.goto(`${BASE}/mais/desafios/novo`);
-await pa.fill("#nome", "Desafio TESTE");
+await pa.fill("#nome", NOME_DESAFIO);
 const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Fortaleza" }).format(new Date());
 const somaDias = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 await pa.fill("#inicio", somaDias(hoje, -2));
@@ -107,28 +111,28 @@ await aviso(pa).waitFor();
 confere((await aviso(pa).textContent()).includes("maior que zero"), "Meta inválida explica o formato esperado");
 await pa.fill("#meta_resultado", "R$ 1.500,00");
 // Duplo toque no botão: deve gravar um desafio só.
-await Promise.all([pa.click("button[type=submit]"), pa.click("button[type=submit]", { force: true }).catch(() => {})]);
+await pa.locator("button[type=submit]").dblclick();
 await esperarPagina(pa, "/mais/desafios");
-await pa.getByText("Desafio TESTE").first().waitFor();
-const linhas = await pa.getByText("Desafio TESTE").count();
+await pa.getByText(NOME_DESAFIO).first().waitFor();
+const linhas = await pa.getByText(NOME_DESAFIO).count();
 confere(linhas === 1, `Duplo toque em Cadastrar grava um desafio só (encontrados: ${linhas})`);
 await pa.screenshot({ path: `${CAPTURAS}/05-desafios.png`, fullPage: true });
 
 await pa.goto(`${BASE}/`);
 await pa.locator("dd").first().waitFor();
 const texto = await pa.locator("main").textContent();
-confere(texto.includes("Desafio TESTE") && /R\$\s?1\.500,00/.test(texto), "Início mostra o desafio e a meta de R$ 1.500,00");
+confere(texto.includes(NOME_DESAFIO) && /R\$\s?1\.500,00/.test(texto), "Início mostra o desafio e a meta de R$ 1.500,00");
 const dias = await pa.locator("dd").allTextContents();
 confere(dias.join(",") === "7,2,5", `Início mostra 7 dias, 2 passados, 5 faltando (mostrou ${dias.join(",")})`);
 await semRolagemLateral(pa, "Início com desafio");
 await pa.screenshot({ path: `${CAPTURAS}/06-inicio-desafio.png`, fullPage: true });
 
 await pa.goto(`${BASE}/mais/formas-pagamento`);
-await pa.fill("#nova-nome", "Cartão de crédito");
+await pa.fill("#nova-nome", NOME_FORMA);
 await pa.fill("#nova-taxa", "3,99");
 await pa.locator("form").last().locator("button[type=submit]").click();
-await pa.getByText("Cartão de crédito cadastrada.").waitFor();
-confere(await pa.locator('input[value="Cartão de crédito"]').count() === 1, "Forma de pagamento nova aparece na lista");
+await pa.getByText(`${NOME_FORMA} cadastrada.`).waitFor();
+confere(await pa.locator(`input[value="${NOME_FORMA}"]`).count() === 1, "Forma de pagamento nova aparece na lista");
 await pa.fill("#nova-nome", "pix");
 await pa.locator("form").last().locator("button[type=submit]").click();
 await aviso(pa).waitFor();
@@ -148,15 +152,16 @@ await pm.screenshot({ path: `${CAPTURAS}/08-acesso-pendente.png`, fullPage: true
 // 4. Admin ativa o membro.
 await pa.goto(`${BASE}/mais/participantes`);
 await pa.getByText("Como adicionar alguém").waitFor();
-confere(await pa.getByText("Aguardando").count() === 1, "Admin vê 1 participante aguardando ativação");
-const cartaoMembro = pa.locator("section").filter({ hasText: "Aguardando" });
+confere(await pa.getByText("Aguardando", { exact: true }).count() === 1, "Admin vê 1 participante aguardando ativação");
+const cartaoMembro = pa.locator("details").filter({ has: pa.getByText("Aguardando", { exact: true }) });
 await cartaoMembro.locator('input[name="ativo"]').check();
 await cartaoMembro.locator("button[type=submit]").click();
 await pa.getByText("Participante atualizado.").waitFor();
 await pa.screenshot({ path: `${CAPTURAS}/09-participantes.png`, fullPage: true });
 
 // Tentar tirar o próprio papel de admin (único admin) é recusado.
-const cartaoAdmin = pa.locator("section").filter({ hasText: "(você)" });
+const cartaoAdmin = pa.locator("details").filter({ hasText: "(você)" });
+await cartaoAdmin.locator("summary").click();
 await cartaoAdmin.locator('select[name="papel"]').selectOption("membro");
 await cartaoAdmin.locator("button[type=submit]").click();
 await aviso(cartaoAdmin).waitFor();
@@ -170,23 +175,38 @@ confere(true, "Membro ativado vai para o Primeiro acesso");
 await pm.fill("#nome", "Membro Teste");
 await pm.click("button[type=submit]");
 await esperarPagina(pm, "/");
-await pm.getByText("Desafio TESTE").waitFor();
-confere((await pm.locator("main").textContent()).includes("Desafio TESTE"), "Membro vê o desafio no Início");
+await pm.getByText(NOME_DESAFIO).waitFor();
+confere((await pm.locator("main").textContent()).includes(NOME_DESAFIO), "Membro vê o desafio no Início");
 await pm.goto(`${BASE}/mais/desafios/novo`);
 await esperarPagina(pm, "/mais/desafios");
 confere(await pm.locator("#nome").count() === 0, "Membro não abre o cadastro de desafio");
 await pm.goto(`${BASE}/mais/formas-pagamento`);
-await pm.getByText("Cartão de crédito").waitFor();
+await pm.getByText(NOME_FORMA).waitFor();
 confere(await pm.locator('input[name="taxa"]').count() === 0, "Membro vê as formas de pagamento sem campos de edição");
 await pm.screenshot({ path: `${CAPTURAS}/10-formas-membro.png`, fullPage: true });
 
-// 6. Sem conexão: aparece a faixa de aviso.
+// 6. Sem conexão: aparece a faixa de aviso e um envio não se perde em silêncio.
 await ctxMembro.setOffline(true);
 await pm.evaluate(() => window.dispatchEvent(new Event("offline")));
 await pm.getByText("Sem conexão.").waitFor({ timeout: 5000 });
 confere(true, "Sem conexão: aparece a faixa avisando que nada será salvo");
 await pm.screenshot({ path: `${CAPTURAS}/11-sem-conexao.png`, fullPage: true });
 await ctxMembro.setOffline(false);
+
+// Admin tenta salvar uma forma de pagamento sem conexão.
+await pa.goto(`${BASE}/mais/formas-pagamento`);
+await pa.fill("#nova-nome", `${NOME_FORMA} B`);
+await pa.fill("#nova-taxa", "2,5");
+await ctxAdmin.setOffline(true);
+await pa.locator("form").last().locator("button[type=submit]").click();
+await aviso(pa.locator("form").last()).waitFor({ timeout: 15000 });
+confere((await aviso(pa.locator("form").last()).textContent()).includes("Não foi salvo"), "Envio sem conexão avisa que não foi salvo");
+confere((await pa.inputValue("#nova-nome")) === `${NOME_FORMA} B` && (await pa.inputValue("#nova-taxa")) === "2,5", "Envio sem conexão mantém o que foi digitado");
+await pa.screenshot({ path: `${CAPTURAS}/12-envio-sem-conexao.png`, fullPage: true });
+await ctxAdmin.setOffline(false);
+await pa.locator("form").last().locator("button[type=submit]").click();
+await pa.getByText(`${NOME_FORMA} B cadastrada.`).waitFor();
+confere((await pa.inputValue("#nova-nome")) === "", "Depois de reenviar com conexão, salva e limpa o formulário de inclusão");
 
 // 7. Sair.
 await pm.goto(`${BASE}/mais`);

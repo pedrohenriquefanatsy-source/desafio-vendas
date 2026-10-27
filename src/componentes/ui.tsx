@@ -165,3 +165,4 @@ export function Interruptor({ rotulo, id, ...props }: ComponentProps<"input"> & 
     </label>
   );
 }
+

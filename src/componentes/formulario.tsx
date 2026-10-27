@@ -1,55 +1,76 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
-import { useFormStatus } from "react-dom";
+import { startTransition, useActionState, useRef, type FormEvent, type ReactNode } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { Aviso, classeBotao } from "./ui";
 import type { Resultado } from "@/servicos/erros";
 
 type Acao = (anterior: Resultado | null, dados: FormData) => Promise<Resultado>;
 
+const NAO_SALVO =
+  "Não foi salvo: a conexão falhou no envio. O que você digitou continua aqui. Confira o sinal e toque de novo.";
+
 // Formulário que chama uma Server Action e mostra o resultado.
-// - Gera uma chave única ao abrir (idempotência): um reenvio não duplica.
-// - Botão travado durante o envio (sem duplo toque).
+// - Chave única por registro (idempotência): reenviar o mesmo formulário depois de
+//   uma falha usa a mesma chave e não duplica; depois de um sucesso, a chave muda.
+// - Botão travado durante o envio e segundo toque ignorado (sem duplo envio).
+// - Em caso de erro, o que a pessoa digitou fica na tela (o React limparia o
+//   formulário sozinho se usássemos <form action>; por isso o envio é manual).
+// - Sem conexão no envio: mensagem "não foi salvo", dados preservados (Seção 6.2).
 // - Mensagem de erro que diz como resolver; sucesso confirmado em texto.
 export function Formulario({
   acao,
   children,
   textoBotao,
   textoEnviando = "Salvando…",
+  limparAoSalvar = false,
   className = "flex flex-col gap-4",
 }: {
   acao: Acao;
   children: ReactNode;
   textoBotao: string;
   textoEnviando?: string;
+  limparAoSalvar?: boolean;
   className?: string;
 }) {
-  const [resultado, enviar] = useActionState(acao, null);
-  const [chave] = useState(() => crypto.randomUUID());
+  const formulario = useRef<HTMLFormElement>(null);
+  const chave = useRef("");
+  const enviando = useRef(false);
+
+  const [resultado, enviar, pendente] = useActionState<Resultado | null, FormData>(async (anterior, dados) => {
+    try {
+      const resposta = await acao(anterior, dados);
+      if (resposta.ok) {
+        chave.current = "";
+        if (limparAoSalvar) formulario.current?.reset();
+      }
+      return resposta;
+    } catch (erro) {
+      unstable_rethrow(erro); // redirecionamentos do Next seguem normalmente
+      return { ok: false, erro: NAO_SALVO };
+    } finally {
+      enviando.current = false;
+    }
+  }, null);
+
+  function aoEnviar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    if (enviando.current) return; // segundo toque antes da resposta: ignora
+    enviando.current = true;
+    if (!chave.current) chave.current = crypto.randomUUID();
+    const dados = new FormData(evento.currentTarget);
+    dados.set("chave", chave.current);
+    startTransition(() => enviar(dados));
+  }
+
   return (
-    <form action={enviar} className={className}>
-      <input type="hidden" name="chave" value={chave} />
+    <form ref={formulario} onSubmit={aoEnviar} className={className}>
       {children}
       {resultado && !resultado.ok ? <Aviso tipo="erro">{resultado.erro}</Aviso> : null}
       {resultado?.ok && resultado.mensagem ? <Aviso tipo="sucesso">{resultado.mensagem}</Aviso> : null}
-      <BotaoEnviar textoEnviando={textoEnviando}>{textoBotao}</BotaoEnviar>
+      <button type="submit" disabled={pendente} aria-busy={pendente} className={classeBotao("primario", "w-full")}>
+        {pendente ? textoEnviando : textoBotao}
+      </button>
     </form>
-  );
-}
-
-export function BotaoEnviar({
-  children,
-  textoEnviando = "Salvando…",
-  variante = "primario",
-}: {
-  children: ReactNode;
-  textoEnviando?: string;
-  variante?: "primario" | "secundario" | "perigo";
-}) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" disabled={pending} aria-busy={pending} className={classeBotao(variante, "w-full")}>
-      {pending ? textoEnviando : children}
-    </button>
   );
 }
