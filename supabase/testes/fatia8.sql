@@ -68,7 +68,7 @@ begin
   update public.formas_pagamento set taxa_percentual = 50 where id = pg_temp.id('pix');
   get diagnostics n = row_count;
   assert n = 0, 'A17: membro não muda a taxa da forma de pagamento';
-  update public.desafios set meta_resultado = 1;
+  update public.desafios set meta_resultado = 1 where meta_resultado is distinct from 1;
   get diagnostics n = row_count;
   assert n = 0, 'A17: membro não muda a meta';
 

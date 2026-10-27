@@ -24,15 +24,14 @@ export default async function Mais() {
         <ItemLista href="/mais/formas-pagamento" titulo="Formas de pagamento" apoio="Pix, dinheiro, cartão e taxas" />
         <ItemLista href="/compras" titulo="Compras" apoio="Compras de insumos e embalagens" />
         <ItemLista href="/mais/exportar" titulo="Exportar" apoio="Planilha XLSX ou CSV de vendas, caixa, estoque…" />
+        {ehAdmin(perfil) ? <ItemLista href="/mais/auditoria" titulo="Auditoria" apoio="Quem incluiu, alterou ou cancelou o quê" /> : null}
+        <ItemLista href="/mais/como-calculamos" titulo="Como calculamos" apoio="Custo, margem, resultado, caixa e meta" />
         <ItemLista
           href="/mais/participantes"
           titulo="Participantes"
           apoio={ehAdmin(perfil) ? "Ativar, desativar e definir papéis" : "Quem participa do desafio"}
         />
       </Cartao>
-      <p className="mt-3 text-sm text-texto-suave">
-        Exportação e auditoria chegam nas próximas fatias.
-      </p>
       <form action={sair} className="mt-6">
         <button type="submit" className={classeBotao("secundario", "w-full")}>
           <LogOut aria-hidden className="size-4" />
