@@ -12,6 +12,7 @@ import {
   listarProducaoPossivel,
   listarProducoes,
 } from "@/servicos/estoque";
+import { listarCobertura } from "@/servicos/painel";
 import { cancelarProducao, concluirProducao, planejarProducao } from "./acoes";
 
 type Aba = "produtos" | "insumos" | "producao";
@@ -51,7 +52,8 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
 }
 
 async function AbaProdutos() {
-  const [produtos, possivel] = await Promise.all([listarEstoqueProdutos(), listarProducaoPossivel()]);
+  const [produtos, possivel, cobertura] = await Promise.all([listarEstoqueProdutos(), listarProducaoPossivel(), listarCobertura()]);
+  const coberturaDe = new Map(cobertura.map((c) => [c.variacao_id, c]));
   if (produtos.length === 0) {
     return (
       <EstadoVazio titulo="Nenhum produto cadastrado" acao={<LinkBotao href="/mais/produtos" variante="secundario">Ir para Produtos</LinkBotao>}>
@@ -77,12 +79,25 @@ async function AbaProdutos() {
                     ? `Insumos para mais ${formatarQuantidade(pode.fornadas_possiveis)} fornada(s) (${formatarQuantidade(pode.unidades_possiveis)} un.) · limita: ${pode.insumo_limitante}`
                     : `Sem insumo para outra fornada · falta: ${pode.insumo_limitante}`
               }
-              direita={<span className={`font-semibold tabular-nums ${Number(p.saldo) <= 0 ? "text-texto-suave" : ""}`}>{formatarSaldo(p.saldo, "und")}</span>}
+              direita={
+                <span className="flex shrink-0 flex-col items-end">
+                  <span className={`font-semibold tabular-nums ${Number(p.saldo) <= 0 ? "text-texto-suave" : ""}`}>{formatarSaldo(p.saldo, "und")}</span>
+                  {coberturaDe.get(p.variacao_id)?.dias_cobertura != null ? (
+                    <span className="text-xs text-texto-suave">
+                      ~{formatarQuantidade(coberturaDe.get(p.variacao_id)?.dias_cobertura)} dias
+                      {coberturaDe.get(p.variacao_id)?.fonte === "estimativa" ? " (estimativa)" : ""}
+                    </span>
+                  ) : null}
+                </span>
+              }
             />
           );
         })}
       </Cartao>
-      <p className="mt-3 text-xs text-texto-suave">Toque num produto para corrigir a contagem ou registrar uma perda.</p>
+      <p className="mt-3 text-xs text-texto-suave">
+        “~N dias” é para quantos dias o estoque dá: pela média de venda por dia (com 2 dias ou mais de venda) ou pela demanda
+        estimada no desafio (rotulada “estimativa”). Toque num produto para corrigir a contagem ou registrar uma perda.
+      </p>
     </>
   );
 }

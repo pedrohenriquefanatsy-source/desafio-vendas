@@ -192,3 +192,29 @@ Em 27/10/2026, depois da fatia 4: funções `153e6d43…`, views `b32fbc4b…` n
 
 Sem rolagem lateral e alvos de toque ≥ 44 px em todas as telas.
 
+## Fatia 6 — Painel, metas, projeção e cobertura (27/10/2026)
+
+### Banco (`supabase/testes/fatia6.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou, junto com as fatias 1 a 5 num banco novo |
+| Supabase de teste | Passou |
+| Supabase principal | Migration aplicada; funções `261c9d5e…` e views `99a172d7…` iguais nos três |
+
+- **Aceite 13** (meta conferida à mão): desafio de 7 dias iniciado anteontem, meta 100,00. Sem vendas: realizado 0, falta 100, ritmo 20,00 (100 ÷ 5), sem projeção. Com 3 vendas (margem 4,00 cada) e despesa de 2,00: realizado **10,00**, **10,0%**, falta **90,00**, ritmo **18,00**/dia (90 ÷ 5), média **3,33**/dia (10 ÷ 3), margem média **4,00**/unidade, projeção **23** unidades (22,5 arredondado para cima), meta de vendas 15 de 200 = **7,5%**. Meta de 8,00: falta 0, ritmo 0, **125%**. **Passou.**
+- Cobertura: 1 dia com venda e sem estimativa → em branco; estimativa de 2/dia → 7 ÷ 2 = **3,5 dias (estimativa)**; com 2 dias com venda (4 unidades) → média 2/dia, 6 ÷ 2 = **3 dias** pela média. Membro não define demanda; `anon` não lê o painel. **Passou.**
+
+### Telas no navegador em 375 px (`testes-e2e/fatia6.mjs`, Supabase de teste)
+
+**16 de 16 verificações passaram** (3ª rodada). Nas anteriores:
+- 1 falha real, corrigida: a tela da demanda estimada ficava 31 px mais larga que o celular.
+- 3 falhas do próprio teste: ele lia o percentual junto do número de cima, clicava no botão errado e editava um desafio antigo.
+
+O teste lê os números do Início e refaz as contas à mão antes e depois de uma despesa de R$ 10,00:
+- **falta** = meta − realizado;
+- **ritmo** = falta ÷ dias restantes;
+- **%** = realizado ÷ meta.
+
+A despesa baixou o realizado em exatamente 10,00. Há 2 gráficos e a mesma informação em tabela, e a projeção aparece rotulada. O administrador salva uma demanda estimada, e o Estoque mostra "~N dias (estimativa)". Sem rolagem lateral e alvos de toque ≥ 44 px.
+

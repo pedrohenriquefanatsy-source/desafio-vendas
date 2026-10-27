@@ -280,8 +280,42 @@
 - O administrador informa o saldo real da conta (extrato do Pix). O banco lança a diferença
   como ajuste, com o motivo. Mexe no caixa, não no resultado. Reenvio não repete.
 
-## 10. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
+## 10. Painel, meta, projeção e cobertura (fatia 6)
 
-Detalhados em `docs/plano.md`, Seção 2.7. Resumo:
+### Meta (do desafio em andamento)
 
-- Ritmo necessário por dia = (meta − realizado) ÷ dias restantes (contando hoje).
+- **Realizado** = resultado acumulado do desafio (Seção 9).
+- **% alcançado** = realizado ÷ meta × 100 (uma casa decimal). **Falta** = meta − realizado
+  (nunca negativo: passou da meta, falta 0).
+- **Dias**: total = fim − início + 1; decorridos = dias antes de hoje; **restantes contam hoje**.
+- **Ritmo necessário por dia** = falta ÷ dias restantes.
+- **Média por dia até agora** = realizado ÷ dias desde o início, contando hoje (as vendas de
+  hoje já estão no realizado).
+- **Projeção** (rotulada "projeção"): unidades que faltam vender = falta ÷ margem média por
+  unidade vendida até agora (pelo mix real; doações fora). Premissas escritas na tela: mesma
+  margem média, sem novas despesas nem perdas. É uma conta, não uma promessa.
+- Meta de vendas (opcional): vendido (valor líquido, sem doações) ÷ meta de vendas.
+- Ex. testado (aceite 13): desafio de 7 dias que começou anteontem, meta 100,00; 3 vendas com
+  margem 4,00 cada e despesa de 2,00 → realizado 10,00; 10,0%; falta 90,00; restam 5 dias;
+  ritmo 18,00 por dia; média 3,33 por dia (10 ÷ 3); projeção 23 unidades (90 ÷ 4 = 22,5).
+
+### Painel do Início
+
+- Resultado e barra da meta, dias, ritmo, média e projeção; saldo de caixa; a receber;
+  pendências (encomendas a entregar, reembolsos devidos, insumos abaixo do mínimo); gráficos
+  do desafio dia a dia. Cada número leva à tela com os registros que o formam.
+- Gráficos: resultado de cada dia (barras; dia negativo em vermelho) e acumulado contra a
+  meta (linha e meta tracejada). Dias futuros ficam em branco, não como zero. Os mesmos
+  números aparecem em tabela.
+
+### Cobertura de estoque (Seção 4.4)
+
+- Para quantos dias o estoque de cada produto pronto dá = saldo ÷ demanda por dia.
+- Com **2 dias ou mais com venda** no desafio: demanda = unidades que saíram (vendas, doações
+  e componentes de kits) ÷ dias com venda.
+- Antes disso: a **demanda estimada** que o administrador informar para o desafio
+  (Mais → Desafio e meta), sempre rotulada "estimativa". Sem estimativa, fica em branco.
+
+## 11. Cálculos das próximas fatias
+
+- Exportação (fatia 7): os números vêm do banco, não da tela.

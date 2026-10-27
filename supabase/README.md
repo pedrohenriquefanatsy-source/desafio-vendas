@@ -39,6 +39,7 @@ mesmo dia: 0 tabelas, funções, tipos, políticas, usuários e migrations no sc
 | `20261027150100_indices_e_politica_perfis.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027160000_vendas.sql` | 27/10/2026, MCP (a função `registrar_venda` foi trocada depois por `create or replace` com o texto final do arquivo; conferido por impressão digital das funções) | 27/10/2026, MCP (texto final) |
 | `20261027170000_caixa.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
+| `20261027180000_painel_meta.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 
 As aplicadas pelo SQL Editor **não aparecem** no histórico de migrations do Supabase
 (`supabase_migrations`), porque a confirmação pedida pela integração não chegou a tempo.
@@ -74,6 +75,7 @@ O efeito foi conferido por consulta.
 - `testes/fatia4.sql`: idem, com os testes de aceite 3 (vendas passadas), 6, 7, 8, 9, 12 e 14.
   O 15 (concorrência) roda no Postgres local com duas sessões (ver `docs/testes.md`).
 - `testes/fatia5.sql`: idem, com os testes de aceite 10 e 11.
+- `testes/fatia6.sql`: idem, com o teste de aceite 13 e a cobertura de estoque.
 - Conferência de igualdade entre ambientes: `md5` dos textos de todas as funções e views
   (consulta em `docs/testes.md`, fatia 4) tem de dar o mesmo nos três.
 - `testes/preparar-e2e-fatia1.sql` e `testes/preparar-e2e-fatia2.sql`: deixam o projeto de teste

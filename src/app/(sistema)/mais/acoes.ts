@@ -8,6 +8,7 @@ import { alterarDesafio, criarDesafio, type DadosDesafio, type SituacaoDesafio }
 import { alterarFormaPagamento, criarFormaPagamento } from "@/servicos/formas-pagamento";
 import { atualizarParticipante, type Papel } from "@/servicos/participantes";
 import type { Resultado } from "@/servicos/erros";
+import { definirDemanda } from "@/servicos/painel";
 
 // Cada ação confere a sessão de novo; quem decide a permissão é a RLS do banco.
 
@@ -82,4 +83,17 @@ export async function salvarParticipante(_anterior: Resultado | null, dados: For
   const resultado = await atualizarParticipante(id, { nome: nome || null, papel, ativo });
   if (resultado.ok) revalidatePath("/mais/participantes");
   return resultado;
+}
+
+// Demanda estimada por produto (cobertura de estoque antes de 2 dias com venda). Vazio = tirar.
+export async function salvarDemanda(_anterior: Resultado | null, dados: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const desafio = String(dados.get("desafio_id") ?? "");
+  const variacao = String(dados.get("variacao_id") ?? "");
+  const texto = String(dados.get("unidades") ?? "").trim();
+  const unidades = texto ? lerNumero(texto) : null;
+  if (texto && (unidades == null || unidades <= 0)) return { ok: false, erro: "Informe quantas unidades por dia, como 20 (ou deixe vazio)." };
+  const r = await definirDemanda(desafio, variacao, unidades);
+  if (r.ok) revalidatePath("/", "layout");
+  return r;
 }

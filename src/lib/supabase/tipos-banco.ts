@@ -198,6 +198,39 @@ export type Database = {
         }
         Relationships: []
       }
+      demanda_estimada: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          criado_em: string
+          criado_por: string | null
+          desafio_id: string
+          id: string
+          unidades_por_dia: number
+          variacao_id: string
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id: string
+          id?: string
+          unidades_por_dia: number
+          variacao_id: string
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string
+          id?: string
+          unidades_por_dia?: number
+          variacao_id?: string
+        }
+        Relationships: []
+      }
       desafios: {
         Row: {
           alterado_em: string | null
@@ -1166,6 +1199,19 @@ export type Database = {
       }
     }
     Views: {
+      v_cobertura_estoque: {
+        Row: {
+          demanda_dia: number | null
+          dias_cobertura: number | null
+          dias_com_venda: number | null
+          fonte: string | null
+          produto: string | null
+          saldo: number | null
+          variacao: string | null
+          variacao_id: string | null
+        }
+        Relationships: []
+      }
       v_custo_embalagens: {
         Row: {
           custo: number | null
@@ -1323,6 +1369,38 @@ export type Database = {
           taxa_percentual: number | null
           taxa_valor: number | null
           variacao_id: string | null
+        }
+        Relationships: []
+      }
+      v_painel_meta: {
+        Row: {
+          desafio_id: string | null
+          despesas: number | null
+          dias_com_venda: number | null
+          dias_decorridos: number | null
+          dias_restantes: number | null
+          dias_total: number | null
+          falta: number | null
+          fim: string | null
+          hoje: string | null
+          inicio: string | null
+          margem: number | null
+          mc_media_unidade: number | null
+          media_por_dia: number | null
+          meta_resultado: number | null
+          meta_vendas: number | null
+          nome: string | null
+          percentual: number | null
+          percentual_vendas: number | null
+          perdas: number | null
+          realizado: number | null
+          ritmo_necessario: number | null
+          sem_custo: boolean | null
+          situacao: Database["public"]["Enums"]["situacao_desafio"] | null
+          unidades_para_meta: number | null
+          unidades_vendidas: number | null
+          vendas: number | null
+          vendido: number | null
         }
         Relationships: []
       }
