@@ -236,10 +236,52 @@
 - Vendas por chips (Hoje, Todas, A receber, Encomendas, Doações, Canceladas), com contagem, e
   filtros por dia, produto, quem vendeu e forma de pagamento. "Dia" é a data em Fortaleza.
 
-## 9. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
+## 9. Caixa, despesas, reembolsos, aportes e resultado (fatia 5)
+
+### Duas contas separadas
+
+- **Saldo de caixa** = soma do livro de caixa: só dinheiro que entrou ou saiu
+  (recebimentos de vendas, taxas, compras e despesas pagas pelo caixa, reembolsos, aportes,
+  ajustes e estornos). Uma conta só (Pix), como decidido.
+- **Resultado** = Σ margem das vendas reconhecidas (doações entram com margem negativa)
+  − custo das perdas − despesas. Compras, aportes, reembolsos e ajustes **não** entram.
+  Conta por dia, na data de Fortaleza (venda: quando foi reconhecida; perda: quando foi
+  registrada; despesa: a data informada). O resultado mostrado é o do desafio em andamento.
+- Ex. testado: venda de 2 × (5,00 − 1,00) = +8,00; perda de 1 unidade de custo 1,00 = −1,00;
+  compra de insumo = 0 no resultado (só baixa o caixa).
+
+### Despesa
+
+- Gasto que não vira estoque (Uber, adesivos…): valor, categoria, descrição e data.
+- **Entra no resultado uma vez**, na data dela.
+- Pago pelo caixa: sai do caixa na hora. **Do bolso**: não mexe no caixa; fica "a reembolsar"
+  para quem pagou.
+- Cancelar: o caixa volta (se foi pelo caixa) e sai do resultado. Membro cancela a própria em
+  até 30 minutos; depois, só o administrador. Despesa do bolso já reembolsada não pode ser
+  cancelada antes de cancelar o reembolso (a dívida ficaria negativa). O mesmo vale para
+  compra do bolso.
+
+### Reembolso (três estados, Seção 4.5)
+
+1. Compra ou despesa paga do bolso → reconhecida uma vez e gera "a reembolsar".
+2. **Devido** a cada participante = compras e despesas pagas do bolso (ativas) − reembolsos
+   pagos (ativos). Aparece no Caixa.
+3. **Reembolso pago** (só o administrador): sai do caixa e liquida a dívida, sem mexer no
+   resultado de novo. Não pode passar do devido (trava por participante: dois reembolsos ao
+   mesmo tempo não passam).
+
+### Aporte
+
+- Dinheiro colocado no caixa por um participante ou pela PJ (só o administrador registra).
+  Aumenta o caixa e **não** é receita: não muda o resultado. Cancelar tira do caixa.
+
+### Conferência e ajuste do caixa
+
+- O administrador informa o saldo real da conta (extrato do Pix). O banco lança a diferença
+  como ajuste, com o motivo. Mexe no caixa, não no resultado. Reenvio não repete.
+
+## 10. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
 
 Detalhados em `docs/plano.md`, Seção 2.7. Resumo:
 
-- Resultado = Σ MC das vendas reconhecidas − custo de doações e perdas − despesas.
-- Saldo de caixa = soma do livro de caixa (só dinheiro que entrou ou saiu).
 - Ritmo necessário por dia = (meta − realizado) ÷ dias restantes (contando hoje).

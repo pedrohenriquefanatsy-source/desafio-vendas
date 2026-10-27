@@ -38,6 +38,7 @@ mesmo dia: 0 tabelas, funções, tipos, políticas, usuários e migrations no sc
 | `20261027150000_estoque_compras_producao.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027150100_indices_e_politica_perfis.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027160000_vendas.sql` | 27/10/2026, MCP (a função `registrar_venda` foi trocada depois por `create or replace` com o texto final do arquivo; conferido por impressão digital das funções) | 27/10/2026, MCP (texto final) |
+| `20261027170000_caixa.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 
 As aplicadas pelo SQL Editor **não aparecem** no histórico de migrations do Supabase
 (`supabase_migrations`), porque a confirmação pedida pela integração não chegou a tempo.
@@ -55,7 +56,9 @@ O efeito foi conferido por consulta.
 - `admin_atualizar_participante`, `definir_meu_nome`, `definir_custo_insumo` e as funções da
   fatia 3 (`registrar_compra`, `cancelar_compra`, `planejar_producao`, `concluir_producao`,
   `cancelar_producao`, `ajustar_estoque`, `registrar_perda`) e da fatia 4 (`registrar_venda`,
-  `registrar_recebimento`, `marcar_encomenda_pronta`, `entregar_encomenda`, `cancelar_venda`) são funções da API usadas pelas
+  `registrar_recebimento`, `marcar_encomenda_pronta`, `entregar_encomenda`, `cancelar_venda`) e da
+  fatia 5 (`registrar_despesa`, `cancelar_despesa`, `pagar_reembolso`, `cancelar_reembolso`,
+  `registrar_aporte`, `cancelar_aporte`, `ajustar_caixa`) são funções da API usadas pelas
   telas (alerta 0029). Cada uma confere quem está chamando antes de fazer qualquer coisa; é
   por elas que o estoque e o caixa são gravados, já que a gravação direta é proibida.
 - "Unused index" (informativo): índices novos ainda sem uso porque as tabelas estão vazias.
@@ -70,6 +73,7 @@ O efeito foi conferido por consulta.
 - `testes/fatia3.sql`: idem, com os testes de aceite 3 (parte de estoque), 4 e 5.
 - `testes/fatia4.sql`: idem, com os testes de aceite 3 (vendas passadas), 6, 7, 8, 9, 12 e 14.
   O 15 (concorrência) roda no Postgres local com duas sessões (ver `docs/testes.md`).
+- `testes/fatia5.sql`: idem, com os testes de aceite 10 e 11.
 - Conferência de igualdade entre ambientes: `md5` dos textos de todas as funções e views
   (consulta em `docs/testes.md`, fatia 4) tem de dar o mesmo nos três.
 - `testes/preparar-e2e-fatia1.sql` e `testes/preparar-e2e-fatia2.sql`: deixam o projeto de teste

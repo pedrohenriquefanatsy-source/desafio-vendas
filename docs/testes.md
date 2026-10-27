@@ -164,3 +164,31 @@ select
 ```
 
 Em 27/10/2026, depois da fatia 4: funções `153e6d43…`, views `b32fbc4b…` nos três.
+
+## Fatia 5 — Caixa: despesas, reembolsos, aportes, ajuste e resultado (27/10/2026)
+
+### Banco (`supabase/testes/fatia5.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou (todas), junto com as fatias 1 a 4 num banco novo |
+| Supabase de teste | Passou |
+| Supabase principal | Passou (verificação curta dos aceites 10 e 11). Funções `261c9d5e…` e views `1d4ead9a…` iguais nos três |
+
+- **Resultado**: venda de 2 bolos (preço 5,00, custo 1,00) → resultado +8,00 e caixa +10,00; perda de 1 bolo → resultado −1,00, caixa igual; compra de farinha → caixa −10,00, resultado igual. **Passou.**
+- **Aceite 10** (despesa com reembolso): membro lança Uber 15,00 do bolso → resultado −15,00 uma vez, caixa igual, devido 15,00; reenvio não duplica; membro não paga reembolso; reembolso de 20,00 recusado ("passa do que o desafio deve (15.00)"); admin paga 15,00 → caixa −15,00, resultado igual, devido 0; reenvio do reembolso não duplica. **Passou.**
+- Despesa reembolsada não cancela antes do reembolso; cancelar o reembolso devolve caixa e dívida; aí a despesa cancela e sai do resultado. Despesa pelo caixa: caixa −10 e resultado −10; cancelada volta, uma vez só. Compra do bolso reembolsada não cancela. Despesa zero ou sem descrição recusada. **Passou.**
+- **Aceite 11** (aporte): PJ 100,00 → caixa +100,00, resultado igual; reenvio não duplica; aporte de participante sem pessoa recusado; cancelar tira do caixa. **Passou.**
+- Ajuste: contou 5,00 a mais → lança +5,00; reenvio não repete; resultado igual; o livro de caixa termina no saldo. Membro não faz aporte nem ajuste; ninguém grava direto em despesas ou reembolsos; `anon` não lê o resultado. **Passou.**
+
+### Telas no navegador em 375 px (`testes-e2e/fatia5.mjs`, Supabase de teste)
+
+**26 de 26 verificações passaram** (1ª rodada). O teste lê o saldo e o resultado na tela do Caixa antes e depois de cada passo:
+- Aceite 11: aporte PJ R$ 100,00 → caixa +100, resultado igual.
+- Aceite 10: o membro lança "Uber" R$ 15,00 com "Paguei do meu bolso" → resultado −15, caixa igual, "A reembolsar" +15. O admin paga o reembolso com o valor já preenchido → caixa cai o valor devido, resultado igual, devido zera.
+- Despesa pelo caixa R$ 10,00 → caixa e resultado −10. Cancelada pelo próprio membro → voltam.
+- Conferência do saldo com +R$ 1,00 → caixa +1, resultado igual. O livro de caixa mostra aporte, reembolso e ajuste.
+- O membro não vê aporte nem ajuste.
+
+Sem rolagem lateral e alvos de toque ≥ 44 px em todas as telas.
+

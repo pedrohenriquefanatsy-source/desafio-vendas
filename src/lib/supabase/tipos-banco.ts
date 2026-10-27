@@ -15,6 +15,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      aportes: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_idempotencia: string
+          criado_em: string
+          criado_por: string | null
+          data: string
+          desafio_id: string | null
+          id: string
+          motivo_cancelamento: string | null
+          observacao: string | null
+          origem: Database["public"]["Enums"]["origem_aporte"]
+          participante_id: string | null
+          situacao: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          origem: Database["public"]["Enums"]["origem_aporte"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia?: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          origem?: Database["public"]["Enums"]["origem_aporte"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor?: number
+        }
+        Relationships: []
+      }
       auditoria: {
         Row: {
           acao: string
@@ -183,6 +240,66 @@ export type Database = {
           meta_vendas?: number | null
           nome?: string
           situacao?: Database["public"]["Enums"]["situacao_desafio"]
+        }
+        Relationships: []
+      }
+      despesas: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          categoria: string | null
+          chave_idempotencia: string
+          criado_em: string
+          criado_por: string | null
+          data: string
+          desafio_id: string | null
+          descricao: string
+          id: string
+          motivo_cancelamento: string | null
+          pago_por: Database["public"]["Enums"]["pago_por"]
+          participante_id: string | null
+          situacao: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          categoria?: string | null
+          chave_idempotencia: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          descricao: string
+          id?: string
+          motivo_cancelamento?: string | null
+          pago_por: Database["public"]["Enums"]["pago_por"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          categoria?: string | null
+          chave_idempotencia?: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          desafio_id?: string | null
+          descricao?: string
+          id?: string
+          motivo_cancelamento?: string | null
+          pago_por?: Database["public"]["Enums"]["pago_por"]
+          participante_id?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor?: number
         }
         Relationships: []
       }
@@ -720,6 +837,57 @@ export type Database = {
         }
         Relationships: []
       }
+      reembolsos: {
+        Row: {
+          alterado_em: string | null
+          alterado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_idempotencia: string
+          criado_em: string
+          criado_por: string | null
+          data: string
+          id: string
+          motivo_cancelamento: string | null
+          observacao: string | null
+          participante_id: string
+          situacao: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Insert: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          participante_id: string
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor: number
+        }
+        Update: {
+          alterado_em?: string | null
+          alterado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_idempotencia?: string
+          criado_em?: string
+          criado_por?: string | null
+          data?: string
+          id?: string
+          motivo_cancelamento?: string | null
+          observacao?: string | null
+          participante_id?: string
+          situacao?: Database["public"]["Enums"]["situacao_registro"]
+          valor?: number
+        }
+        Relationships: []
+      }
       saldos_estoque: {
         Row: {
           id: number
@@ -1115,6 +1283,23 @@ export type Database = {
         }
         Relationships: []
       }
+      v_fluxo_caixa: {
+        Row: {
+          criado_em: string | null
+          criado_por: string | null
+          desafio_id: string | null
+          descricao: string | null
+          dia: string | null
+          id: number | null
+          origem_id: string | null
+          origem_tipo: string | null
+          quem: string | null
+          saldo_apos: number | null
+          tipo: Database["public"]["Enums"]["tipo_lancamento_caixa"] | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       v_lista_compras: {
         Row: {
           custo_atual: number | null
@@ -1171,6 +1356,39 @@ export type Database = {
           variacao: string | null
           variacao_id: string | null
           vendidos: number | null
+        }
+        Relationships: []
+      }
+      v_reembolsos_devidos: {
+        Row: {
+          devido: number | null
+          pago_do_bolso: number | null
+          participante: string | null
+          participante_id: string | null
+          reembolsado: number | null
+        }
+        Relationships: []
+      }
+      v_resultado_diario: {
+        Row: {
+          custo_perdas: number | null
+          desafio_id: string | null
+          despesas: number | null
+          dia: string | null
+          margem_vendas: number | null
+          resultado: number | null
+          sem_custo: boolean | null
+          unidades: number | null
+          vendas: number | null
+          vendido: number | null
+        }
+        Relationships: []
+      }
+      v_saldo_caixa: {
+        Row: {
+          entradas: number | null
+          saidas: number | null
+          saldo: number | null
         }
         Relationships: []
       }
@@ -1237,6 +1455,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      ajustar_caixa: {
+        Args: {
+          p_chave: string
+          p_justificativa: string
+          p_saldo_contado: number
+        }
+        Returns: number
+      }
       ajustar_estoque: {
         Args: {
           p_chave: string
@@ -1247,12 +1473,24 @@ export type Database = {
         }
         Returns: number
       }
+      cancelar_aporte: {
+        Args: { p_aporte: string; p_motivo: string }
+        Returns: undefined
+      }
       cancelar_compra: {
         Args: { p_compra: string; p_motivo: string }
         Returns: undefined
       }
+      cancelar_despesa: {
+        Args: { p_despesa: string; p_motivo: string }
+        Returns: undefined
+      }
       cancelar_producao: {
         Args: { p_motivo: string; p_producao: string }
+        Returns: undefined
+      }
+      cancelar_reembolso: {
+        Args: { p_motivo: string; p_reembolso: string }
         Returns: undefined
       }
       cancelar_venda: {
@@ -1277,6 +1515,15 @@ export type Database = {
         Returns: Json
       }
       marcar_encomenda_pronta: { Args: { p_venda: string }; Returns: undefined }
+      pagar_reembolso: {
+        Args: {
+          p_chave: string
+          p_observacao?: string
+          p_participante: string
+          p_valor: number
+        }
+        Returns: string
+      }
       planejar_producao: {
         Args: {
           p_chave: string
@@ -1284,6 +1531,16 @@ export type Database = {
           p_fornadas: number
           p_observacao?: string
           p_variacao: string
+        }
+        Returns: string
+      }
+      registrar_aporte: {
+        Args: {
+          p_chave: string
+          p_observacao?: string
+          p_origem: Database["public"]["Enums"]["origem_aporte"]
+          p_participante: string
+          p_valor: number
         }
         Returns: string
       }
@@ -1295,6 +1552,17 @@ export type Database = {
           p_itens: Json
           p_observacao?: string
           p_pago_por: Database["public"]["Enums"]["pago_por"]
+        }
+        Returns: string
+      }
+      registrar_despesa: {
+        Args: {
+          p_categoria: string
+          p_chave: string
+          p_data?: string
+          p_descricao: string
+          p_pago_por: Database["public"]["Enums"]["pago_por"]
+          p_valor: number
         }
         Returns: string
       }
@@ -1336,6 +1604,7 @@ export type Database = {
     }
     Enums: {
       dimensao: "massa" | "volume" | "contagem"
+      origem_aporte: "participante" | "pj"
       pago_por: "caixa" | "participante"
       papel: "administrador" | "membro"
       situacao_desafio: "planejado" | "em_andamento" | "encerrado"
@@ -1492,6 +1761,7 @@ export const Constants = {
   public: {
     Enums: {
       dimensao: ["massa", "volume", "contagem"],
+      origem_aporte: ["participante", "pj"],
       pago_por: ["caixa", "participante"],
       papel: ["administrador", "membro"],
       situacao_desafio: ["planejado", "em_andamento", "encerrado"],
