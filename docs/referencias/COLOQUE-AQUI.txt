@@ -1,0 +1,8 @@
+Coloque nesta pasta, com estes nomes:
+
+  heuristicas-nielsen.pdf   (ou .docx/.md: material das 10 heurísticas)
+  leis-ux.pdf               (ou .docx/.md: material das leis psicológicas da UX)
+  video-design.mp4          (vídeo de referência do design)
+
+A planilha "Planilha Cakenoura.xlsx" já está aqui.
+Opcional: capturas de tela das partes do vídeo que mais importam (print-01.png, print-02.png...).
