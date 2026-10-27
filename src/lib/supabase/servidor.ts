@@ -2,12 +2,13 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { ambiente } from "./ambiente";
+import type { Database } from "./tipos-banco";
 
 // Cliente do Supabase para páginas do servidor, Server Actions e rotas.
 // Usa só a chave pública e o login do participante (cookie): a RLS vale sempre.
 export async function criarClienteServidor() {
   const loja = await cookies();
-  return createServerClient(ambiente.url, ambiente.chavePublica, {
+  return createServerClient<Database>(ambiente.url, ambiente.chavePublica, {
     cookies: {
       getAll() {
         return loja.getAll();
