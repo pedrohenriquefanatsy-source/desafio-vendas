@@ -64,3 +64,28 @@ recusado; membro novo cai em "acesso pendente"; admin ativa; não deixa ficar se
 ativado vê o desafio e não altera cadastro; faixa "sem conexão"; **envio sem conexão avisa e
 mantém os dados**; reenvio salva; sair. Em todas as telas verificadas: sem rolagem lateral em
 375 px e alvos de toque com 44 px ou mais.
+
+## Fatia 2 — Insumos, receitas, produtos, kits e custeio (27/10/2026)
+
+### Banco (`supabase/testes/fatia2.sql`, desfaz tudo no fim)
+
+| Onde | Resultado |
+|---|---|
+| Postgres 16 local | Passou (todas). Teste de mutação: trocar o custo esperado da casadinha de 3,77 para 3,78 faz o teste falhar, como deveria |
+| Supabase de teste | Passou. Sem os 2 comandos de apagar (o Supabase pede confirmação para eles); esses 2 rodaram só no Postgres local |
+| Supabase principal | Passou (aceites 1 e 2, unidade massa→volume recusada, membro não cadastra nem muda custo, `anon` não lê) |
+
+- **Aceite 1** (receita com g, kg, cx e und): custo da receita **17,403**; por unidade **0,725125**; 1,17 cx = 462,15 g. **Passou.**
+- **Aceite 2** (Cakenoura): custo / MC / markup — Clássico 1,45 / 5,05 / 4,48 (MC 77,69%); Avelã 2,32 / 5,18 / 3,23; Piscininha chocolate 2,08 / 5,92 / 3,85; Piscininha Nutella 2,95 / 5,05 / 2,71; Casadinha (kit) 3,77 / 8,23 / 3,18. **Passou.**
+- **Aceite 3 (parte de custo)**: farinha de R$ 6,00 para R$ 7,20/kg → custo da receita de 17,403 para 17,883; histórico com os dois preços. **Passou.** (A parte "vendas anteriores não mudam" entra na fatia 4.)
+- Outras: unidade sem conversão e massa→volume recusadas com mensagem que diz onde cadastrar; conversão para "kg" recusada; conversão em uso não pode ser apagada; mudar a conversão (395 g → 400 g) recalcula; insumo sem preço deixa o custo em branco e diz qual falta; MC com taxa de 3,99% = 4,79065; kit não aceita receita nem outro kit; mudança de preço de venda vai para a auditoria; membro não cria insumo, não muda preço (nem pela função nem direto na tabela), não altera preço de venda, não apaga item de receita; admin não muda custo direto, tipo do produto nem unidade base; `anon` não lê.
+
+### Telas no navegador em 375 px (`testes-e2e/fatia2.mjs`, Supabase de teste)
+
+**25 de 25 verificações passaram** (2ª rodada; na 1ª, 4 falharam porque o teste lia a tela ainda no estado "carregando" — corrigido no teste).
+
+Cadastro de 5 insumos pelas telas (farinha em g com preço por kg; leite condensado com caixa de 395 g; ovos com bandeja de 30; açúcar; embalagem); conversão "kg" recusada; receita montada pela tela → **R$ 17,40 a fornada, R$ 0,73 cada, "1,17 cx = 462,15 g"**; produto sem receita avisa o que falta; bolo com a receita → custo R$ 0,73, MC R$ 5,77; com embalagem de R$ 0,08 → custo R$ 0,81, MC R$ 5,69; kit com 2 bolos → custo R$ 1,61, MC R$ 10,39; mudar o preço da farinha → fornada R$ 17,88; membro vê tudo sem campos de edição. Sem rolagem lateral e alvos de toque ≥ 44 px em todas as telas verificadas.
+
+### Regras de leitura de números (`npm test`)
+
+5 testes, todos passaram (inclui quantidades "0,4", "462,15" e custo por unidade "R$ 0,0048/g").

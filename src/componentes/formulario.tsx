@@ -24,6 +24,7 @@ export function Formulario({
   textoBotao,
   textoEnviando = "Salvando…",
   limparAoSalvar = false,
+  variante = "primario",
   className = "flex flex-col gap-4",
 }: {
   acao: Acao;
@@ -31,6 +32,7 @@ export function Formulario({
   textoBotao: string;
   textoEnviando?: string;
   limparAoSalvar?: boolean;
+  variante?: "primario" | "secundario" | "perigo";
   className?: string;
 }) {
   const formulario = useRef<HTMLFormElement>(null);
@@ -68,7 +70,7 @@ export function Formulario({
       {children}
       {resultado && !resultado.ok ? <Aviso tipo="erro">{resultado.erro}</Aviso> : null}
       {resultado?.ok && resultado.mensagem ? <Aviso tipo="sucesso">{resultado.mensagem}</Aviso> : null}
-      <button type="submit" disabled={pendente} aria-busy={pendente} className={classeBotao("primario", "w-full")}>
+      <button type="submit" disabled={pendente} aria-busy={pendente} className={classeBotao(variante, "w-full")}>
         {pendente ? textoEnviando : textoBotao}
       </button>
     </form>

@@ -21,7 +21,7 @@
 
 - Toda tabela importante tem `criado_por`, `criado_em`, `alterado_por` e `alterado_em`, preenchidos **pelo banco** (`privado.preencher_registro`). O que a tela mandar nesses campos é ignorado.
 - A tabela `auditoria` guarda, para cada inclusão, alteração ou exclusão, o **valor anterior** (`antes`), o **novo** (`depois`), quem fez e quando (`privado.registrar_auditoria`). Só o administrador lê.
-- Tabelas auditadas até agora: `perfis`, `desafios`, `formas_pagamento`. As próximas fatias acrescentam vendas, recebimentos, despesas, compras, preços, receitas, estoque e produção.
+- Tabelas auditadas até agora: `perfis`, `desafios`, `formas_pagamento`, `insumos`, `insumo_conversoes`, `receitas`, `receita_itens`, `produtos`, `variacoes`, `variacao_embalagens`, `kit_componentes` (e o histórico de preço de insumo). As próximas fatias acrescentam vendas, recebimentos, despesas, compras, preços, receitas, estoque e produção.
 
 ## 3. Desafio e meta (fatia 1)
 
@@ -50,12 +50,50 @@
 - Números aceitam "6,50", "6.50", "R$ 1.234,56" e "3,99%". Guardados sempre como número.
 - Dinheiro: `numeric(12,2)`. Nunca `float`.
 
-## 6. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
+## 6. Insumos, receitas, produtos e custeio (fatia 2)
+
+### Unidades
+
+- Todo insumo tem uma **unidade base**: `g` (o que se pesa), `ml` (o que se mede em volume) ou `und` (o que se conta). Ela não muda depois de criada.
+- **Conversões automáticas**, só dentro da mesma grandeza: 1 kg = 1000 g; 1 l = 1000 ml.
+- **Conversões do insumo** para caixa, pacote, bandeja etc.: o administrador diz quanto cabe ("1 cx = 395 g"). Sem essa regra, a unidade é recusada com uma mensagem que diz onde cadastrar.
+- **Massa nunca vira volume** (g ↔ ml é recusado).
+- Uma conversão em uso em receita ou embalagem não pode ser apagada. Mudar a quantidade dela recalcula tudo na hora.
+
+### Preço e custo do insumo
+
+- O preço é informado **como se compra**: "R$ 7,90 por cx".
+- **Custo por unidade base** = preço ÷ (quantas unidades base tem a unidade de compra), com 6 casas decimais. Ex.: R$ 7,90 ÷ 395 g = R$ 0,020000/g.
+- Cada mudança de preço fica no **histórico** (preço, unidade, custo por base, quem, quando). O preço só muda por essa função, nunca direto na tabela.
+
+### Receita (fornada)
+
+- **Custo da receita** = Σ (quantidade do insumo em unidade base × custo por unidade base).
+- **Custo por unidade produzida** = custo da receita ÷ rendimento.
+- Exemplo do teste de aceite 1 (rende 24): 0,4 kg de farinha a R$ 6,00/kg = R$ 2,40; 1,17 cx de leite condensado (462,15 g a R$ 0,02/g) = R$ 9,243; 6 ovos a R$ 0,52 = R$ 3,12; 550 g de açúcar a R$ 4,80/kg = R$ 2,64. **Total R$ 17,403; R$ 0,725125 por unidade.**
+- Se algum insumo está **sem preço**, o custo fica **em branco** e o sistema diz qual falta (nunca mostra um custo menor que o real).
+
+### Produto, variação, embalagem e kit
+
+- O que se vende é a **variação** (sabor, cobertura). Produto sem sabor tem a variação "Única".
+- **Custo variável unitário** (produto simples) = custo por unidade da receita + Σ embalagens por unidade vendida.
+- Produto sem receita (comprado pronto): custo = só as embalagens.
+- **Kit** = Σ (custo de cada produto que o forma × quantidade) + embalagens do kit. Kit não tem receita própria e não pode conter outro kit.
+- **MC unitária** = preço − custo variável unitário. **MC %** = MC ÷ preço. **Markup** = preço ÷ custo.
+- **MC por forma de pagamento** = MC − preço × taxa %. Ex.: Clássico a R$ 6,50 no cartão de 3,99% → 5,05 − 0,25935 = 4,79065.
+- Conferido com a planilha Cakenoura (teste de aceite 2): Clássico 1,45 / 5,05; Avelã 2,32 / 5,18; Piscininha chocolate 2,08 / 5,92; Piscininha Nutella 2,95 / 5,05; Casadinha (kit) 3,77 / 8,23.
+- Mudar preço de venda, receita, embalagem ou preço de insumo muda o **custo atual** na hora. Vendas (fatia 4) guardam o custo e a margem **do momento da venda**.
+
+### Permissões do cadastro
+
+- Todos os participantes **veem** custos e margens. Só o administrador cadastra e altera.
+- Insumos, receitas, produtos e variações não se apagam (desativa). Itens de receita, embalagens e componentes de kit podem ser removidos pelo administrador (fica na auditoria).
+- O tipo do produto (simples/kit) não muda depois de criado.
+
+## 7. Cálculos das próximas fatias (aprovados no plano, ainda não implementados)
 
 Detalhados em `docs/plano.md`, Seção 2.7. Resumo:
 
-- Custo da receita = Σ (quantidade base do insumo × custo atual por unidade base).
-- Custo variável unitário = custo da receita ÷ rendimento + embalagens por unidade (kit: soma dos componentes).
 - MC do item vendido = valor líquido − custo do momento × quantidade − taxa rateada.
 - Resultado = Σ MC das vendas reconhecidas − custo de doações e perdas − despesas.
 - Saldo de caixa = soma do livro de caixa (só dinheiro que entrou ou saiu).

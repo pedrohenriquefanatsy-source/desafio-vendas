@@ -17,6 +17,9 @@ export default async function Mais() {
         <Selo>{NOMES_PAPEL[perfil.papel]}</Selo>
       </Cartao>
       <Cartao className="divide-y divide-borda p-0">
+        <ItemLista href="/mais/produtos" titulo="Produtos e preços" apoio="Preço, custo e margem de cada produto" />
+        <ItemLista href="/mais/receitas" titulo="Receitas" apoio="Insumos de cada fornada e quanto rende" />
+        <ItemLista href="/mais/insumos" titulo="Insumos" apoio="O que você compra, com o preço pago" />
         <ItemLista href="/mais/desafios" titulo="Desafio e meta" apoio="Datas, meta de resultado e situação" />
         <ItemLista href="/mais/formas-pagamento" titulo="Formas de pagamento" apoio="Pix, dinheiro, cartão e taxas" />
         <ItemLista
@@ -26,7 +29,7 @@ export default async function Mais() {
         />
       </Cartao>
       <p className="mt-3 text-sm text-texto-suave">
-        Produtos e receitas, insumos, exportação e auditoria chegam nas próximas fatias.
+        Exportação e auditoria chegam nas próximas fatias.
       </p>
       <form action={sair} className="mt-6">
         <button type="submit" className={classeBotao("secundario", "w-full")}>

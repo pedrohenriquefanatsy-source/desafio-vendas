@@ -35,3 +35,18 @@ export function partesReais(valor: number | string): { inteiro: string; centavos
   const virgula = texto.lastIndexOf(",");
   return { inteiro: texto.slice(0, virgula), centavos: texto.slice(virgula) };
 }
+
+const quantidade = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
+const custoMiudo = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 4 });
+
+// 0,4 → "0,4"; 462.15 → "462,15"
+export function formatarQuantidade(valor: number | string | null | undefined): string {
+  if (valor == null || valor === "") return "—";
+  return quantidade.format(Number(valor));
+}
+
+// Custo por unidade base, que costuma ter frações de centavo: R$ 0,0048/g.
+export function formatarCustoUnidade(valor: number | string | null | undefined, unidade: string): string {
+  if (valor == null || valor === "") return "sem preço";
+  return `${custoMiudo.format(Number(valor))}/${unidade}`;
+}
