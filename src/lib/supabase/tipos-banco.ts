@@ -1551,6 +1551,18 @@ export type Database = {
         }
         Returns: number
       }
+      cadastrar_insumo: {
+        Args: {
+          p_chave: string
+          p_estoque?: number
+          p_nome: string
+          p_preco?: number
+          p_tamanho?: number
+          p_tipo: Database["public"]["Enums"]["tipo_insumo"]
+          p_unidade_base: string
+        }
+        Returns: string
+      }
       cancelar_aporte: {
         Args: { p_aporte: string; p_motivo: string }
         Returns: undefined
@@ -1583,8 +1595,20 @@ export type Database = {
         }
         Returns: Json
       }
+      copiar_receita_variacao: {
+        Args: { p_destino: string; p_origem: string }
+        Returns: string
+      }
+      criar_receita_variacao: {
+        Args: { p_rendimento: number; p_variacao: string }
+        Returns: string
+      }
       definir_custo_insumo: {
         Args: { p_insumo: string; p_preco: number; p_unidade: string }
+        Returns: undefined
+      }
+      definir_embalagem_insumo: {
+        Args: { p_insumo: string; p_preco: number; p_tamanho: number }
         Returns: undefined
       }
       definir_meu_nome: { Args: { p_nome: string }; Returns: undefined }
@@ -1592,7 +1616,15 @@ export type Database = {
         Args: { p_confirmar_estoque?: boolean; p_venda: string }
         Returns: Json
       }
+      excluir_cadastro: {
+        Args: { p_id: string; p_tipo: string }
+        Returns: undefined
+      }
       marcar_encomenda_pronta: { Args: { p_venda: string }; Returns: undefined }
+      motivo_nao_excluir: {
+        Args: { p_id: string; p_tipo: string }
+        Returns: string
+      }
       pagar_reembolso: {
         Args: {
           p_chave: string

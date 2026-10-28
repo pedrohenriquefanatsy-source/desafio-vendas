@@ -85,7 +85,7 @@ for (const [nome, caminho] of [["Início", "/"], ["Nova venda", "/vendas/nova"],
     const titulo = getComputedStyle(document.querySelector("main h1")).color;
     return { fundo, titulo };
   });
-  confere(cores.fundo === "rgb(18, 18, 17)" && cores.titulo === "rgb(242, 242, 239)", `${nome} no escuro: fundo escuro e texto claro (${cores.fundo} / ${cores.titulo})`);
+  confere(cores.fundo === "rgb(30, 15, 9)" && cores.titulo === "rgb(249, 237, 221)", `${nome} no escuro: fundo escuro e texto claro (${cores.fundo} / ${cores.titulo})`);
   await verificarTela(pe, `${nome} (escuro)`);
   await pe.screenshot({ path: `${CAPTURAS}/escuro-${caminho.replace(/\//g, "_") || "inicio"}.png`, fullPage: false });
 }

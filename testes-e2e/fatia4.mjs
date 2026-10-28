@@ -3,6 +3,7 @@
 // Monta pelas telas um cardápio com estoque e refaz os testes de aceite 6, 7, 8, 9, 12 e 14.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
+import { adicionarEmbalagem as embalagemDoProduto, cadastrarInsumo, criarProduto as criarProdutoNovo, montarReceita } from "./cadastro.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
@@ -43,25 +44,6 @@ async function entrar(p, quem) {
   await esperarPagina(p, /^\/$/);
 }
 
-async function criarInsumo(p, n, tipo, base) {
-  await p.goto(`${BASE}/mais/insumos`);
-  await p.fill("#nome", n);
-  await p.selectOption("#tipo", tipo);
-  await p.selectOption("#unidade_base", base);
-  await p.getByRole("button", { name: "Cadastrar e definir o preço" }).click();
-  await esperarPagina(p, /^\/mais\/insumos\/[0-9a-f-]{36}$/);
-  await p.getByText("Sem preço ainda").waitFor();
-}
-
-async function criarProduto(p, n, tipo, preco) {
-  await p.goto(`${BASE}/mais/produtos`);
-  await p.fill("#nome", n);
-  await p.selectOption("#tipo", tipo);
-  await p.fill("#preco", preco);
-  await p.getByRole("button", { name: "Cadastrar e configurar" }).click();
-  await esperarPagina(p, /^\/mais\/produtos\/[0-9a-f-]{36}$/);
-}
-
 async function produzir(p, produto) {
   await p.goto(`${BASE}/estoque?aba=producao`);
   await p.selectOption("#variacao_id", { label: produto });
@@ -97,43 +79,26 @@ await entrar(p, admin);
 // ── Cardápio: Clássico e Avelã (mesma massa, 0,30 cada), Casadinha = 1 + 1 + caixa (1,60) ──
 const FARINHA = nome("Farinha");
 const CAIXA = nome("Caixa");
-const MASSA = nome("Massa");
 const CLASSICO = nome("Clássico");
 const AVELA = nome("Avelã");
 const CASADINHA = nome("Casadinha");
-await criarInsumo(p, FARINHA, "ingrediente", "g");
-await criarInsumo(p, CAIXA, "embalagem", "und");
-await p.goto(`${BASE}/mais/receitas`);
-await p.fill("#nome", MASSA);
-await p.fill("#rendimento", "10");
-await p.getByRole("button", { name: "Cadastrar e adicionar insumos" }).click();
-await esperarPagina(p, /^\/mais\/receitas\/[0-9a-f-]{36}$/);
-await p.selectOption("#novo-insumo", { label: FARINHA });
-await p.fill("#novo-quantidade", "500");
-await p.selectOption("#novo-unidade", "g");
-await p.getByRole("button", { name: "Adicionar", exact: true }).click();
-await p.getByText(FARINHA, { exact: true }).first().waitFor();
+await cadastrarInsumo(p, BASE, { nome: FARINHA });
+await cadastrarInsumo(p, BASE, { nome: CAIXA, tipo: "embalagem", base: "und" });
 for (const [n, preco] of [[CLASSICO, "6,50"], [AVELA, "7,50"]]) {
-  await criarProduto(p, n, "simples", preco);
-  await p.getByText("Alterar variação").click();
-  await p.locator('select[name="receita_id"]').first().selectOption({ label: `${MASSA} (rende 10)` });
-  await p.getByRole("button", { name: "Salvar", exact: true }).first().click();
-  await sucesso(p).waitFor();
+  await criarProdutoNovo(p, BASE, { nome: n, preco });
+  await montarReceita(p, { rendimento: 10, ingredientes: [[FARINHA, "500", "g"]] });
 }
-await criarProduto(p, CASADINHA, "kit", "12");
+await criarProdutoNovo(p, BASE, { nome: CASADINHA, tipo: "kit", preco: "12" });
 for (const comp of [CLASSICO, AVELA]) {
-  await p.getByText("Adicionar produto ao kit").click();
+  await p.locator("summary", { hasText: "＋ Adicionar produto ao kit" }).first().click();
   await p.locator('select[name="componente_id"]').selectOption({ label: comp });
   await p.fill('input[id^="comp-qtd-"]', "1");
   await p.getByRole("button", { name: "Adicionar", exact: true }).first().click();
   await sucesso(p).waitFor();
   await p.reload();
-  await p.getByText("Embalagens por unidade vendida").first().waitFor();
+  await p.getByText("Embalagem de cada unidade vendida").first().waitFor();
 }
-await p.getByText("Adicionar embalagem").click();
-await p.locator('select[name="insumo_id"]').last().selectOption({ label: CAIXA });
-await p.getByRole("button", { name: "Adicionar", exact: true }).last().click();
-await sucesso(p).waitFor();
+await embalagemDoProduto(p, CAIXA);
 
 await p.goto(`${BASE}/compras/nova`);
 const g1 = p.getByRole("group", { name: "Item 1" });
@@ -172,10 +137,10 @@ confere(/Total\s?R\$\s?24,00/.test(await texto(p)), "Aceite 6: total R$ 24,00 (2
 await p.screenshot({ path: `${CAPTURAS}/02-venda-com-kit.png`, fullPage: true });
 const v6 = await confirmarVenda(p);
 await p.goto(`${BASE}/vendas/${v6.id}`);
-await p.getByText("Margem (MC)").waitFor();
+await p.getByText("Sobra da venda").waitFor();
 let t = await texto(p);
 // MC = (12,48 − 2 × 0,30) + (11,52 − 1,60) = 11,88 + 9,92 = 21,80
-confere(/Total\s?R\$\s?24,00/.test(t) && /Margem \(MC\)\s?R\$\s?21,80/.test(t), "Aceite 6: total R$ 24,00 e MC R$ 21,80 calculados pelo banco");
+confere(/Total\s?R\$\s?24,00/.test(t) && /Sobra da venda\s?R\$\s?21,80/.test(t), "Aceite 6: total R$ 24,00 e MC R$ 21,80 calculados pelo banco");
 confere(t.includes(`2× ${CLASSICO}`) && t.includes(`1× ${CASADINHA}`) && /desconto R\$\s?0,52/.test(t), "Aceite 6: itens e desconto rateado (0,52 no clássico)");
 await verificarTela(p, "Detalhe da venda");
 await p.screenshot({ path: `${CAPTURAS}/03-detalhe-venda.png`, fullPage: true });
@@ -218,8 +183,8 @@ await p.goto(`${BASE}/vendas?ver=encomendas`);
 await p.getByText(nome("Caio")).waitFor();
 confere(true, "Aceite 8: aparece em Encomendas");
 await p.goto(`${BASE}/vendas/${v8.id}`);
-await p.getByText("Margem (MC)").waitFor();
-confere(/Margem \(MC\)\s?na entrega/.test(await texto(p)), "Aceite 8: margem só na entrega");
+await p.getByText("Sobra da venda").waitFor();
+confere(/Sobra da venda\s?na entrega/.test(await texto(p)), "Aceite 8: margem só na entrega");
 await p.getByRole("button", { name: "Marcar como entregue" }).click();
 await p.getByText("Encomenda entregue").waitFor();
 confere((await saldoProduto(p, AVELA)) === 6, "Aceite 8: entregue, o estoque baixa 2 (8 → 6)");
@@ -231,9 +196,9 @@ await p.getByRole("button", { name: "Doação", exact: true }).click();
 await tile(p, CLASSICO).click();
 const v9 = await confirmarVenda(p);
 await p.goto(`${BASE}/vendas/${v9.id}`);
-await p.getByText("Margem (MC)").waitFor();
+await p.getByText("Sobra da venda").waitFor();
 t = await texto(p);
-confere(t.includes("Doação nº") && /Total\s?R\$\s?0,00/.test(t) && /Margem \(MC\)\s?-R\$\s?0,30/.test(t), "Aceite 9: doação sem receita, custo −0,30 no resultado");
+confere(t.includes("Doação nº") && /Total\s?R\$\s?0,00/.test(t) && /Sobra da venda\s?-R\$\s?0,30/.test(t), "Aceite 9: doação sem receita, custo −0,30 no resultado");
 confere((await saldoProduto(p, CLASSICO)) === 5, "Aceite 9: doação baixa o estoque (6 → 5)");
 
 // ── D8: mais do que o estoque → avisa e deixa seguir ────────────────────────
@@ -287,7 +252,7 @@ const ctxM = await navegador.newContext(celular);
 const pm = await ctxM.newPage();
 await entrar(pm, membro);
 await pm.goto(`${BASE}/vendas/${v1.id}`);
-await pm.getByText("Margem (MC)").waitFor();
+await pm.getByText("Sobra da venda").waitFor();
 confere((await pm.locator("summary", { hasText: "Cancelar venda" }).count()) === 0 && (await texto(pm)).includes("peça ao administrador"), "Membro não vê cancelar na venda de outra pessoa");
 await pm.goto(`${BASE}/vendas/nova`);
 await tile(pm, CLASSICO).click();

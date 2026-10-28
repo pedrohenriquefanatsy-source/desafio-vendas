@@ -52,3 +52,21 @@ venda, Estoque e Caixa (fatia 8).
 - Perguntar a 2 participantes o que significa cada número do Início, sem explicar antes (Nielsen 2, modelo mental).
 - Cronometrar uma venda simples na rua (meta: menos de 10 segundos) e ver se alguém novo registra sem ajuda (Hick, Jakob, usuário ativo).
 - Decidir se querem lançamento em lote no fim do dia (Nielsen 7).
+
+## Ajustes depois do uso real (28/10/2026, fatia 9)
+
+O administrador usou o sistema e achou parte dele complexa. O que ele relatou, e o que mudou:
+
+| O que foi dito | Causa | O que mudou |
+|---|---|---|
+| "Confuso cadastrar o insumo, preço por grama" | Três telas para uma informação: insumo, unidade de compra e preço | Uma tela: nome, embalagem (quanto vem), preço da embalagem e quanto tem. A tela mostra a conta (R$ 16,00 ÷ 500 g = R$ 0,032 por g) antes de salvar (Nielsen 1, 5 e 6; Tesler) |
+| "Ter a opção de remover" | Só existia "desligar", escondido em "Dados do insumo" | "Excluir" para o que nunca foi usado; para o que já tem histórico, a tela explica por quê e aponta "desligar" (Nielsen 3 e 9) |
+| "A receita já fica embutida no produto" | Tela de Receitas separada; o produto escolhia uma receita pronta | A receita mora dentro de cada sabor. "Copiar de outro sabor" resolve massa-base igual com recheio diferente (Hick, Tesler, carga cognitiva) |
+| "Vários sabores de bites" | Variação com nome técnico | "Sabor" na tela; o primeiro sabor é pedido já no cadastro do produto |
+| "Meta pode ficar negativa" | Barra parada em 0% e porcentagem confusa | Aviso claro de resultado negativo e por quê (Nielsen 1 e 9) |
+| "Sem nomes da planilha" | Exemplos como "Bolo clássico" e "casadinha" nos campos | Exemplos neutros ("Brownie bites", "Tradicional", "Ninho") |
+| "Sistema complexo" | Dez itens soltos no menu Mais | Menu em três grupos; lista de **Primeiros passos** no Início do administrador (Zeigarnik, usuário ativo) |
+| "MC", "variação" | Jargão | "Sobra" e "sabor" nas telas; o termo técnico continua na página "Como calculamos" e nas planilhas |
+
+Marca: cores e ícone da logo Choc Bites (creme, chocolate e rosa), com contraste AA nos dois temas.
+Ainda **depende de vocês**: ver se alguém novo cadastra um insumo e um sabor sem ajuda (meta: 2 minutos).

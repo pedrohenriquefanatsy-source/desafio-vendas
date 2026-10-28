@@ -34,13 +34,31 @@ export async function criarInsumo(_a: Resultado | null, d: FormData): Promise<Re
   const nome = texto(d, "nome");
   const tipo = texto(d, "tipo");
   const unidade_base = texto(d, "unidade_base");
+  const tamanhoTexto = texto(d, "tamanho");
+  const precoTexto = texto(d, "preco");
+  const estoqueTexto = texto(d, "estoque");
+  const tamanho = tamanhoTexto ? lerNumero(tamanhoTexto) : null;
+  const preco = precoTexto ? lerNumero(precoTexto) : null;
+  const estoque = estoqueTexto ? lerNumero(estoqueTexto) : null;
   if (nome.length < 2 || nome.length > 60) return erro("Dê um nome ao insumo (de 2 a 60 letras).");
   if (!TIPOS_INSUMO.includes(tipo)) return erro("Escolha o tipo: ingrediente, embalagem ou outro.");
   if (!UNIDADES_BASE.includes(unidade_base)) return erro("Escolha como o insumo é medido: g, ml ou und.");
-  const r = await catalogo.criarInsumo({ nome, tipo: tipo as catalogo.TipoInsumo, unidade_base });
+  if (tamanhoTexto && (tamanho == null || tamanho <= 0)) return erro("Diga quanto vem em cada embalagem, como 500.");
+  if (precoTexto && (preco == null || preco < 0)) return erro("Informe o preço da embalagem, como 16,00.");
+  if (!!tamanhoTexto !== !!precoTexto) return erro("Para calcular o custo, preencha o quanto vem na embalagem e o preço dela (ou deixe os dois em branco).");
+  if (estoqueTexto && (estoque == null || estoque < 0)) return erro("Informe quanto você tem agora, como 1500 (ou deixe em branco).");
+  const r = await catalogo.cadastrarInsumo({
+    chave: texto(d, "chave"),
+    nome,
+    tipo: tipo as catalogo.TipoInsumo,
+    unidade_base,
+    tamanho,
+    preco,
+    estoque,
+  });
   if (!r.ok) return r;
-  atualizar("/mais/insumos");
-  redirect(`/mais/insumos/${r.id}`);
+  atualizar("/mais/insumos", "/estoque", "/");
+  return { ok: true, mensagem: r.mensagem };
 }
 
 export async function alterarInsumo(_a: Resultado | null, d: FormData): Promise<Resultado> {
@@ -66,14 +84,14 @@ export async function alterarInsumo(_a: Resultado | null, d: FormData): Promise<
   return r;
 }
 
-export async function definirPreco(_a: Resultado | null, d: FormData): Promise<Resultado> {
+export async function salvarEmbalagem(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
+  const tamanho = positivo(d, "tamanho");
   const preco = lerNumero(texto(d, "preco"));
-  const unidade = texto(d, "unidade");
-  if (preco == null || preco < 0) return erro("Informe o preço pago, como 7,90.");
-  if (!unidade) return erro("Escolha a unidade em que você compra (kg, cx, und…).");
-  const r = await catalogo.definirPrecoInsumo(texto(d, "id"), preco, unidade);
-  if (r.ok) atualizar("/mais/insumos", `/mais/insumos/${texto(d, "id")}`, "/mais/receitas", "/mais/produtos");
+  if (tamanho == null) return erro("Diga quanto vem em cada embalagem, como 500.");
+  if (preco == null || preco < 0) return erro("Informe o preço da embalagem, como 16,00.");
+  const r = await catalogo.definirEmbalagemInsumo(texto(d, "id"), tamanho, preco);
+  if (r.ok) atualizar("/mais/insumos", `/mais/insumos/${texto(d, "id")}`, "/mais/produtos", "/estoque", "/");
   return r;
 }
 
@@ -93,7 +111,7 @@ export async function alterarConversao(_a: Resultado | null, d: FormData): Promi
   const qtd = positivo(d, "quantidade");
   if (qtd == null) return erro("Informe quanto cabe em 1 unidade, como 395.");
   const r = await catalogo.alterarConversao(texto(d, "id"), qtd);
-  if (r.ok) atualizar(`/mais/insumos/${texto(d, "insumo_id")}`, "/mais/receitas", "/mais/produtos");
+  if (r.ok) atualizar(`/mais/insumos/${texto(d, "insumo_id")}`, "/mais/produtos");
   return r;
 }
 
@@ -104,35 +122,7 @@ export async function removerConversao(_a: Resultado | null, d: FormData): Promi
   return r;
 }
 
-// ── Receitas ────────────────────────────────────────────────────────────────
-
-export async function criarReceita(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const nome = texto(d, "nome");
-  const rendimento = positivo(d, "rendimento");
-  if (nome.length < 2 || nome.length > 60) return erro("Dê um nome à receita (de 2 a 60 letras).");
-  if (rendimento == null) return erro("Informe quantas unidades a receita rende, como 24.");
-  const r = await catalogo.criarReceita(nome, rendimento);
-  if (!r.ok) return r;
-  atualizar("/mais/receitas");
-  redirect(`/mais/receitas/${r.id}`);
-}
-
-export async function alterarReceita(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const nome = texto(d, "nome");
-  const rendimento = positivo(d, "rendimento");
-  if (nome.length < 2 || nome.length > 60) return erro("Dê um nome à receita (de 2 a 60 letras).");
-  if (rendimento == null) return erro("Informe quantas unidades a receita rende, como 24.");
-  const r = await catalogo.alterarReceita(texto(d, "id"), {
-    nome,
-    rendimento_unidades: rendimento,
-    observacao: texto(d, "observacao") || null,
-    ativa: marcado(d, "ativa"),
-  });
-  if (r.ok) atualizar("/mais/receitas", `/mais/receitas/${texto(d, "id")}`, "/mais/produtos");
-  return r;
-}
+// ── Itens da receita (a receita mora dentro do sabor do produto) ─────────────
 
 export async function adicionarItemReceita(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
@@ -143,7 +133,7 @@ export async function adicionarItemReceita(_a: Resultado | null, d: FormData): P
   if (qtd == null) return erro("Informe a quantidade, como 0,4 ou 550.");
   if (!unidade) return erro("Escolha a unidade da quantidade.");
   const r = await catalogo.adicionarItemReceita(texto(d, "receita_id"), insumo, qtd, unidade);
-  if (r.ok) atualizar(`/mais/receitas/${texto(d, "receita_id")}`, "/mais/receitas", "/mais/produtos");
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
   return r;
 }
 
@@ -152,14 +142,14 @@ export async function alterarItemReceita(_a: Resultado | null, d: FormData): Pro
   const qtd = positivo(d, "quantidade");
   if (qtd == null) return erro("Informe a quantidade, como 0,4 ou 550.");
   const r = await catalogo.alterarItemReceita(texto(d, "id"), qtd, texto(d, "unidade"));
-  if (r.ok) atualizar(`/mais/receitas/${texto(d, "receita_id")}`, "/mais/receitas", "/mais/produtos");
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
   return r;
 }
 
 export async function removerItemReceita(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const r = await catalogo.removerItemReceita(texto(d, "id"));
-  if (r.ok) atualizar(`/mais/receitas/${texto(d, "receita_id")}`, "/mais/receitas", "/mais/produtos");
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
   return r;
 }
 
@@ -178,15 +168,18 @@ export async function criarProduto(_a: Resultado | null, d: FormData): Promise<R
   const nome = texto(d, "nome");
   const tipo = texto(d, "tipo");
   const preco = lerNumero(texto(d, "preco"));
+  const sabor = texto(d, "sabor");
   if (nome.length < 2 || nome.length > 60) return erro("Dê um nome ao produto (de 2 a 60 letras).");
   if (!TIPOS_PRODUTO.includes(tipo)) return erro("Escolha se é um produto simples ou um kit.");
   if (preco == null || preco < 0) return erro("Informe o preço de venda, como 6,50.");
+  if (sabor.length > 40) return erro("O nome do sabor pode ter até 40 letras.");
   const r = await catalogo.criarProduto({
     nome,
     categoria: texto(d, "categoria") || null,
     tipo: tipo as catalogo.TipoProduto,
     apelidos: lerApelidos(d),
     preco,
+    sabor,
   });
   if (!r.ok) return r;
   atualizar("/mais/produtos");
@@ -211,23 +204,29 @@ export async function criarVariacao(_a: Resultado | null, d: FormData): Promise<
   await exigirParticipante();
   const nome = texto(d, "nome");
   const preco = lerNumero(texto(d, "preco"));
-  if (nome.length < 1 || nome.length > 40) return erro("Dê um nome à variação, como Chocolate ou Nutella.");
+  const copiarDe = texto(d, "copiar_de");
+  if (nome.length < 1 || nome.length > 40) return erro("Dê um nome ao sabor, como Chocolate ou Ninho.");
   if (preco == null || preco < 0) return erro("Informe o preço de venda, como 8,00.");
-  const r = await catalogo.criarVariacao(texto(d, "produto_id"), nome, preco, texto(d, "receita_id") || null);
-  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
-  return r;
+  const r = await catalogo.criarVariacao(texto(d, "produto_id"), nome, preco);
+  if (!r.ok) return r;
+  atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
+  if (copiarDe && r.id) {
+    const c = await catalogo.copiarReceitaSabor(copiarDe, r.id);
+    if (!c.ok) return erro(`O sabor ${nome} foi criado, mas a receita não foi copiada: ${c.erro}`);
+    return { ok: true, mensagem: `Sabor ${nome} criado com a receita copiada. Troque o que muda neste sabor.` };
+  }
+  return { ok: true, mensagem: `Sabor ${nome} criado. Agora crie a receita dele.` };
 }
 
 export async function alterarVariacao(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const nome = texto(d, "nome");
   const preco = lerNumero(texto(d, "preco"));
-  if (nome.length < 1 || nome.length > 40) return erro("Dê um nome à variação, como Chocolate ou Única.");
+  if (nome.length < 1 || nome.length > 40) return erro("Dê um nome ao sabor, como Chocolate ou Única.");
   if (preco == null || preco < 0) return erro("Informe o preço de venda, como 8,00.");
   const r = await catalogo.alterarVariacao(texto(d, "id"), {
     nome,
     preco_venda: preco,
-    receita_id: texto(d, "receita_id") || null,
     ativa: marcado(d, "ativa"),
   });
   if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
@@ -270,4 +269,60 @@ export async function removerComponente(_a: Resultado | null, d: FormData): Prom
   const r = await catalogo.removerComponente(texto(d, "id"));
   if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
   return r;
+}
+
+// ── Receita dentro do sabor ─────────────────────────────────────────────────
+
+export async function criarReceitaSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const rendimento = positivo(d, "rendimento");
+  if (rendimento == null) return erro("Informe quantas unidades uma fornada rende, como 24.");
+  const r = await catalogo.criarReceitaSabor(texto(d, "variacao_id"), rendimento);
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
+  return r;
+}
+
+export async function copiarReceitaSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const origem = texto(d, "origem");
+  if (!origem) return erro("Escolha de qual sabor copiar a receita.");
+  const r = await catalogo.copiarReceitaSabor(origem, texto(d, "variacao_id"));
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
+  return r;
+}
+
+export async function salvarRendimento(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const rendimento = positivo(d, "rendimento");
+  if (rendimento == null) return erro("Informe quantas unidades uma fornada rende, como 24.");
+  const r = await catalogo.alterarRendimento(texto(d, "receita_id"), rendimento);
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
+  return r;
+}
+
+// ── Excluir o que nunca foi usado ───────────────────────────────────────────
+// O banco confere se pode (sem compra, venda, produção nem receita em uso) e explica quando não.
+
+export async function excluirInsumo(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const r = await catalogo.excluirCadastro("insumo", texto(d, "id"));
+  if (!r.ok) return r;
+  atualizar("/mais/insumos", "/estoque", "/");
+  redirect("/mais/insumos?feito=excluido");
+}
+
+export async function excluirSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const r = await catalogo.excluirCadastro("variacao", texto(d, "id"));
+  if (!r.ok) return r;
+  atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`, "/estoque", "/");
+  redirect(`/mais/produtos/${texto(d, "produto_id")}?feito=sabor-excluido`);
+}
+
+export async function excluirProduto(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const r = await catalogo.excluirCadastro("produto", texto(d, "id"));
+  if (!r.ok) return r;
+  atualizar("/mais/produtos", "/estoque", "/");
+  redirect("/mais/produtos?feito=excluido");
 }

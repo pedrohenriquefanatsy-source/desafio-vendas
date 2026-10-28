@@ -12,3 +12,4 @@
 - D1 aprovada: projeto de teste `dfzawglgkgconblqrmwf` (limpo em 27/10/2026). Ver `supabase/README.md`.
 - Supabase principal: `appgestãogeladinho` (`iebzbiccuwrchgdsojgn`, sa-east-1).
 - Implementação segue as fatias da Seção 4 de `docs/plano.md`.
+- Fatia 9 (28/10/2026, pedido do administrador depois do uso real): cadastro simplificado (insumo com embalagem e preço, receita dentro do sabor, excluir só o que nunca foi usado) e marca Choc Bites. Ver `docs/regras-de-negocio.md`, seção 12.

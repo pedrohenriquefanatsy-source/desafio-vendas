@@ -39,11 +39,13 @@ export function NavegacaoInferior() {
                 className={`flex min-h-16 flex-col items-center justify-center gap-1 text-xs ${atual ? "font-semibold text-texto" : "text-texto-suave"}`}
               >
                 {destaque ? (
-                  <span className="flex size-11 items-center justify-center rounded-full bg-acao text-acao-texto">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-acao text-acao-texto ring-2 ring-acento">
                     <Icone aria-hidden className="size-6" />
                   </span>
                 ) : (
-                  <Icone aria-hidden className="size-6" />
+                  <span className={`flex h-7 w-12 items-center justify-center rounded-full ${atual ? "bg-acento/25" : ""}`}>
+                    <Icone aria-hidden className="size-6" />
+                  </span>
                 )}
                 <span className={destaque ? "sr-only" : undefined}>{rotulo}</span>
               </Link>

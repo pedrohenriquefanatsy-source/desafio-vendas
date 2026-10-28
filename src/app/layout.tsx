@@ -8,14 +8,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Desafio de Vendas",
+  title: { default: "Choc Bites", template: "%s · Choc Bites" },
   description: "Gestão do desafio de vendas: vendas, estoque, produção, caixa e resultado.",
+  applicationName: "Choc Bites",
+  // iPhone: ao adicionar à tela inicial, abre como aplicativo, com o nome e a logo da Choc Bites.
+  appleWebApp: { capable: true, title: "Choc Bites", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f5f5f4",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf0e2" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e0f09" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

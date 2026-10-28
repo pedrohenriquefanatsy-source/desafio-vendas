@@ -224,7 +224,7 @@ async function AbaProducao({
       <Cartao>
         <h2 className="mb-3 font-semibold">Planejar produção</h2>
         {comReceita.length === 0 ? (
-          <p className="text-sm text-texto-suave">Nenhum produto tem receita ainda. Escolha a receita em Mais → Produtos e preços.</p>
+          <p className="text-sm text-texto-suave">Nenhum produto tem receita ainda. Crie a receita do sabor em Mais → Produtos e sabores.</p>
         ) : (
           <Formulario acao={planejarProducao} textoBotao="Planejar" limparAoSalvar>
             <Selecao id="variacao_id" name="variacao_id" rotulo="Produto" required defaultValue="">

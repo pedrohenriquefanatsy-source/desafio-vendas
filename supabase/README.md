@@ -41,6 +41,7 @@ mesmo dia: 0 tabelas, funções, tipos, políticas, usuários e migrations no sc
 | `20261027170000_caixa.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027180000_painel_meta.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027190000_auditoria_itens_compra.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
+| `20261028120000_cadastro_simplificado.sql` | 28/10/2026, MCP | 28/10/2026, MCP (só cria funções novas; dados conferidos antes e depois) |
 
 As aplicadas pelo SQL Editor **não aparecem** no histórico de migrations do Supabase
 (`supabase_migrations`), porque a confirmação pedida pela integração não chegou a tempo.
@@ -59,6 +60,8 @@ O efeito foi conferido por consulta.
   fatia 3 (`registrar_compra`, `cancelar_compra`, `planejar_producao`, `concluir_producao`,
   `cancelar_producao`, `ajustar_estoque`, `registrar_perda`) e da fatia 4 (`registrar_venda`,
   `registrar_recebimento`, `marcar_encomenda_pronta`, `entregar_encomenda`, `cancelar_venda`) e da
+  fatia 9 (`cadastrar_insumo`, `definir_embalagem_insumo`, `criar_receita_variacao`,
+  `copiar_receita_variacao`, `motivo_nao_excluir`, `excluir_cadastro`) e da
   fatia 5 (`registrar_despesa`, `cancelar_despesa`, `pagar_reembolso`, `cancelar_reembolso`,
   `registrar_aporte`, `cancelar_aporte`, `ajustar_caixa`) são funções da API usadas pelas
   telas (alerta 0029). Cada uma confere quem está chamando antes de fazer qualquer coisa; é
@@ -77,6 +80,9 @@ O efeito foi conferido por consulta.
   O 15 (concorrência) roda no Postgres local com duas sessões (ver `docs/testes.md`).
 - `testes/fatia5.sql`: idem, com os testes de aceite 10 e 11.
 - `testes/fatia6.sql`: idem, com o teste de aceite 13 e a cobertura de estoque.
+- `testes/fatia9.sql`: idem, com o cadastro simplificado (insumo com embalagem, receita no sabor,
+  copiar receita, exclusão segura). Roda inteiro no Postgres local; no Supabase use a variante sem
+  o `DELETE` direto (a integração pede confirmação para `DELETE`).
 - `testes/fatia8.sql`: idem, com o teste de aceite 17 (permissões) e a auditoria. No Supabase,
   roda sem as tentativas de apagar e de alterar sem filtro (pedem confirmação); essas ficam no
   Postgres local.

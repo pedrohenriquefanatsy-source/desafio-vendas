@@ -15,6 +15,10 @@ const campo = "min-h-toque w-full rounded-xl border border-borda bg-superficie p
 // Os itens vão para a Server Action num campo escondido "itens" (JSON).
 export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; iniciais: { insumo_id: string; quantidade: string }[] }) {
   const unidadeBase = (id: string) => insumos.find((i) => i.id === id)?.unidadeBase ?? "";
+  // Ao escolher o insumo, a unidade que já vem marcada é a embalagem (é assim que se compra), se ele tiver.
+  // A compra aberta pela lista de compras já traz a quantidade na unidade base, por isso lá não vale.
+  const unidadeAoEscolher = (id: string) =>
+    insumos.find((i) => i.id === id)?.unidades.some((u) => u.unidade === "embalagem") ? "embalagem" : unidadeBase(id);
   const [linhas, setLinhas] = useState<Linha[]>(() => {
     const prontas = iniciais
       .filter((i) => insumos.some((o) => o.id === i.insumo_id))
@@ -62,7 +66,7 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
               <select
                 value={l.insumo_id}
                 required
-                onChange={(e) => mudar(l.chave, { insumo_id: e.target.value, unidade: unidadeBase(e.target.value) })}
+                onChange={(e) => mudar(l.chave, { insumo_id: e.target.value, unidade: unidadeAoEscolher(e.target.value) })}
                 className={campo}
               >
                 <option value="">Escolha…</option>

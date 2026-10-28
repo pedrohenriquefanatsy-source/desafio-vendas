@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { Cartao, Campo, EstadoVazio, Selecao, Selo, TituloPagina } from "@/componentes/ui";
+import { Aviso, Cartao, Campo, EstadoVazio, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
+import { ItemEditavel } from "@/componentes/item-editavel";
 import { formatarPercentual, formatarReais } from "@/lib/numeros";
 import { exigirParticipante, ehAdmin } from "@/servicos/sessao";
 import { listarCustosVariacoes, type CustoVariacao } from "@/servicos/catalogo";
@@ -9,12 +10,13 @@ import { criarProduto } from "../acoes-catalogo";
 
 function aviso(v: CustoVariacao): string | null {
   if (v.kit_sem_componentes) return "Kit sem componentes";
-  if (v.sem_receita) return "Sem receita";
+  if (v.sem_receita) return "Falta a receita";
   if (v.sem_preco) return "Falta preço de insumo";
   return null;
 }
 
-export default async function Produtos() {
+export default async function Produtos({ searchParams }: PageProps<"/mais/produtos">) {
+  const { feito } = await searchParams;
   const perfil = await exigirParticipante();
   const admin = ehAdmin(perfil);
   const variacoes = await listarCustosVariacoes();
@@ -22,9 +24,50 @@ export default async function Produtos() {
 
   return (
     <>
-      <TituloPagina apoio="Preço, custo variável e margem de contribuição (MC) de cada produto, sem taxa de pagamento.">
-        Produtos e preços
-      </TituloPagina>
+      <TituloPagina apoio="Preço, custo e quanto sobra em cada venda (sem a taxa de pagamento).">Produtos e sabores</TituloPagina>
+      {feito === "excluido" ? (
+        <div className="mb-4">
+          <Aviso tipo="sucesso">Produto excluído.</Aviso>
+        </div>
+      ) : null}
+
+      {admin ? (
+        <div className="mb-4">
+          <ItemEditavel titulo="＋ Cadastrar produto" apoio="Nome, primeiro sabor e preço" aberto={produtos.length === 0}>
+            <Formulario acao={criarProduto} textoBotao="Cadastrar e montar a receita" limparAoSalvar>
+              <Campo id="nome" name="nome" rotulo="Nome do produto" placeholder="Ex.: Brownie bites" required maxLength={60} />
+              <Selecao id="tipo" name="tipo" rotulo="O que é" defaultValue="simples">
+                <option value="simples">Produto que eu faço (tem receita)</option>
+                <option value="kit">Kit (junta outros produtos, como um combo)</option>
+              </Selecao>
+              <Campo
+                id="sabor"
+                name="sabor"
+                rotulo="Nome do primeiro sabor (opcional)"
+                placeholder="Ex.: Tradicional"
+                maxLength={40}
+                dica="Deixe em branco se o produto não tem sabores. Os outros sabores você adiciona na tela do produto."
+              />
+              <Campo id="preco" name="preco" rotulo="Preço de venda (R$)" inputMode="decimal" placeholder="Ex.: 5,00" required />
+              <details className="rounded-xl border border-borda">
+                <summary className="flex min-h-toque cursor-pointer list-none items-center px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                  Mais opções: categoria, outros nomes
+                </summary>
+                <div className="flex flex-col gap-3 border-t border-borda p-3">
+                  <Campo id="categoria" name="categoria" rotulo="Categoria (opcional)" placeholder="Ex.: Doces" maxLength={40} />
+                  <Campo
+                    id="apelidos"
+                    name="apelidos"
+                    rotulo="Outros nomes (opcional)"
+                    placeholder="Ex.: bites, brownie"
+                    dica="Separe por vírgula. Ajuda a achar o produto na hora de vender."
+                  />
+                </div>
+              </details>
+            </Formulario>
+          </ItemEditavel>
+        </div>
+      ) : null}
 
       {produtos.length === 0 ? (
         <EstadoVazio titulo="Nenhum produto cadastrado">
@@ -58,7 +101,7 @@ export default async function Produtos() {
                         ) : (
                           <span className="text-right">
                             <span className={`block font-semibold tabular-nums ${(v.mc_unitaria ?? 0) < 0 ? "text-negativo" : ""}`}>
-                              MC {formatarReais(v.mc_unitaria)}
+                              Sobra {formatarReais(v.mc_unitaria)}
                             </span>
                             <span className="text-texto-suave tabular-nums">{formatarPercentual((v.mc_percentual ?? 0) * 100)}</span>
                           </span>
@@ -73,27 +116,6 @@ export default async function Produtos() {
         </div>
       )}
 
-      {admin ? (
-        <Cartao className="mt-6">
-          <h2 className="mb-3 font-semibold">Cadastrar produto</h2>
-          <Formulario acao={criarProduto} textoBotao="Cadastrar e configurar">
-            <Campo id="nome" name="nome" rotulo="Nome" placeholder="Ex.: Bolo clássico" required maxLength={60} />
-            <Selecao id="tipo" name="tipo" rotulo="Tipo" defaultValue="simples">
-              <option value="simples">Simples (tem receita própria)</option>
-              <option value="kit">Kit (formado por outros produtos, como a casadinha)</option>
-            </Selecao>
-            <Campo id="preco" name="preco" rotulo="Preço de venda (R$)" inputMode="decimal" placeholder="6,50" required />
-            <Campo id="categoria" name="categoria" rotulo="Categoria (opcional)" placeholder="Ex.: Bolos" maxLength={40} />
-            <Campo
-              id="apelidos"
-              name="apelidos"
-              rotulo="Outros nomes (opcional)"
-              placeholder="Ex.: combinado, combo"
-              dica="Separe por vírgula. Ajuda a achar o produto na hora de vender."
-            />
-          </Formulario>
-        </Cartao>
-      ) : null}
     </>
   );
 }

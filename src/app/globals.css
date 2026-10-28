@@ -1,36 +1,38 @@
 @import "tailwindcss";
 
 /*
- * Tokens visuais (docs/plano.md, Seção 6.4 da especificação).
- * Neutro e profissional. Cor só com significado: ação, positivo, negativo, alerta.
- * Contraste mínimo AA para leitura na rua.
+ * Tokens visuais (docs/plano.md, Seção 6.4 da especificação), tirados da logo Choc Bites:
+ * creme (fundo), chocolate (ação e texto) e rosa (acento). Cor só com significado:
+ * ação, positivo, negativo, alerta. O rosa só enfeita (selo de "hoje", aro do menu): nunca
+ * carrega texto, porque no creme ele tem pouco contraste. Contraste mínimo AA para a rua.
  */
 :root {
-  --fundo: #f5f5f4;
-  --superficie: #ffffff;
-  --borda: #e2e2df;
-  --texto: #1c1c1a;
-  --texto-suave: #57574f;
-  --acao: #1d4ed8;
-  --acao-texto: #ffffff;
-  --positivo: #15803d;
-  --negativo: #b91c1c;
-  --alerta: #a16207;
+  --fundo: #faf0e2;
+  --superficie: #fffbf5;
+  --borda: #ebd8c0;
+  --texto: #3a140a;
+  --texto-suave: #7a4b3a;
+  --acao: #541b0e;
+  --acao-texto: #fff6ea;
+  --acento: #e06d7a;
+  --positivo: #157a3c;
+  --negativo: #b3261e;
+  --alerta: #9a5b00;
   color-scheme: light;
 }
 
-/* Tema escuro, conforme a configuração do celular. Mesmos papéis de cor, com contraste
-   conferido sobre a superfície escura (texto 15:1, apoio 8:1, cores de significado ≥ 6:1;
-   botão de ação claro com texto escuro, 7:1). */
+/* Tema escuro, conforme a configuração do celular: chocolate bem escuro, com o rosa da logo como
+   cor de ação (texto escuro sobre ela, 7,6:1). Texto 16:1, apoio 9:1, cores de significado ≥ 6:1. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #121211;
-    --superficie: #1c1c1a;
-    --borda: #3a3a35;
-    --texto: #f2f2ef;
-    --texto-suave: #b4b4ab;
-    --acao: #7c9cff;
-    --acao-texto: #0b1020;
+    --fundo: #1e0f09;
+    --superficie: #2a1710;
+    --borda: #4a2c20;
+    --texto: #f9eddd;
+    --texto-suave: #cdb19d;
+    --acao: #f08b9b;
+    --acao-texto: #2a0c12;
+    --acento: #f08b9b;
     --positivo: #4ade80;
     --negativo: #f87171;
     --alerta: #fbbf24;
@@ -46,6 +48,7 @@
   --color-texto-suave: var(--texto-suave);
   --color-acao: var(--acao);
   --color-acao-texto: var(--acao-texto);
+  --color-acento: var(--acento);
   --color-positivo: var(--positivo);
   --color-negativo: var(--negativo);
   --color-alerta: var(--alerta);

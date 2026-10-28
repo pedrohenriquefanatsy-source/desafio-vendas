@@ -100,7 +100,7 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
               ) : null}
             </>
           ) : null}
-          <dt className="text-texto-suave">Margem (MC)</dt>
+          <dt className="text-texto-suave">Sobra da venda</dt>
           <dd className="text-right tabular-nums">
             {v.margem_total == null ? (v.tipo === "encomenda" ? "na entrega" : "sem custo") : formatarReais(v.margem_total)}
           </dd>

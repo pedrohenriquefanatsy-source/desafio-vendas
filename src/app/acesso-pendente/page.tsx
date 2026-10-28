@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Cartao, LinkBotao, classeBotao } from "@/componentes/ui";
+import { LogoGrande } from "@/componentes/logo";
 import { obterPerfil } from "@/servicos/sessao";
 import { sair } from "../acoes-sessao";
 
-export const metadata: Metadata = { title: "Acesso pendente · Desafio de Vendas" };
+export const metadata: Metadata = { title: "Acesso pendente" };
 
 export default async function AcessoPendente() {
   const perfil = await obterPerfil();
@@ -13,6 +14,7 @@ export default async function AcessoPendente() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-8">
+      <LogoGrande />
       <Cartao>
         <h1 className="text-xl font-semibold">Acesso ainda não liberado</h1>
         <p className="mt-2 text-texto-suave">

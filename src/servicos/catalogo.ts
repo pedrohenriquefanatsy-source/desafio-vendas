@@ -29,9 +29,8 @@ export const UNIDADES_BASE = [
 ] as const;
 
 const DUP_INSUMO = { duplicado: "Já existe um insumo com esse nome." };
-const DUP_RECEITA = { duplicado: "Já existe uma receita com esse nome." };
 const DUP_PRODUTO = { duplicado: "Já existe um produto com esse nome." };
-const DUP_VARIACAO = { duplicado: "Esse produto já tem uma variação com esse nome." };
+const DUP_VARIACAO = { duplicado: "Esse produto já tem um sabor com esse nome." };
 
 function falhou(erro: { code?: string; message?: string }, contexto?: { duplicado?: string }): Resultado {
   return { ok: false, erro: mensagemDeErro(erro, contexto) };
@@ -56,16 +55,17 @@ export async function listarInsumos(): Promise<Insumo[]> {
 
 export async function obterInsumo(id: string) {
   const s = await db();
-  const [insumo, unidades, historico] = await Promise.all([
+  const [insumo, unidades, historico, estoque] = await Promise.all([
     s.from("insumos").select("*").eq("id", id).maybeSingle(),
     lista(s.from("v_unidades_insumo").select("*").eq("insumo_id", id).order("personalizada").order("quantidade_em_base")),
     lista(s.from("insumo_custos_historico").select("*").eq("insumo_id", id).order("registrado_em", { ascending: false }).limit(20)),
+    s.from("v_estoque_insumos").select("saldo").eq("insumo_id", id).maybeSingle(),
   ]);
   if (insumo.error) throw new Error(mensagemDeErro(insumo.error));
   if (!insumo.data) return null;
   const { data: conversoes, error } = await s.from("insumo_conversoes").select("*").eq("insumo_id", id).order("unidade");
   if (error) throw new Error(mensagemDeErro(error));
-  return { insumo: insumo.data, unidades, conversoes: conversoes ?? [], historico };
+  return { insumo: insumo.data, unidades, conversoes: conversoes ?? [], historico, saldo: Number(estoque.data?.saldo ?? 0) };
 }
 
 export async function unidadesPorInsumo(): Promise<Record<string, UnidadeInsumo[]>> {
@@ -76,11 +76,27 @@ export async function unidadesPorInsumo(): Promise<Record<string, UnidadeInsumo[
   return mapa;
 }
 
-export async function criarInsumo(dados: { nome: string; tipo: TipoInsumo; unidade_base: string }): Promise<Resultado & { id?: string }> {
+export async function cadastrarInsumo(dados: {
+  chave: string;
+  nome: string;
+  tipo: TipoInsumo;
+  unidade_base: string;
+  tamanho: number | null;
+  preco: number | null;
+  estoque: number | null;
+}): Promise<Resultado & { id?: string }> {
   const s = await db();
-  const { data, error } = await s.from("insumos").insert(dados).select("id").single();
+  const { data, error } = await s.rpc("cadastrar_insumo", {
+    p_chave: dados.chave,
+    p_nome: dados.nome,
+    p_tipo: dados.tipo,
+    p_unidade_base: dados.unidade_base,
+    ...(dados.tamanho != null ? { p_tamanho: dados.tamanho } : {}),
+    ...(dados.preco != null ? { p_preco: dados.preco } : {}),
+    ...(dados.estoque != null ? { p_estoque: dados.estoque } : {}),
+  });
   if (error) return falhou(error, DUP_INSUMO);
-  return { ok: true, mensagem: `${dados.nome} cadastrado.`, id: data.id };
+  return { ok: true, mensagem: `${dados.nome} cadastrado.`, id: data };
 }
 
 export async function alterarInsumo(
@@ -94,11 +110,11 @@ export async function alterarInsumo(
   return { ok: true, mensagem: "Alterações salvas." };
 }
 
-export async function definirPrecoInsumo(id: string, preco: number, unidade: string): Promise<Resultado> {
+export async function definirEmbalagemInsumo(id: string, tamanho: number, preco: number): Promise<Resultado> {
   const s = await db();
-  const { error } = await s.rpc("definir_custo_insumo", { p_insumo: id, p_preco: preco, p_unidade: unidade });
+  const { error } = await s.rpc("definir_embalagem_insumo", { p_insumo: id, p_tamanho: tamanho, p_preco: preco });
   if (error) return falhou(error);
-  return { ok: true, mensagem: "Preço salvo. Custos das receitas e produtos atualizados." };
+  return { ok: true, mensagem: "Embalagem e preço salvos. Custos das receitas e produtos atualizados." };
 }
 
 export async function criarConversao(insumoId: string, unidade: string, quantidade: number): Promise<Resultado> {
@@ -124,42 +140,7 @@ export async function removerConversao(id: string): Promise<Resultado> {
   return { ok: true, mensagem: "Conversão removida." };
 }
 
-// ── Receitas ────────────────────────────────────────────────────────────────
-
-export async function listarReceitas(): Promise<CustoReceita[]> {
-  const s = await db();
-  return lista(s.from("v_custo_receitas").select("*").order("ativa", { ascending: false }).order("nome"));
-}
-
-export async function obterReceita(id: string) {
-  const s = await db();
-  const [receita, custo, itens] = await Promise.all([
-    s.from("receitas").select("*").eq("id", id).maybeSingle(),
-    s.from("v_custo_receitas").select("*").eq("receita_id", id).maybeSingle(),
-    lista(s.from("v_custo_receita_itens").select("*").eq("receita_id", id).order("insumo")),
-  ]);
-  if (receita.error) throw new Error(mensagemDeErro(receita.error));
-  if (!receita.data) return null;
-  return { receita: receita.data, custo: custo.data, itens };
-}
-
-export async function criarReceita(nome: string, rendimento: number): Promise<Resultado & { id?: string }> {
-  const s = await db();
-  const { data, error } = await s.from("receitas").insert({ nome, rendimento_unidades: rendimento }).select("id").single();
-  if (error) return falhou(error, DUP_RECEITA);
-  return { ok: true, mensagem: `Receita ${nome} criada.`, id: data.id };
-}
-
-export async function alterarReceita(
-  id: string,
-  dados: { nome: string; rendimento_unidades: number; observacao: string | null; ativa: boolean },
-): Promise<Resultado> {
-  const s = await db();
-  const { data, error } = await s.from("receitas").update(dados).eq("id", id).select("id");
-  if (error) return falhou(error, DUP_RECEITA);
-  if (!data.length) return falhou({ code: "42501" });
-  return { ok: true, mensagem: "Alterações salvas." };
-}
+// ── Receitas: itens (a receita em si nasce junto com o sabor, pelo banco) ────
 
 export async function adicionarItemReceita(receitaId: string, insumoId: string, quantidade: number, unidade: string): Promise<Resultado> {
   const s = await db();
@@ -212,7 +193,16 @@ export async function obterProduto(id: string) {
         lista(s.from("v_margem_formas").select("*").in("variacao_id", ids).order("taxa_percentual")),
       ])
     : [[], [], []];
-  return { produto, custos, embalagens, componentes, margens };
+  const receitaIds = [...new Set(custos.map((c) => c.receita_id).filter((r): r is string => Boolean(r)))];
+  const [receitas, itensReceita, custosReceita, usoReceita] = receitaIds.length
+    ? await Promise.all([
+        lista(s.from("receitas").select("*").in("id", receitaIds)),
+        lista(s.from("v_custo_receita_itens").select("*").in("receita_id", receitaIds).order("insumo")),
+        lista(s.from("v_custo_receitas").select("*").in("receita_id", receitaIds)),
+        lista(s.from("v_custo_variacoes").select("receita_id, variacao_id, produto, variacao").in("receita_id", receitaIds)),
+      ])
+    : [[], [], [], []];
+  return { produto, custos, embalagens, componentes, margens, receitas, itensReceita, custosReceita, usoReceita };
 }
 
 export async function criarProduto(dados: {
@@ -221,13 +211,14 @@ export async function criarProduto(dados: {
   tipo: TipoProduto;
   apelidos: string[];
   preco: number;
+  sabor: string;
 }): Promise<Resultado & { id?: string }> {
   const s = await db();
-  const { preco, ...produto } = dados;
+  const { preco, sabor, ...produto } = dados;
   const { data, error } = await s.from("produtos").insert(produto).select("id").single();
   if (error) return falhou(error, DUP_PRODUTO);
-  // Todo produto nasce com uma variação "Única"; sabores entram depois.
-  const v = await s.from("variacoes").insert({ produto_id: data.id, nome: "Única", preco_venda: preco });
+  // Todo produto nasce com um sabor ("Única" se ele não tem sabores); os outros entram depois.
+  const v = await s.from("variacoes").insert({ produto_id: data.id, nome: sabor || "Única", preco_venda: preco });
   if (v.error) return falhou(v.error);
   return { ok: true, mensagem: `${dados.nome} cadastrado.`, id: data.id };
 }
@@ -243,28 +234,34 @@ export async function alterarProduto(
   return { ok: true, mensagem: "Alterações salvas." };
 }
 
-export async function criarVariacao(produtoId: string, nome: string, preco: number, receitaId: string | null): Promise<Resultado> {
+export async function criarVariacao(produtoId: string, nome: string, preco: number): Promise<Resultado & { id?: string }> {
   const s = await db();
-  const { error } = await s.from("variacoes").insert({ produto_id: produtoId, nome, preco_venda: preco, receita_id: receitaId });
+  // O sabor novo entra depois dos que já existem (na ordem em que foram criados).
+  const ultimo = await s.from("variacoes").select("ordem").eq("produto_id", produtoId).order("ordem", { ascending: false }).limit(1).maybeSingle();
+  const { data, error } = await s
+    .from("variacoes")
+    .insert({ produto_id: produtoId, nome, preco_venda: preco, ordem: (ultimo.data?.ordem ?? -1) + 1 })
+    .select("id")
+    .single();
   if (error) return falhou(error, DUP_VARIACAO);
-  return { ok: true, mensagem: `Variação ${nome} criada.` };
+  return { ok: true, mensagem: `Sabor ${nome} criado.`, id: data.id };
 }
 
 export async function alterarVariacao(
   id: string,
-  dados: { nome: string; preco_venda: number; receita_id: string | null; ativa: boolean },
+  dados: { nome: string; preco_venda: number; ativa: boolean },
 ): Promise<Resultado> {
   const s = await db();
   const { data, error } = await s.from("variacoes").update(dados).eq("id", id).select("id");
   if (error) return falhou(error, DUP_VARIACAO);
   if (!data.length) return falhou({ code: "42501" });
-  return { ok: true, mensagem: "Variação salva. Custo e margem recalculados." };
+  return { ok: true, mensagem: "Sabor salvo. Custo e margem recalculados." };
 }
 
 export async function adicionarEmbalagem(variacaoId: string, insumoId: string, quantidade: number, unidade: string): Promise<Resultado> {
   const s = await db();
   const { error } = await s.from("variacao_embalagens").insert({ variacao_id: variacaoId, insumo_id: insumoId, quantidade, unidade });
-  if (error) return falhou(error, { duplicado: "Essa embalagem já está na variação." });
+  if (error) return falhou(error, { duplicado: "Essa embalagem já está neste sabor." });
   return { ok: true, mensagem: "Embalagem adicionada." };
 }
 
@@ -291,4 +288,47 @@ export async function removerComponente(id: string): Promise<Resultado> {
   if (error) return falhou(error);
   if (!data.length) return falhou({ code: "42501" });
   return { ok: true, mensagem: "Produto removido do kit." };
+}
+
+// ── Receita dentro do sabor ─────────────────────────────────────────────────
+
+export async function criarReceitaSabor(variacaoId: string, rendimento: number): Promise<Resultado> {
+  const s = await db();
+  const { error } = await s.rpc("criar_receita_variacao", { p_variacao: variacaoId, p_rendimento: rendimento });
+  if (error) return falhou(error);
+  return { ok: true, mensagem: "Receita criada. Agora adicione os ingredientes." };
+}
+
+export async function copiarReceitaSabor(origemId: string, destinoId: string): Promise<Resultado> {
+  const s = await db();
+  const { error } = await s.rpc("copiar_receita_variacao", { p_origem: origemId, p_destino: destinoId });
+  if (error) return falhou(error);
+  return { ok: true, mensagem: "Receita copiada. Troque o que muda neste sabor." };
+}
+
+export async function alterarRendimento(receitaId: string, rendimento: number): Promise<Resultado> {
+  const s = await db();
+  const { data, error } = await s.from("receitas").update({ rendimento_unidades: rendimento }).eq("id", receitaId).select("id");
+  if (error) return falhou(error);
+  if (!data.length) return falhou({ code: "42501" });
+  return { ok: true, mensagem: "Rendimento salvo. Custo por unidade recalculado." };
+}
+
+// ── Excluir o que nunca foi usado ───────────────────────────────────────────
+
+export type TipoExclusao = "insumo" | "variacao" | "produto";
+
+// null = pode excluir; texto = por que não pode (e o que fazer no lugar).
+export async function motivoNaoExcluir(tipo: TipoExclusao, id: string): Promise<string | null> {
+  const s = await db();
+  const { data, error } = await s.rpc("motivo_nao_excluir", { p_tipo: tipo, p_id: id });
+  if (error) throw new Error(mensagemDeErro(error));
+  return data;
+}
+
+export async function excluirCadastro(tipo: TipoExclusao, id: string): Promise<Resultado> {
+  const s = await db();
+  const { error } = await s.rpc("excluir_cadastro", { p_tipo: tipo, p_id: id });
+  if (error) return falhou(error);
+  return { ok: true };
 }

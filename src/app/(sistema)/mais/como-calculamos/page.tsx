@@ -8,16 +8,18 @@ const BLOCOS: { titulo: string; itens: string[] }[] = [
   {
     titulo: "Custo de cada produto",
     itens: [
-      "Custo da receita = soma de (quantidade de cada insumo × preço por grama, ml ou unidade).",
+      "Preço de cada insumo por grama (ou ml, ou unidade) = preço da embalagem ÷ quanto vem nela. Ex.: R$ 16,00 por 500 g = R$ 0,032 por g.",
+      "Custo da receita = soma de (quantidade de cada insumo × preço por grama, ml ou unidade). Cada sabor tem a sua receita.",
       "Custo por unidade = custo da receita ÷ quantas unidades ela rende + embalagens de cada unidade.",
       "Kit = soma do custo dos produtos que o formam + a embalagem própria do kit.",
       "O preço de cada insumo é o da última compra (ou o que o administrador cadastrou).",
+      "Sobra (margem de contribuição, MC) = preço de venda − custo. É o que sobra de cada unidade para pagar despesas e dar lucro.",
     ],
   },
   {
     titulo: "Margem de cada venda",
     itens: [
-      "Margem (MC) = valor da venda − desconto − custo do produto naquele momento − taxa da forma de pagamento.",
+      "Sobra da venda (margem) = valor da venda − desconto − custo do produto naquele momento − taxa da forma de pagamento.",
       "O custo e a margem ficam guardados na venda: se um insumo ficar mais caro depois, as vendas passadas não mudam.",
       "Desconto da venda é dividido entre os itens pelo valor de cada um.",
       "Encomenda só entra na conta quando é entregue. Doação entra só com o custo (margem negativa).",

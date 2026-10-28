@@ -87,3 +87,28 @@ export async function definirDemanda(desafioId: string, variacaoId: string, unid
   if (!r.data?.length) return { ok: false, erro: "Você não tem permissão para isso. Se precisar, peça ao administrador." };
   return { ok: true, mensagem: unidades == null ? "Estimativa retirada." : "Estimativa salva." };
 }
+
+// "Primeiros passos" do administrador: o que falta para o sistema calcular custo, meta e resultado.
+export type Passo = { feito: boolean; texto: string; href: string; opcional?: boolean };
+
+export async function obterPassos(): Promise<Passo[]> {
+  const s = await criarClienteServidor();
+  const [desafio, insumos, sabores, pessoas] = await Promise.all([
+    obterDesafioAtual(),
+    s.from("insumos").select("custo_atual").eq("ativo", true),
+    s.from("v_custo_variacoes").select("custo_unitario").eq("ativa", true).eq("tipo", "simples"),
+    s.from("perfis").select("id", { count: "exact", head: true }).eq("ativo", true),
+  ]);
+  const listaInsumos = lista(insumos);
+  const listaSabores = lista(sabores);
+  return [
+    { feito: desafio?.situacao === "em_andamento", texto: "Desafio com datas e meta, em andamento", href: desafio ? `/mais/desafios/${desafio.id}` : "/mais/desafios/novo" },
+    {
+      feito: listaInsumos.length > 0 && listaInsumos.every((i) => i.custo_atual != null),
+      texto: listaInsumos.length === 0 ? "Insumos cadastrados, com embalagem e preço" : "Todos os insumos com preço",
+      href: "/mais/insumos",
+    },
+    { feito: listaSabores.some((v) => v.custo_unitario != null), texto: "Um produto com receita e custo calculado", href: "/mais/produtos" },
+    { feito: (pessoas.count ?? 0) > 1, texto: "Chamar os outros participantes", href: "/mais/participantes", opcional: true },
+  ];
+}

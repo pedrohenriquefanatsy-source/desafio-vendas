@@ -332,3 +332,61 @@
 - Filtros só onde fazem sentido: período nas listas com data (o dia é o de Fortaleza);
   produto em vendas, itens, estoque e produção; participante em vendas, compras, despesas e
   reembolsos. O período vem preenchido com as datas do desafio.
+
+## 12. Cadastro simplificado e marca (fatia 9, 28/10/2026)
+
+Mudanças pedidas pelo administrador depois de usar o sistema: menos passos, a receita dentro do
+produto e poder excluir o que nunca foi usado. Nenhuma conta mudou (custo, estoque, margem e
+caixa saem das mesmas tabelas e views).
+
+### Insumo em uma tela
+- O insumo nasce com **embalagem e preço**: "pacote de 500 g por R$ 16,00". Por baixo, vira a
+  unidade de compra `embalagem` do insumo (1 embalagem = 500 g) e o preço é salvo por ela.
+- O custo por grama (ou ml, ou unidade) = preço ÷ quanto vem na embalagem, calculado pelo banco
+  sem arredondar antes (R$ 7,90 ÷ 395 g = R$ 0,02/g). A tela mostra a conta antes de salvar.
+- Quantidade que já existe em estoque pode ser informada no cadastro: entra como **contagem**
+  ("Estoque inicial"), não mexe no caixa. Estoque só muda por compra, produção, venda, perda ou
+  contagem; ninguém digita saldo solto.
+- Embalagem e preço ficam em branco juntos ou preenchidos juntos. Sem eles, o insumo fica "sem
+  preço" e o custo dos produtos que o usam fica em branco (nunca um custo menor que o real).
+- Na compra, a unidade já vem como `embalagem` quando o insumo tem uma. Cada compra continua
+  atualizando o preço (custo atual = última compra, D9).
+- Outras unidades de compra (lata, caixa…) ficam em "Outras unidades de compra" (avançado).
+
+### Receita dentro do sabor
+- Não há mais tela de Receitas. Cada **sabor** (variação) de um produto simples tem a receita
+  dele, na tela do produto: quantas unidades uma fornada rende e os ingredientes.
+- Por baixo continua existindo uma receita ligada ao sabor, com o nome "Produto · Sabor". O nome
+  acompanha quando o produto ou o sabor é renomeado.
+- **Copiar de outro sabor**: copia ingredientes, rendimento e embalagem. A cópia é independente
+  (mudar um sabor não muda o outro). Ao criar um sabor novo já dá para começar com a cópia.
+- Kit continua sem receita: o custo vem dos produtos que o formam mais a embalagem própria.
+- Nos textos das telas, "variação" virou **sabor** e "MC" virou **sobra** (preço − custo). As
+  planilhas exportadas mantêm os nomes técnicos.
+
+### Excluir só o que nunca foi usado
+- **Pode excluir** (só o administrador): insumo, sabor e produto **sem** compra, venda, produção,
+  receita em uso, embalagem de produto ou kit. Contagens de estoque (estoque inicial, correção
+  de contagem) não contam como uso e saem junto, deixando rastro na auditoria.
+- **Não pode** quando já tem histórico: aí só se **desativa** ("Em uso" / "À venda"), que tira
+  das telas sem apagar o passado. Compra cancelada continua sendo histórico.
+- O último sabor de um produto não se exclui sozinho (exclui-se o produto).
+- Excluir um sabor leva a receita, os ingredientes e a embalagem dele; excluir um produto leva
+  todos os sabores. Tudo fica na Auditoria (quem, quando e o que existia).
+- A tela só mostra "Excluir" quando o banco diz que dá; quando não dá, explica o motivo e o que
+  fazer. O banco confere de novo na hora de excluir (mesma regra, não só na tela).
+
+### Meta com resultado negativo
+- O resultado pode ficar negativo (despesas e perdas maiores que a margem das vendas). O Início
+  mostra o valor em vermelho, a barra da meta fica vazia (0%), não mostra porcentagem negativa e
+  explica: "o resultado está negativo… a meta só volta a andar quando as vendas cobrirem esse
+  valor". "Falta" = meta − resultado (passa da meta).
+
+### Marca e aplicativo
+- Identidade visual da logo Choc Bites: creme (fundo), chocolate (ação e texto) e rosa (acento
+  só decorativo). Contraste AA conferido; o tema escuro usa chocolate escuro com o rosa como cor
+  de ação. A logo aparece na entrada e no topo.
+- O site pode ser instalado no celular ("Adicionar à tela inicial") com o ícone da logo, nome
+  "Choc Bites", abrindo como aplicativo (manifesto + ícone do iPhone + ícone redondo do Android).
+- Menu Mais em grupos: Cadastros, Desafio, Relatórios e ajuda. A lista de passos iniciais
+  aparece no Início do administrador enquanto faltar o essencial.

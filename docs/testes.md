@@ -258,6 +258,47 @@ Sem mudança no banco.
 
 Revisão de usabilidade (Nielsen e Leis de UX) em `docs/revisao-ux.md`.
 
+## Fatia 9 — Cadastro simplificado e marca Choc Bites (28/10/2026)
+
+Pedido do administrador depois do uso real: menos passos no cadastro, receita dentro do produto,
+poder excluir o que nunca foi usado, meta com resultado negativo e a logo no aplicativo.
+
+### Banco (`supabase/testes/fatia9.sql`, desfaz tudo no fim)
+Passou no Postgres local e no projeto de teste (variante sem o `DELETE` direto, que pede
+confirmação na integração; o resultado do teste remoto é a mensagem `OK_FATIA9_REMOTO`).
+- Insumo em uma chamada: R$ 16,00 por 500 g = R$ 0,032/g; R$ 7,90 por 395 g = R$ 0,02/g exato;
+  pacote de 100 por R$ 12 = R$ 0,12 cada; sem embalagem e preço nasce sem custo.
+- Estoque inicial entra como contagem ("Estoque inicial"), sem mexer no caixa.
+- Recusas com mensagem clara: nome repetido, tamanho sem preço, unidade inválida, tamanho zero;
+  membro e usuário não logado não cadastram nem excluem.
+- Trocar embalagem e preço não duplica a embalagem e fica no histórico de preço.
+- Receita dentro do sabor: nasce ligada, com o nome "Produto · Sabor"; custo do sabor = receita ÷
+  rendimento + embalagem (0,795 + 0,12 = 0,915). O nome acompanha produto e sabor renomeados.
+- Copiar de outro sabor: ingredientes, rendimento e embalagem; cópia independente; recusa copiar
+  de sabor sem receita e por cima de ingredientes existentes.
+- Compra em "embalagem" soma 2 × 395 g; produção e venda do sabor com receita embutida funcionam.
+- Exclusão: insumo em receita ou embalagem, com compra (mesmo cancelada), sabor com venda ou em
+  kit, produto com sabor vendido: bloqueados (na tela e no banco), com o motivo. Insumo só com
+  contagem, sabor sem uso, kit e produto sem uso: saem com receita, ingredientes, embalagem,
+  componentes e contagens, e ficam na auditoria com o que existia. O último sabor só sai com o produto.
+
+### Telas no navegador em 375 px (`testes-e2e/fatia9.mjs`, Supabase de teste): 46 de 46
+Manifesto e ícones abrem sem entrar; ícone do iPhone; logo na entrada e no topo; fundo creme;
+tema escuro chocolate; item ativo da barra com o rosa; menu Mais em grupos e sem Receitas; a conta
+aparece antes de salvar o insumo; estoque inicial de 1,5 kg; unidade "embalagem" já marcada na
+compra; produto com receita (fornada R$ 14,30); novo sabor com receita copiada, independente do
+primeiro; excluir sabor, insumo e produto sem uso; insumo em receita sem botão Excluir e com o
+motivo; membro sem editar nem excluir; resultado negativo explicado, barra em 0% e sem
+porcentagem negativa; sem rolagem lateral e alvos de toque ≥ 44 px.
+
+### Os testes de tela antigos foram adaptados e rodados de novo
+Fatias 1 a 8 (cadastro pelos novos formulários, "Sobra da venda", cores do tema escuro):
+fatia 1: 29, fatia 2: 25, fatia 3: 32, fatia 4: 29, fatia 5: 26, fatia 6: 16, fatia 7: 22,
+fatia 8: 22, fatia 9: 46 — **247 verificações, todas passaram**.
+Os testes pegaram um erro meu durante o trabalho: na "compra da lista de compras" a quantidade vem
+em gramas e eu tinha deixado a unidade padrão como "embalagem" (compraria 395 embalagens).
+Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insumo na mão.
+
 ## Resumo dos 18 testes de aceite (Seção 10)
 
 | # | Teste | Resultado | Onde está a prova |
@@ -279,5 +320,5 @@ Revisão de usabilidade (Nielsen e Leis de UX) em `docs/revisao-ux.md`.
 | 15 | Concorrência no último item | Passou (a 2ª venda esperou e recebeu o aviso) | Fatia 4: Postgres local, duas sessões |
 | 16 | Totais do XLSX batem com o SQL | Passou (31 vendas; R$ 467,50; caixa R$ 120,10) | Fatia 7 |
 | 17 | Permissões | Passou | Fatias 1 a 8, consolidado na 8 |
-| 18 | Celular (375 px): venda, despesa, produção, estoque | Passou (201 verificações, sem rolagem lateral, alvos ≥ 44 px, claro e escuro) | Fatias 1 a 8 |
+| 18 | Celular (375 px): venda, despesa, produção, estoque | Passou (247 verificações, sem rolagem lateral, alvos ≥ 44 px, claro e escuro) | Fatias 1 a 9 |
 

@@ -3,6 +3,7 @@
 // Refaz pelas telas os testes de aceite 4 (produção) e 5 (falta de insumo).
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
+import { adicionarEmbalagem, cadastrarInsumo, criarProduto, idInsumo, montarReceita } from "./cadastro.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
@@ -43,17 +44,6 @@ async function entrar(p, quem) {
   await esperarPagina(p, /^\/$/);
 }
 
-async function criarInsumo(p, n, tipo, base) {
-  await p.goto(`${BASE}/mais/insumos`);
-  await p.fill("#nome", n);
-  await p.selectOption("#tipo", tipo);
-  await p.selectOption("#unidade_base", base);
-  await p.getByRole("button", { name: "Cadastrar e definir o preço" }).click();
-  await esperarPagina(p, /^\/mais\/insumos\/[0-9a-f-]{36}$/);
-  await p.getByText("Sem preço ainda").waitFor();
-  return p.url().split("/").pop();
-}
-
 // Preenche o item n (1, 2…) da tela de compra.
 async function itemCompra(p, n, { insumo, quantidade, unidade, valor }) {
   const g = p.getByRole("group", { name: `Item ${n}` });
@@ -76,53 +66,25 @@ await entrar(p, admin);
 const FARINHA = nome("Farinha");
 const LC = nome("Leite condensado");
 const POTE = nome("Pote");
-const MASSA = nome("Massa");
 const BOLO = nome("Bolo");
 
-const idFarinha = await criarInsumo(p, FARINHA, "ingrediente", "g");
-await criarInsumo(p, LC, "ingrediente", "g");
-await p.fill("#nova-unidade", "cx");
-await p.fill("#nova-qtd", "395");
-await p.getByRole("button", { name: "Adicionar unidade" }).click();
-await p.getByText("1 cx = ").waitFor();
-await criarInsumo(p, POTE, "embalagem", "und");
+await cadastrarInsumo(p, BASE, { nome: FARINHA, tamanho: "1000", preco: "6" });
+const idFarinha = await idInsumo(p, BASE, FARINHA);
+await cadastrarInsumo(p, BASE, { nome: LC, tamanho: "395", preco: "7,90" });
+await cadastrarInsumo(p, BASE, { nome: POTE, tipo: "embalagem", base: "und", tamanho: "1", preco: "0,50" });
 
-await p.goto(`${BASE}/mais/receitas`);
-await p.fill("#nome", MASSA);
-await p.fill("#rendimento", "10");
-await p.getByRole("button", { name: "Cadastrar e adicionar insumos" }).click();
-await esperarPagina(p, /^\/mais\/receitas\/[0-9a-f-]{36}$/);
-for (const [insumo, qtd, un] of [[FARINHA, "500", "g"], [LC, "1", "cx"]]) {
-  await p.selectOption("#novo-insumo", { label: insumo });
-  await p.fill("#novo-quantidade", qtd);
-  await p.selectOption("#novo-unidade", un);
-  await p.getByRole("button", { name: "Adicionar", exact: true }).click();
-  await p.getByText(insumo, { exact: true }).first().waitFor();
-}
-
-await p.goto(`${BASE}/mais/produtos`);
-await p.fill("#nome", BOLO);
-await p.selectOption("#tipo", "simples");
-await p.fill("#preco", "8");
-await p.getByRole("button", { name: "Cadastrar e configurar" }).click();
-await esperarPagina(p, /^\/mais\/produtos\/[0-9a-f-]{36}$/);
-await p.getByText("Alterar variação").click();
-await p.locator('select[name="receita_id"]').first().selectOption({ label: `${MASSA} (rende 10)` });
-await p.getByRole("button", { name: "Salvar", exact: true }).first().click();
-await sucesso(p).waitFor();
-await p.getByText("Adicionar embalagem").click();
-await p.locator('select[name="insumo_id"]').last().selectOption({ label: POTE });
-await p.getByRole("button", { name: "Adicionar", exact: true }).last().click();
-await sucesso(p).waitFor();
+await criarProduto(p, BASE, { nome: BOLO, preco: "8" });
+await montarReceita(p, { rendimento: 10, ingredientes: [[FARINHA, "500", "g"], [LC, "1", "embalagem"]] });
+await adicionarEmbalagem(p, POTE);
 
 // ── Compra pelo caixa, com 3 itens em kg, cx e und ──────────────────────────
 await p.goto(`${BASE}/compras/nova`);
 await itemCompra(p, 1, { insumo: FARINHA, quantidade: "1", unidade: "kg", valor: "6,00" });
 await p.getByRole("button", { name: "Adicionar item" }).click();
-await itemCompra(p, 2, { insumo: LC, quantidade: "1", unidade: "cx", valor: "7,90" });
+await itemCompra(p, 2, { insumo: LC, quantidade: "1", unidade: "embalagem", valor: "7,90" });
 await p.getByRole("button", { name: "Adicionar item" }).click();
 await itemCompra(p, 3, { insumo: POTE, quantidade: "10", unidade: "und", valor: "5" });
-await p.getByText("1 cx = 395 g").waitFor();
+await p.getByText("1 embalagem = 395 g").waitFor();
 confere(/Total da compra\s?R\$\s?18,90/.test(await texto(p)), "Compra: total de R$ 18,90 aparece antes de salvar");
 await verificarTela(p, "Nova compra");
 await p.screenshot({ path: `${CAPTURAS}/01-nova-compra.png`, fullPage: true });
