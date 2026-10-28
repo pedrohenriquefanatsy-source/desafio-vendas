@@ -112,7 +112,11 @@ confere(/R\$\s?16,00 por embalagem de 500 g/.test(t) && /R\$\s?0,032\/g/.test(t)
 confere(/Em estoque\s?1,5 kg/.test(t), "Estoque inicial de 1500 g aparece como 1,5 kg");
 await p.goto(`${BASE}/compras/nova`);
 await p.getByRole("group", { name: "Item 1" }).locator("select").first().selectOption({ label: CHOC });
-confere((await p.getByRole("group", { name: "Item 1" }).locator("select").nth(1).inputValue()) === "embalagem", "Na compra, a unidade já vem como “embalagem”");
+{
+  const item = p.getByRole("group", { name: "Item 1" });
+  await item.getByText("Embalagem de 500 g").waitFor();
+  confere((await item.locator("select").count()) === 1, "Na compra, não há escolha de unidade: só o insumo");
+}
 
 // ── Produto com sabores e a receita dentro ──────────────────────────────────
 const BITES = nome("Bites");

@@ -390,3 +390,42 @@ caixa saem das mesmas tabelas e views).
   "Choc Bites", abrindo como aplicativo (manifesto + ícone do iPhone + ícone redondo do Android).
 - Menu Mais em grupos: Cadastros, Desafio, Relatórios e ajuda. A lista de passos iniciais
   aparece no Início do administrador enquanto faltar o essencial.
+
+## 13. Compra sem trocar unidade, cliente e bairro, receita de uma vez (fatia 10, 28/10/2026)
+
+Pedido do administrador depois de usar o sistema.
+
+### Compra de insumo já cadastrado
+- A unidade vem do cadastro do insumo: se ele tem **embalagem** (ex.: pacote de 500 g), a compra é
+  em embalagens; se não tem, é na unidade base (g, ml, und). Não há escolha de unidade.
+- A tela mostra a embalagem e o **último preço** (R$ 16,00 · R$ 0,032/g). A pessoa só informa
+  quantas embalagens comprou e quanto pagou. O valor já vem sugerido (quantidade × último preço)
+  e pode ser corrigido; depois de corrigido, não é mais sobrescrito.
+- Comprou em outro tamanho de embalagem? Cadastra-se **outro insumo** (a tela avisa).
+- A lista de compras ("falta insumo") abre a compra com a falta convertida em embalagens inteiras
+  (arredonda para cima).
+- O banco não mudou nesta parte: a compra continua indo como quantidade + unidade + valor.
+
+### Cliente, bairro e "cliente desconhecido" na venda
+- Três campos novos na venda: **nome do cliente** (opcional), **bairro** (opcional, 2 a 60 letras)
+  e **cliente desconhecido** (marcação). Desconhecido e nome são excludentes (o banco confere).
+- A tela começa em "Desconhecido" para vender rápido; "Informar cliente" mostra o nome, com
+  sugestão dos clientes já cadastrados, e o bairro vem sozinho quando o cliente já é conhecido.
+- **Venda pendente, parcial ou encomenda com valor a receber exige o nome**: não dá para cobrar
+  de um desconhecido. Nesses casos "Desconhecido" fica desligado. Doação não exige nada.
+- Nome e bairro são texto livre; "Marina" e "marina" contam como o mesmo cliente (compara em
+  minúsculas, sem espaços nas pontas).
+- **Clientes e bairros** (Mais → Relatórios e ajuda): ranking por valor comprado.
+  Só entram vendas ativas que já contam no resultado, sem doações e sem canceladas.
+  Resumo: vendas com nome, a desconhecidos e sem informação (as feitas antes desta fatia).
+- Exportações novas: "Clientes" e "Bairros"; a de Vendas ganhou as colunas Bairro e Cliente
+  desconhecido.
+
+### Receita montada de uma vez
+- No sabor sem receita: lista de ingredientes com quantidade e unidade; o **custo da fornada
+  aparece na hora**. No fim, "quantas unidades essa fornada rende?" e o custo de cada unidade.
+  Mudar o rendimento só muda a conta por unidade (uma receita pode render mais ou menos).
+- Nada é gravado até "Cadastrar receita"; aí vai tudo de uma vez (ou nada: é uma operação só no
+  banco, `cadastrar_receita_variacao`, só para o administrador).
+- Ingrediente sem preço cadastrado avisa que o custo está incompleto.
+- O banco continua calculando o custo oficial; o da tela é só prévia.

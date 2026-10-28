@@ -147,6 +147,8 @@ export async function registrarVenda(dados: {
   valorRecebido: number | null; // nulo = paga (o total calculado pelo banco)
   desconto: number;
   cliente: string;
+  bairro: string;
+  desconhecido: boolean;
   observacao: string;
   entrega: string | null;
   confirmar: boolean;
@@ -164,6 +166,8 @@ export async function registrarVenda(dados: {
     p_observacao: dados.observacao,
     p_entrega_prevista: dados.entrega ?? undefined,
     p_confirmar_estoque: dados.confirmar,
+    p_bairro: dados.bairro || undefined,
+    p_cliente_desconhecido: dados.desconhecido,
   });
   if (error) return falhou(error);
   const r = data as { ok: boolean; faltas?: Falta[]; venda_id?: string; numero?: number };
@@ -199,4 +203,41 @@ export async function cancelarVenda(venda: string, motivo: string): Promise<Resu
   const { error } = await s.rpc("cancelar_venda", { p_venda: venda, p_motivo: motivo });
   if (error) return falhou(error);
   return { ok: true, mensagem: "Venda cancelada. O estoque e o caixa voltaram; o registro fica no histórico." };
+}
+
+// ── Clientes e bairros ──────────────────────────────────────────────────────
+
+export type ClienteRanking = Tables<"v_clientes">;
+export type BairroRanking = Tables<"v_bairros">;
+
+export async function listarClientes(): Promise<ClienteRanking[]> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.from("v_clientes").select("*").order("total", { ascending: false }).limit(500);
+  if (error) throw new Error(mensagemDeErro(error));
+  return data;
+}
+
+export async function listarBairros(): Promise<BairroRanking[]> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.from("v_bairros").select("*").order("total", { ascending: false }).limit(500);
+  if (error) throw new Error(mensagemDeErro(error));
+  return data;
+}
+
+// Vendas (sem doação nem cancelada) por tipo de cliente: com nome, desconhecido e sem informação.
+export async function resumoDeClientes() {
+  const s = await criarClienteServidor();
+  const base = () => s.from("v_vendas").select("total", { count: "exact" }).eq("situacao", "ativa").neq("tipo", "doacao").not("reconhecida_em", "is", null);
+  const [nomeados, desconhecidos, semInformar] = await Promise.all([
+    base().not("cliente", "is", null),
+    base().eq("cliente_desconhecido", true),
+    base().is("cliente", null).eq("cliente_desconhecido", false),
+  ]);
+  for (const r of [nomeados, desconhecidos, semInformar]) if (r.error) throw new Error(mensagemDeErro(r.error));
+  const soma = (linhas: { total: number | null }[] | null) => (linhas ?? []).reduce((t, l) => t + Number(l.total ?? 0), 0);
+  return {
+    nomeados: { vendas: nomeados.count ?? 0, total: soma(nomeados.data) },
+    desconhecidos: { vendas: desconhecidos.count ?? 0, total: soma(desconhecidos.data) },
+    semInformar: { vendas: semInformar.count ?? 0, total: soma(semInformar.data) },
+  };
 }

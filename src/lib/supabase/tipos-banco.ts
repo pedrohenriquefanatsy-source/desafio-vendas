@@ -1090,10 +1090,12 @@ export type Database = {
         Row: {
           alterado_em: string | null
           alterado_por: string | null
+          bairro: string | null
           cancelado_em: string | null
           cancelado_por: string | null
           chave_idempotencia: string
           cliente: string | null
+          cliente_desconhecido: boolean
           criado_em: string
           criado_por: string | null
           data_hora: string
@@ -1126,10 +1128,12 @@ export type Database = {
         Insert: {
           alterado_em?: string | null
           alterado_por?: string | null
+          bairro?: string | null
           cancelado_em?: string | null
           cancelado_por?: string | null
           chave_idempotencia: string
           cliente?: string | null
+          cliente_desconhecido?: boolean
           criado_em?: string
           criado_por?: string | null
           data_hora?: string
@@ -1162,10 +1166,12 @@ export type Database = {
         Update: {
           alterado_em?: string | null
           alterado_por?: string | null
+          bairro?: string | null
           cancelado_em?: string | null
           cancelado_por?: string | null
           chave_idempotencia?: string
           cliente?: string | null
+          cliente_desconhecido?: boolean
           criado_em?: string
           criado_por?: string | null
           data_hora?: string
@@ -1199,6 +1205,28 @@ export type Database = {
       }
     }
     Views: {
+      v_bairros: {
+        Row: {
+          bairro: string | null
+          chave: string | null
+          clientes_conhecidos: number | null
+          total: number | null
+          vendas: number | null
+          vendas_desconhecidos: number | null
+        }
+        Relationships: []
+      }
+      v_clientes: {
+        Row: {
+          bairro: string | null
+          chave: string | null
+          cliente: string | null
+          compras: number | null
+          total: number | null
+          ultima_compra: string | null
+        }
+        Relationships: []
+      }
       v_cobertura_estoque: {
         Row: {
           demanda_dia: number | null
@@ -1482,9 +1510,11 @@ export type Database = {
       v_vendas: {
         Row: {
           a_receber: number | null
+          bairro: string | null
           cancelado_em: string | null
           cancelado_por: string | null
           cliente: string | null
+          cliente_desconhecido: boolean | null
           criado_em: string | null
           criado_por: string | null
           data_hora: string | null
@@ -1561,6 +1591,10 @@ export type Database = {
           p_tipo: Database["public"]["Enums"]["tipo_insumo"]
           p_unidade_base: string
         }
+        Returns: string
+      }
+      cadastrar_receita_variacao: {
+        Args: { p_itens: Json; p_rendimento: number; p_variacao: string }
         Returns: string
       }
       cancelar_aporte: {
@@ -1698,8 +1732,10 @@ export type Database = {
       }
       registrar_venda: {
         Args: {
+          p_bairro?: string
           p_chave: string
           p_cliente?: string
+          p_cliente_desconhecido?: boolean
           p_confirmar_estoque?: boolean
           p_desconto?: number
           p_entrega_prevista?: string

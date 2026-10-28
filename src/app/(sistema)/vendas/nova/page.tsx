@@ -4,7 +4,7 @@ import { NovaVenda, type VendaInicial } from "@/componentes/nova-venda";
 import { hojeIso } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
-import { listarProdutosVenda, obterVenda, ultimaForma } from "@/servicos/vendas";
+import { listarBairros, listarClientes, listarProdutosVenda, obterVenda, ultimaForma } from "@/servicos/vendas";
 import { registrarVenda } from "../acoes";
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -15,10 +15,12 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">) {
   const perfil = await exigirParticipante();
   const { ok, id, copiar } = await searchParams;
-  const [produtos, formas, padrao, base] = await Promise.all([
+  const [produtos, formas, padrao, clientes, bairros, base] = await Promise.all([
     listarProdutosVenda(),
     listarFormasPagamento(),
     ultimaForma(perfil.id),
+    listarClientes(),
+    listarBairros(),
     typeof copiar === "string" && UUID.test(copiar) ? obterVenda(copiar) : null,
   ]);
   const ativas = formas.filter((f) => f.ativa);
@@ -27,6 +29,8 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
         itens: base.itens.map((i) => ({ id: i.variacao_id, quantidade: Number(i.quantidade) })),
         forma: base.venda.forma_pagamento_id ?? undefined,
         cliente: base.venda.cliente ?? undefined,
+        bairro: base.venda.bairro ?? undefined,
+        desconhecido: base.venda.cliente_desconhecido ?? undefined,
         observacao: base.venda.observacao ?? undefined,
       }
     : undefined;
@@ -77,6 +81,8 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
             busca: [p.nome, ...(p.apelidos ?? []), p.categoria ?? ""].join(" ").toLocaleLowerCase("pt-BR"),
           }))}
           inicial={inicial}
+          clientes={clientes.map((c) => ({ nome: c.cliente ?? "", bairro: c.bairro }))}
+          bairros={bairros.map((b) => b.bairro ?? "").filter(Boolean)}
         />
       )}
     </>

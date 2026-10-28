@@ -13,3 +13,4 @@
 - Supabase principal: `appgestãogeladinho` (`iebzbiccuwrchgdsojgn`, sa-east-1).
 - Implementação segue as fatias da Seção 4 de `docs/plano.md`.
 - Fatia 9 (28/10/2026, pedido do administrador depois do uso real): cadastro simplificado (insumo com embalagem e preço, receita dentro do sabor, excluir só o que nunca foi usado) e marca Choc Bites. Ver `docs/regras-de-negocio.md`, seção 12.
+- Fatia 10 (28/10/2026, pedido do administrador): compra sem trocar unidade (embalagem já cadastrada), cliente, bairro e "cliente desconhecido" na venda com tela Clientes e bairros, receita montada de uma vez (ingredientes e, no fim, rendimento). Ver `docs/regras-de-negocio.md`, seção 13.

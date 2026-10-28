@@ -40,6 +40,7 @@ export default async function Mais() {
         <section>
           <h2 className="mb-2 text-sm font-medium text-texto-suave">Relatórios e ajuda</h2>
           <Cartao className="divide-y divide-borda p-0">
+            <ItemLista href="/mais/clientes" titulo="Clientes e bairros" apoio="Quem mais comprou e onde você mais vende" />
             <ItemLista href="/mais/exportar" titulo="Exportar" apoio="Planilha XLSX ou CSV de vendas, caixa, estoque…" />
             {ehAdmin(perfil) ? <ItemLista href="/mais/auditoria" titulo="Auditoria" apoio="Quem incluiu, alterou ou cancelou o quê" /> : null}
             <ItemLista href="/mais/como-calculamos" titulo="Como calculamos" apoio="Custo, sobra, resultado, caixa e meta" />

@@ -38,7 +38,7 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
         ← Vendas
       </Link>
       <TituloPagina
-        apoio={`${formatarDataHora(v.data_hora)} · ${v.participante ?? "—"}${v.cliente ? ` · cliente: ${v.cliente}` : ""}`}
+        apoio={`${formatarDataHora(v.data_hora)} · ${v.participante ?? "—"}${v.cliente ? ` · cliente: ${v.cliente}` : v.cliente_desconhecido ? " · cliente desconhecido" : ""}${v.bairro ? ` · bairro ${v.bairro}` : ""}`}
       >
         {titulo} nº {v.numero}
       </TituloPagina>

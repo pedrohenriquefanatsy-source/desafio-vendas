@@ -69,8 +69,11 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
 
   const entrega = texto(d, "entrega");
   if (tipo === "encomenda" && !DATA.test(entrega)) return erro("Informe a data de entrega da encomenda.");
-  const cliente = texto(d, "cliente");
+  const desconhecido = texto(d, "cliente_desconhecido") === "1";
+  const cliente = desconhecido ? "" : texto(d, "cliente");
   if (cliente.length > 60) return erro("O nome do cliente pode ter até 60 letras.");
+  const bairro = texto(d, "bairro");
+  if (bairro && (bairro.length < 2 || bairro.length > 60)) return erro("O bairro precisa ter de 2 a 60 letras.");
   const observacao = texto(d, "observacao");
   if (observacao.length > 300) return erro("A observação pode ter até 300 letras.");
   if (!doacao && pagamento !== "paga" && !cliente) return erro("Venda pendente ou parcial: diga o nome do cliente, para saber de quem cobrar.");
@@ -83,6 +86,8 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     valorRecebido,
     desconto: doacao ? 0 : desconto,
     cliente,
+    bairro,
+    desconhecido,
     observacao,
     entrega: tipo === "encomenda" ? entrega : null,
     confirmar: texto(d, "confirmar") === "1",

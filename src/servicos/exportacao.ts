@@ -54,7 +54,7 @@ export const EXPORTACOES: Record<string, Definicao> = {
     filtros: ["periodo", "produto", "participante"],
     colunas: [
       t("id", "ID"), n("numero", "Nº"), dh("data_hora", "Data e hora"), d("dia", "Dia"), t("tipo", "Tipo"), t("situacao", "Situação"),
-      t("participante", "Quem vendeu"), t("cliente", "Cliente"), t("forma_pagamento", "Forma de pagamento"), n("taxa_percentual", "Taxa (%)"),
+      t("participante", "Quem vendeu"), t("cliente", "Cliente"), t("bairro", "Bairro"), t("cliente_desconhecido", "Cliente desconhecido"), t("forma_pagamento", "Forma de pagamento"), n("taxa_percentual", "Taxa (%)"),
       n("subtotal", "Subtotal"), n("desconto", "Desconto"), n("total", "Total"), n("recebido", "Recebido"), n("a_receber", "A receber"),
       t("situacao_pagamento", "Pagamento"), t("situacao_entrega", "Entrega"), d("entrega_prevista", "Entrega prevista"),
       dh("reconhecida_em", "Entrou no resultado em"), n("margem_total", "Margem (MC)"), t("itens_resumo", "Itens"),
@@ -296,6 +296,21 @@ export const EXPORTACOES: Record<string, Definicao> = {
         if (f.ate) q = q.lte("dia", f.ate);
         return q;
       }),
+  },
+  clientes: {
+    titulo: "Clientes (quem mais comprou)",
+    filtros: [],
+    colunas: [t("cliente", "Cliente"), t("bairro", "Bairro"), n("compras", "Compras"), n("total", "Total comprado"), d("ultima_compra", "Última compra")],
+    carregar: async (s) => tudo((a, b) => s.from("v_clientes").select("*").order("total", { ascending: false }).range(a, b)),
+  },
+  bairros: {
+    titulo: "Bairros (onde mais vendeu)",
+    filtros: [],
+    colunas: [
+      t("bairro", "Bairro"), n("vendas", "Vendas"), n("total", "Total vendido"), n("clientes_conhecidos", "Clientes com nome"),
+      n("vendas_desconhecidos", "Vendas a desconhecidos"),
+    ],
+    carregar: async (s) => tudo((a, b) => s.from("v_bairros").select("*").order("total", { ascending: false }).range(a, b)),
   },
   metas: {
     titulo: "Metas e indicadores",

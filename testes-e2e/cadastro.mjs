@@ -41,12 +41,20 @@ export async function criarProduto(p, BASE, { nome, tipo = "simples", preco, sab
   await esperar(p, /^\/mais\/produtos\/[0-9a-f-]{36}$/);
 }
 
-// Na tela do produto, no sabor que está aberto e ainda sem receita: cria e adiciona os ingredientes.
+// Na tela do produto, no sabor que está aberto e ainda sem receita: lista os ingredientes (o custo da
+// fornada aparece na hora), diz quantas unidades rende e cadastra tudo de uma vez.
 export async function montarReceita(p, { rendimento, ingredientes }) {
-  await p.locator('input[name="rendimento"]').first().fill(String(rendimento));
-  await p.getByRole("button", { name: "Criar receita" }).click();
-  await p.getByText("Nenhum ingrediente ainda.").waitFor();
-  for (const [insumo, qtd, unidade] of ingredientes) await adicionarIngrediente(p, insumo, qtd, unidade);
+  for (let n = 0; n < ingredientes.length; n++) {
+    const [insumo, qtd, unidade] = ingredientes[n];
+    if (n > 0) await p.getByRole("button", { name: "Adicionar ingrediente" }).click();
+    const linha = p.getByRole("group", { name: `Ingrediente ${n + 1}` });
+    await linha.locator('select[id$="-insumo"]').selectOption({ label: insumo });
+    await linha.locator('input[id$="-quantidade"]').fill(String(qtd));
+    if (unidade) await linha.locator('select[id$="-unidade"]').selectOption(unidade);
+  }
+  await p.fill("#rc-rendimento", String(rendimento));
+  await p.getByRole("button", { name: "Cadastrar receita" }).click();
+  await p.locator("summary").filter({ hasText: ingredientes[0][0] }).first().waitFor({ timeout: 20000 });
 }
 
 export async function adicionarIngrediente(p, insumo, qtd, unidade) {

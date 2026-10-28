@@ -322,3 +322,23 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 | 17 | Permissões | Passou | Fatias 1 a 8, consolidado na 8 |
 | 18 | Celular (375 px): venda, despesa, produção, estoque | Passou (247 verificações, sem rolagem lateral, alvos ≥ 44 px, claro e escuro) | Fatias 1 a 9 |
 
+
+## Fatia 10: compra sem unidade, cliente/bairro e receita de uma vez (28/10/2026)
+
+- **Banco** (`supabase/testes/fatia10.sql`, Postgres local e projeto de teste): bairro e
+  "desconhecido" gravados; nome + desconhecido juntos recusados; desconhecido não fica pendente;
+  bairro curto demais recusado; rankings de clientes e bairros (cliente com maiúsculas
+  diferentes conta como um só; doação e venda cancelada ficam de fora);
+  `cadastrar_receita_variacao` cria tudo ou nada (lista vazia, rendimento zero, insumo repetido, unidade desconhecida e membro recusados; uma
+  tentativa recusada não deixa nada pela metade). Os testes das fatias 1 a 9 continuam passando.
+- **Telas** (`testes-e2e/fatia10.mjs`, 375 px): **39 de 39**. Compra sem escolha de unidade, com
+  embalagem e último preço, valor sugerido (e valor digitado preservado); receita com custo ao
+  vivo (R$ 14,30; R$ 1,43 por unidade rendendo 10; R$ 2,86 rendendo 5) e aviso de insumo sem
+  preço; venda a desconhecido, com nome e bairro, bairro preenchido sozinho, pendente exigindo
+  nome; ranking de clientes e de bairros; exportações. Sem rolagem lateral e alvos ≥ 44 px.
+- **Testes antigos adaptados** (compra sem seletor de unidade, receita pelo novo formulário):
+  fatia 2: 25, fatia 3: 32, fatia 4: 29, fatia 5: 26, fatia 6: 16, fatia 7: 24, fatia 8: 22,
+  fatia 9: 46 — todos passaram. A fatia 1 (primeiro acesso) não mexe no que mudou e não foi
+  repetida.
+- Os testes pegaram dois detalhes de tela (link pequeno demais para o toque; frases do resumo
+  quebrando mal), já corrigidos.

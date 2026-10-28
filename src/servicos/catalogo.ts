@@ -292,11 +292,15 @@ export async function removerComponente(id: string): Promise<Resultado> {
 
 // ── Receita dentro do sabor ─────────────────────────────────────────────────
 
-export async function criarReceitaSabor(variacaoId: string, rendimento: number): Promise<Resultado> {
+export async function cadastrarReceitaSabor(
+  variacaoId: string,
+  rendimento: number,
+  itens: { insumo_id: string; quantidade: number; unidade: string }[],
+): Promise<Resultado> {
   const s = await db();
-  const { error } = await s.rpc("criar_receita_variacao", { p_variacao: variacaoId, p_rendimento: rendimento });
+  const { error } = await s.rpc("cadastrar_receita_variacao", { p_variacao: variacaoId, p_rendimento: rendimento, p_itens: itens });
   if (error) return falhou(error);
-  return { ok: true, mensagem: "Receita criada. Agora adicione os ingredientes." };
+  return { ok: true, mensagem: "Receita cadastrada." };
 }
 
 export async function copiarReceitaSabor(origemId: string, destinoId: string): Promise<Resultado> {

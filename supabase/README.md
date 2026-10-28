@@ -42,6 +42,7 @@ mesmo dia: 0 tabelas, funções, tipos, políticas, usuários e migrations no sc
 | `20261027180000_painel_meta.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261027190000_auditoria_itens_compra.sql` | 27/10/2026, MCP | 27/10/2026, MCP |
 | `20261028120000_cadastro_simplificado.sql` | 28/10/2026, MCP | 28/10/2026, MCP (só cria funções novas; dados conferidos antes e depois) |
+| `20261028150000_clientes_e_receita_completa.sql` | 28/10/2026, MCP, em duas partes (o arquivo inteiro numa chamada só foi recusado pela integração; nada foi aplicado na tentativa) | 28/10/2026, MCP, em duas partes (colunas e `registrar_venda`; depois views e `cadastrar_receita_variacao`). Conferido pela impressão digital das funções e views |
 
 As aplicadas pelo SQL Editor **não aparecem** no histórico de migrations do Supabase
 (`supabase_migrations`), porque a confirmação pedida pela integração não chegou a tempo.

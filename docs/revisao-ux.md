@@ -70,3 +70,11 @@ O administrador usou o sistema e achou parte dele complexa. O que ele relatou, e
 
 Marca: cores e ícone da logo Choc Bites (creme, chocolate e rosa), com contraste AA nos dois temas.
 Ainda **depende de vocês**: ver se alguém novo cadastra um insumo e um sabor sem ajuda (meta: 2 minutos).
+
+## Fatia 10 (28/10/2026): pedidos depois do uso real
+
+| O que foi pedido | O que mudou |
+|---|---|
+| "Na compra de insumo já cadastrado, sem trocar a unidade; mostrar o que já foi cadastrado" | A compra mostra a embalagem e o último preço e pergunta só "quantas embalagens" e "valor pago" (já sugerido). Menos campos, menos erro (Nielsen 5 e 6; Hick). Outro tamanho de embalagem = outro insumo |
+| "Nome do cliente e localização, para ver quem mais compra e os bairros; ícone de desconhecido" | Escolha "Informar cliente" ou "Desconhecido" (padrão, para vender rápido); bairro opcional com sugestões; tela "Clientes e bairros" com ranking |
+| "Cadastrar a lista toda da receita e, no fim, a quantidade que rende" | Ingredientes primeiro, custo da fornada ao vivo, rendimento no fim com o custo por unidade; grava tudo num toque (modelo mental de quem cozinha) |

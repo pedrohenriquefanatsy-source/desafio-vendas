@@ -1,14 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Minus, Plus, Search } from "lucide-react";
+import { CircleHelp, Minus, Plus, Search, UserRound } from "lucide-react";
 import { Formulario } from "./formulario";
 import { lerNumero, formatarReais, formatarQuantidade } from "@/lib/numeros";
 import type { Resultado } from "@/servicos/erros";
 
 export type ProdutoGrade = { id: string; nome: string; preco: number; estoque: number; kit: boolean; busca: string };
 export type FormaGrade = { id: string; nome: string; taxa: number };
-export type VendaInicial = { itens: { id: string; quantidade: number }[]; forma?: string; cliente?: string; observacao?: string };
+export type VendaInicial = {
+  itens: { id: string; quantidade: number }[];
+  forma?: string;
+  cliente?: string;
+  bairro?: string;
+  desconhecido?: boolean;
+  observacao?: string;
+};
+export type ClienteConhecido = { nome: string; bairro: string | null };
 
 type Tipo = "venda" | "encomenda" | "doacao";
 type Pagamento = "paga" | "pendente" | "parcial";
@@ -27,6 +35,8 @@ export function NovaVenda({
   formaPadrao,
   hoje,
   inicial,
+  clientes,
+  bairros,
   acao,
 }: {
   produtos: ProdutoGrade[];
@@ -34,6 +44,8 @@ export function NovaVenda({
   formaPadrao: string | null;
   hoje: string;
   inicial?: VendaInicial;
+  clientes: ClienteConhecido[];
+  bairros: string[];
   acao: (anterior: Resultado | null, dados: FormData) => Promise<Resultado>;
 }) {
   const [quantidades, setQuantidades] = useState<Record<string, number>>(() =>
@@ -47,6 +59,11 @@ export function NovaVenda({
   const [forma, setForma] = useState(inicial?.forma ?? formaPadrao ?? formas[0]?.id ?? "");
   const [desconto, setDesconto] = useState("");
   const [maisOpcoes, setMaisOpcoes] = useState(Boolean(inicial?.observacao));
+  // Cliente: "desconhecido" já vem marcado (a venda de rua é o caso comum e continua em 3 toques);
+  // quem quer anotar o cliente toca em "Informar cliente". Pendente ou parcial sempre pede o nome.
+  const [modoCliente, setModoCliente] = useState<"informar" | "desconhecido">(inicial?.cliente || inicial?.desconhecido === false ? "informar" : "desconhecido");
+  const [nomeCliente, setNomeCliente] = useState(inicial?.cliente ?? "");
+  const [bairro, setBairro] = useState(inicial?.bairro ?? "");
 
   const porId = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos]);
   const visiveis = busca.trim()
@@ -54,6 +71,8 @@ export function NovaVenda({
     : produtos;
   const escolhidos = ordem.filter((id) => (quantidades[id] ?? 0) > 0);
   const doacao = tipo === "doacao";
+  const precisaNome = !doacao && pagamento !== "paga";
+  const desconhecido = modoCliente === "desconhecido" && !precisaNome;
   const precoDe = (id: string) => (precos[id] ? (lerNumero(precos[id]) ?? 0) : (porId.get(id)?.preco ?? 0));
   const subtotal = doacao ? 0 : escolhidos.reduce((t, id) => t + Math.round(precoDe(id) * quantidades[id] * 100) / 100, 0);
   const total = Math.max(0, subtotal - (doacao ? 0 : (lerNumero(desconto) ?? 0)));
@@ -78,6 +97,7 @@ export function NovaVenda({
       <input type="hidden" name="tipo" value={tipo} />
       <input type="hidden" name="forma" value={doacao ? "" : forma} />
       <input type="hidden" name="pagamento" value={pagamento} />
+      <input type="hidden" name="cliente_desconhecido" value={desconhecido ? "1" : ""} />
 
       {produtos.length > 8 ? (
         <label className="relative block">
@@ -183,19 +203,69 @@ export function NovaVenda({
         </>
       ) : null}
 
-      {pagamento !== "paga" || tipo !== "venda" ? (
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium">Cliente</legend>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" aria-pressed={!desconhecido} onClick={() => setModoCliente("informar")} className={`${chip(!desconhecido)} gap-2`}>
+            <UserRound aria-hidden className="size-4" /> Informar cliente
+          </button>
+          <button
+            type="button"
+            aria-pressed={desconhecido}
+            disabled={precisaNome}
+            onClick={() => setModoCliente("desconhecido")}
+            className={`${chip(desconhecido)} gap-2 disabled:opacity-50`}
+          >
+            <CircleHelp aria-hidden className="size-4" /> Desconhecido
+          </button>
+        </div>
+        {!desconhecido ? (
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Nome do cliente{precisaNome ? "" : " (opcional)"}
+            <input
+              name="cliente"
+              list="clientes-conhecidos"
+              value={nomeCliente}
+              onChange={(e) => {
+                setNomeCliente(e.target.value);
+                const achado = clientes.find((c) => c.nome.toLocaleLowerCase("pt-BR") === e.target.value.trim().toLocaleLowerCase("pt-BR"));
+                if (achado?.bairro && !bairro.trim()) setBairro(achado.bairro);
+              }}
+              maxLength={60}
+              required={precisaNome}
+              autoComplete="off"
+              placeholder="Nome de quem comprou"
+              className={campo}
+            />
+          </label>
+        ) : (
+          <p className="text-xs text-texto-suave">Cliente desconhecido: a venda conta normalmente, só não fica ligada a um nome.</p>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Cliente{pagamento !== "paga" && !doacao ? "" : " (opcional)"}
+          Bairro (opcional)
           <input
-            name="cliente"
-            defaultValue={inicial?.cliente}
+            name="bairro"
+            list="bairros-conhecidos"
+            value={bairro}
+            onChange={(e) => setBairro(e.target.value)}
             maxLength={60}
-            required={pagamento !== "paga" && !doacao}
-            placeholder="Nome de quem comprou"
+            autoComplete="off"
+            placeholder="Ex.: Aldeota"
             className={campo}
           />
         </label>
-      ) : null}
+        {precisaNome ? <p className="text-xs text-texto-suave">Venda pendente ou parcial precisa do nome do cliente, para saber de quem cobrar.</p> : null}
+        <datalist id="clientes-conhecidos">
+          {clientes.map((c) => (
+            <option key={c.nome} value={c.nome} />
+          ))}
+        </datalist>
+        <datalist id="bairros-conhecidos">
+          {bairros.map((b) => (
+            <option key={b} value={b} />
+          ))}
+        </datalist>
+      </fieldset>
 
       <details open={maisOpcoes} onToggle={(e) => setMaisOpcoes(e.currentTarget.open)} className="rounded-cartao border border-borda bg-superficie">
         <summary className="flex min-h-toque cursor-pointer list-none items-center px-4 font-medium [&::-webkit-details-marker]:hidden">

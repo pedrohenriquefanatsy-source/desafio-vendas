@@ -1,37 +1,56 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, X } from "lucide-react";
-import { lerNumero, formatarReais } from "@/lib/numeros";
+import { lerNumero, formatarCustoUnidade, formatarQuantidade, formatarReais } from "@/lib/numeros";
 import { classeBotao } from "./ui";
 import type { OpcaoInsumo } from "./campo-insumo-unidade";
 
-type Linha = { chave: number; insumo_id: string; quantidade: string; unidade: string; valor: string };
+type Linha = { chave: number; insumo_id: string; quantidade: string; valor: string; valorEditado: boolean };
 
 const campo = "min-h-toque w-full rounded-xl border border-borda bg-superficie px-3 text-base";
 
-// Itens de uma compra: insumo, quantidade, unidade e quanto custou no total.
+// Itens de uma compra. A unidade já vem do cadastro do insumo: a embalagem cadastrada (ex.: pacote de
+// 500 g), ou a unidade base quando ainda não há embalagem. A pessoa só diz quantas embalagens comprou
+// e quanto pagou; o valor já vem sugerido (quantidade × último preço) e pode ser corrigido.
+// Comprou em outro tamanho de embalagem? Cadastre como outro insumo.
 // O total mostrado é só prévia; o oficial é calculado pelo banco ao salvar.
-// Os itens vão para a Server Action num campo escondido "itens" (JSON).
 export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; iniciais: { insumo_id: string; quantidade: string }[] }) {
-  const unidadeBase = (id: string) => insumos.find((i) => i.id === id)?.unidadeBase ?? "";
-  // Ao escolher o insumo, a unidade que já vem marcada é a embalagem (é assim que se compra), se ele tiver.
-  // A compra aberta pela lista de compras já traz a quantidade na unidade base, por isso lá não vale.
-  const unidadeAoEscolher = (id: string) =>
-    insumos.find((i) => i.id === id)?.unidades.some((u) => u.unidade === "embalagem") ? "embalagem" : unidadeBase(id);
+  const achar = (id: string) => insumos.find((i) => i.id === id);
+  const unidadeDe = (i: OpcaoInsumo) => (i.embalagem ? "embalagem" : i.unidadeBase);
+  const sugerir = (i: OpcaoInsumo | undefined, quantidade: string) => {
+    const q = lerNumero(quantidade);
+    if (!i?.embalagem || i.embalagem.preco == null || q == null || q <= 0) return "";
+    return (Math.round(q * i.embalagem.preco * 100) / 100).toFixed(2).replace(".", ",");
+  };
+
   const [linhas, setLinhas] = useState<Linha[]>(() => {
+    // Quem vem da lista de compras traz a falta em gramas (ml ou unidades): vira embalagens inteiras.
     const prontas = iniciais
-      .filter((i) => insumos.some((o) => o.id === i.insumo_id))
-      .map((i, n) => ({ chave: n, insumo_id: i.insumo_id, quantidade: i.quantidade, unidade: unidadeBase(i.insumo_id), valor: "" }));
-    return prontas.length ? prontas : [{ chave: 0, insumo_id: "", quantidade: "", unidade: "", valor: "" }];
+      .filter((i) => achar(i.insumo_id))
+      .map((i, n) => {
+        const insumo = achar(i.insumo_id);
+        const base = lerNumero(i.quantidade) ?? 0;
+        const quantidade = insumo?.embalagem ? String(Math.max(1, Math.ceil(base / insumo.embalagem.tamanho))) : i.quantidade;
+        return { chave: n, insumo_id: i.insumo_id, quantidade, valor: sugerir(insumo, quantidade), valorEditado: false };
+      });
+    return prontas.length ? prontas : [{ chave: 0, insumo_id: "", quantidade: "", valor: "", valorEditado: false }];
   });
   const [proxima, setProxima] = useState(linhas.length);
 
   function mudar(chave: number, mudanca: Partial<Linha>) {
-    setLinhas((atual) => atual.map((l) => (l.chave === chave ? { ...l, ...mudanca } : l)));
+    setLinhas((atual) =>
+      atual.map((l) => {
+        if (l.chave !== chave) return l;
+        const nova = { ...l, ...mudanca };
+        if (!nova.valorEditado) nova.valor = sugerir(achar(nova.insumo_id), nova.quantidade);
+        return nova;
+      }),
+    );
   }
   function adicionar() {
-    setLinhas((atual) => [...atual, { chave: proxima, insumo_id: "", quantidade: "", unidade: "", valor: "" }]);
+    setLinhas((atual) => [...atual, { chave: proxima, insumo_id: "", quantidade: "", valor: "", valorEditado: false }]);
     setProxima((n) => n + 1);
   }
   function remover(chave: number) {
@@ -39,13 +58,20 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
   }
 
   const total = linhas.reduce((t, l) => t + (lerNumero(l.valor) ?? 0), 0);
-  const json = JSON.stringify(linhas.map(({ insumo_id, quantidade, unidade, valor }) => ({ insumo_id, quantidade, unidade, valor })));
+  const json = JSON.stringify(
+    linhas.map((l) => {
+      const insumo = achar(l.insumo_id);
+      return { insumo_id: l.insumo_id, quantidade: l.quantidade, unidade: insumo ? unidadeDe(insumo) : "", valor: l.valor };
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-3">
       <input type="hidden" name="itens" value={json} />
       {linhas.map((l, n) => {
-        const insumo = insumos.find((i) => i.id === l.insumo_id);
+        const insumo = achar(l.insumo_id);
+        const emb = insumo?.embalagem;
+        const qtd = lerNumero(l.quantidade);
         return (
           <fieldset key={l.chave} aria-label={`Item ${n + 1}`} className="flex flex-col gap-3 rounded-cartao border border-borda p-3">
             <div className="flex items-center justify-between">
@@ -66,7 +92,7 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
               <select
                 value={l.insumo_id}
                 required
-                onChange={(e) => mudar(l.chave, { insumo_id: e.target.value, unidade: unidadeAoEscolher(e.target.value) })}
+                onChange={(e) => mudar(l.chave, { insumo_id: e.target.value, valorEditado: false })}
                 className={campo}
               >
                 <option value="">Escolha…</option>
@@ -77,9 +103,36 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
                 ))}
               </select>
             </label>
-            <div className="grid grid-cols-3 gap-2">
+
+            {insumo ? (
+              <div className="rounded-xl bg-fundo px-3 py-2 text-sm" aria-live="polite">
+                {emb ? (
+                  <>
+                    <p>
+                      Embalagem de <strong>{formatarQuantidade(emb.tamanho)} {insumo.unidadeBase}</strong>
+                      {emb.preco != null ? (
+                        <>
+                          {" · "}último preço <strong>{formatarReais(emb.preco)}</strong> ({formatarCustoUnidade(insumo.custoBase, insumo.unidadeBase)})
+                        </>
+                      ) : (
+                        " · sem preço ainda"
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    Este insumo ainda não tem embalagem cadastrada, então a quantidade é em <strong>{insumo.unidadeBase}</strong>.{" "}
+                    <Link href={`/mais/insumos/${insumo.id}`} className="inline-flex min-h-toque items-center font-medium text-acao underline">
+                      Cadastrar a embalagem
+                    </Link>
+                  </p>
+                )}
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-sm font-medium">
-                Quantidade
+                {emb ? "Quantas embalagens" : insumo ? `Quantidade (${insumo.unidadeBase})` : "Quantidade"}
                 <input
                   inputMode="decimal"
                   required
@@ -89,40 +142,20 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
-                Unidade
-                <select
-                  value={l.unidade}
-                  required
-                  disabled={!insumo}
-                  onChange={(e) => mudar(l.chave, { unidade: e.target.value })}
-                  className={campo}
-                >
-                  {insumo ? (
-                    insumo.unidades.map((u) => (
-                      <option key={u.unidade} value={u.unidade}>
-                        {u.unidade}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">—</option>
-                  )}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Valor (R$)
+                Valor pago (R$)
                 <input
                   inputMode="decimal"
                   required
                   placeholder="0,00"
                   value={l.valor}
-                  onChange={(e) => mudar(l.chave, { valor: e.target.value })}
+                  onChange={(e) => mudar(l.chave, { valor: e.target.value, valorEditado: true })}
                   className={campo}
                 />
               </label>
             </div>
-            {insumo && l.unidade && l.unidade !== insumo.unidadeBase ? (
+            {emb && qtd != null && qtd > 0 ? (
               <p className="text-xs text-texto-suave">
-                1 {l.unidade} = {insumo.unidades.find((u) => u.unidade === l.unidade)?.quantidadeEmBase} {insumo.unidadeBase}
+                = {formatarQuantidade(qtd * emb.tamanho)} {insumo?.unidadeBase} no estoque
               </p>
             ) : null}
           </fieldset>
@@ -131,6 +164,7 @@ export function ItensCompra({ insumos, iniciais }: { insumos: OpcaoInsumo[]; ini
       <button type="button" onClick={adicionar} className={classeBotao("secundario", "w-full")}>
         <Plus aria-hidden className="size-5" /> Adicionar item
       </button>
+      <p className="text-xs text-texto-suave">Comprou em outro tamanho de embalagem? Cadastre como outro insumo, em Mais → Insumos.</p>
       <p className="flex items-baseline justify-between text-sm">
         <span className="text-texto-suave">Total da compra</span>
         <span className="text-lg font-semibold tabular-nums">{formatarReais(total)}</span>

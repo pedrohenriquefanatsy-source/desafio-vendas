@@ -109,7 +109,7 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
                     nº {v.numero} · {formatarDataHora(v.data_hora)}
                   </span>
                 }
-                apoio={`${v.itens_resumo ?? ""}${v.cliente ? ` · ${v.cliente}` : ""}`}
+                apoio={`${v.itens_resumo ?? ""}${v.cliente ? ` · ${v.cliente}` : v.cliente_desconhecido ? " · desconhecido" : ""}${v.bairro ? ` (${v.bairro})` : ""}`}
                 direita={
                   <span className="flex shrink-0 flex-col items-end gap-1">
                     <span className="font-semibold tabular-nums">{formatarReais(v.total)}</span>

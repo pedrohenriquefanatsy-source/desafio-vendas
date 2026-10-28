@@ -8,6 +8,9 @@ export type OpcaoInsumo = {
   unidadeBase: string;
   // Unidades aceitas por este insumo e quantas unidades base cada uma tem.
   unidades: { unidade: string; quantidadeEmBase: number }[];
+  // Custo de cada grama (ou ml, ou unidade) e a embalagem cadastrada; as telas de compra e de receita usam.
+  custoBase: number | null;
+  embalagem: { tamanho: number; preco: number | null } | null;
 };
 
 const selecao = "min-h-toque w-full rounded-xl border border-borda bg-superficie px-3 text-base";

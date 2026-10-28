@@ -273,12 +273,28 @@ export async function removerComponente(_a: Resultado | null, d: FormData): Prom
 
 // ── Receita dentro do sabor ─────────────────────────────────────────────────
 
-export async function criarReceitaSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
+export async function cadastrarReceitaSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const rendimento = positivo(d, "rendimento");
-  if (rendimento == null) return erro("Informe quantas unidades uma fornada rende, como 24.");
-  const r = await catalogo.criarReceitaSabor(texto(d, "variacao_id"), rendimento);
-  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`);
+  let brutos: unknown;
+  try {
+    brutos = JSON.parse(texto(d, "itens") || "[]");
+  } catch {
+    return erro("Não consegui ler os ingredientes. Atualize a página e tente de novo.");
+  }
+  if (!Array.isArray(brutos) || brutos.length === 0) return erro("Adicione pelo menos um ingrediente, com a quantidade.");
+  const itens: { insumo_id: string; quantidade: number; unidade: string }[] = [];
+  for (const [n, b] of brutos.entries()) {
+    const item = b as Record<string, string>;
+    const quantidade = lerNumero(item.quantidade);
+    if (!item.insumo_id || !/^[0-9a-f-]{36}$/i.test(item.insumo_id)) return erro(`Escolha o insumo do ingrediente ${n + 1}.`);
+    if (quantidade == null || quantidade <= 0) return erro(`Informe a quantidade do ingrediente ${n + 1}, como 200 ou 0,4.`);
+    if (!item.unidade) return erro(`Escolha a unidade do ingrediente ${n + 1}.`);
+    itens.push({ insumo_id: item.insumo_id, quantidade, unidade: item.unidade });
+  }
+  if (rendimento == null) return erro("Diga quantas unidades essa fornada rende, como 24.");
+  const r = await catalogo.cadastrarReceitaSabor(texto(d, "variacao_id"), rendimento, itens);
+  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`, "/estoque", "/");
   return r;
 }
 

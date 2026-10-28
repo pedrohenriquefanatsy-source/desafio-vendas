@@ -2,14 +2,15 @@ import { Aviso, Campo, Selecao } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { ItemEditavel } from "@/componentes/item-editavel";
 import { CampoInsumoUnidade, type OpcaoInsumo } from "@/componentes/campo-insumo-unidade";
+import { ConstrutorReceita } from "@/componentes/construtor-receita";
 import { formatarQuantidade, formatarReais } from "@/lib/numeros";
 import type { CustoItemReceita, CustoReceita, CustoVariacao } from "@/servicos/catalogo";
 import type { Tables } from "@/lib/supabase/tipos-banco";
 import {
   adicionarItemReceita,
   alterarItemReceita,
+  cadastrarReceitaSabor,
   copiarReceitaSabor,
-  criarReceitaSabor,
   removerItemReceita,
   salvarRendimento,
 } from "../../acoes-catalogo";
@@ -61,12 +62,14 @@ export function ReceitaDoSabor({
     return (
       <div className="mt-4 flex flex-col gap-2">
         <h3 className="text-sm font-medium">Receita (uma fornada)</h3>
-        <p className="text-sm text-texto-suave">Este sabor ainda não tem receita. Sem ela, o sistema não sabe o custo nem consegue baixar os insumos na produção.</p>
-        <Formulario acao={criarReceitaSabor} textoBotao="Criar receita" textoEnviando="Criando…">
-          <input type="hidden" name="variacao_id" value={id} />
-          <input type="hidden" name="produto_id" value={produtoId} />
-          <Campo id={`rend-novo-${id}`} name="rendimento" rotulo="Uma fornada rende quantas unidades?" inputMode="decimal" placeholder="Ex.: 24" required />
-        </Formulario>
+        <p className="text-sm text-texto-suave">
+          Este sabor ainda não tem receita. Liste os ingredientes e as quantidades de uma fornada para ver o custo; no fim, diga quantas unidades ela rende.
+        </p>
+        {opcoes.length === 0 ? (
+          <Aviso tipo="erro">Cadastre os insumos antes (Mais → Insumos), com embalagem e preço.</Aviso>
+        ) : (
+          <ConstrutorReceita insumos={opcoes} variacaoId={id} produtoId={produtoId} acao={cadastrarReceitaSabor} />
+        )}
         {copiar}
       </div>
     );

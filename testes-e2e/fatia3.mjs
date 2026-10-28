@@ -45,11 +45,11 @@ async function entrar(p, quem) {
 }
 
 // Preenche o item n (1, 2…) da tela de compra.
-async function itemCompra(p, n, { insumo, quantidade, unidade, valor }) {
+// A unidade vem do cadastro do insumo (embalagem): só a quantidade e o valor mudam.
+async function itemCompra(p, n, { insumo, quantidade, valor }) {
   const g = p.getByRole("group", { name: `Item ${n}` });
   if (insumo) await g.locator("select").first().selectOption({ label: insumo });
   if (quantidade) await g.locator("input").first().fill(quantidade);
-  if (unidade) await g.locator("select").nth(1).selectOption(unidade);
   if (valor) await g.locator("input").nth(1).fill(valor);
 }
 
@@ -79,12 +79,12 @@ await adicionarEmbalagem(p, POTE);
 
 // ── Compra pelo caixa, com 3 itens em kg, cx e und ──────────────────────────
 await p.goto(`${BASE}/compras/nova`);
-await itemCompra(p, 1, { insumo: FARINHA, quantidade: "1", unidade: "kg", valor: "6,00" });
+await itemCompra(p, 1, { insumo: FARINHA, quantidade: "1", valor: "6,00" });
 await p.getByRole("button", { name: "Adicionar item" }).click();
-await itemCompra(p, 2, { insumo: LC, quantidade: "1", unidade: "embalagem", valor: "7,90" });
+await itemCompra(p, 2, { insumo: LC, quantidade: "1", valor: "7,90" });
 await p.getByRole("button", { name: "Adicionar item" }).click();
-await itemCompra(p, 3, { insumo: POTE, quantidade: "10", unidade: "und", valor: "5" });
-await p.getByText("1 embalagem = 395 g").waitFor();
+await itemCompra(p, 3, { insumo: POTE, quantidade: "10", valor: "5" });
+await p.getByText("= 395 g no estoque").waitFor();
 confere(/Total da compra\s?R\$\s?18,90/.test(await texto(p)), "Compra: total de R$ 18,90 aparece antes de salvar");
 await verificarTela(p, "Nova compra");
 await p.screenshot({ path: `${CAPTURAS}/01-nova-compra.png`, fullPage: true });
@@ -136,7 +136,7 @@ for (const n of [1, 2]) {
   const insumo = await g.locator("select").first().evaluate((s) => s.selectedOptions[0]?.textContent);
   prontos.push(`${insumo}=${await g.locator("input").first().inputValue()}`);
 }
-confere(prontos.includes(`${LC}=395`) && prontos.includes(`${POTE}=10`), `Compra aberta pela falta já vem com 395 g de leite e 10 potes (${prontos.join(", ")})`);
+confere(prontos.includes(`${LC}=1`) && prontos.includes(`${POTE}=10`), `Compra aberta pela falta já vem com 1 embalagem de leite (395 g) e 10 potes (${prontos.join(", ")})`);
 // A ordem dos itens não é fixa: o valor vai pelo insumo de cada item.
 for (const n of [1, 2]) await itemCompra(p, n, { valor: prontos[n - 1].startsWith(`${LC}=`) ? "7,90" : "5,00" });
 await p.screenshot({ path: `${CAPTURAS}/05-compra-da-falta.png`, fullPage: true });
@@ -191,7 +191,7 @@ const ctxM = await navegador.newContext(celular);
 const pm = await ctxM.newPage();
 await entrar(pm, membro);
 await pm.goto(`${BASE}/compras/nova`);
-await itemCompra(pm, 1, { insumo: FARINHA, quantidade: "1", unidade: "kg", valor: "7" });
+await itemCompra(pm, 1, { insumo: FARINHA, quantidade: "1", valor: "7" });
 await pm.locator('input[name="pago_por"][value="participante"]').check();
 await pm.getByRole("button", { name: "Registrar compra" }).click();
 await esperarPagina(pm, /^\/compras$/);
