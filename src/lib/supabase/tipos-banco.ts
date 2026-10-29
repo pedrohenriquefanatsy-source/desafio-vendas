@@ -653,12 +653,17 @@ export type Database = {
           concluida_por: string | null
           criado_em: string
           criado_por: string | null
+          custo_cobertura: number | null
+          custo_massa: number | null
+          custo_por_grama: number | null
           data_planejada: string | null
           desafio_id: string | null
           fornadas: number
           id: string
           motivo_cancelamento: string | null
           observacao: string | null
+          peso_cubos: number | null
+          peso_final: number | null
           receita_id: string
           situacao: Database["public"]["Enums"]["situacao_producao"]
           unidades_perdidas: number | null
@@ -676,12 +681,17 @@ export type Database = {
           concluida_por?: string | null
           criado_em?: string
           criado_por?: string | null
+          custo_cobertura?: number | null
+          custo_massa?: number | null
+          custo_por_grama?: number | null
           data_planejada?: string | null
           desafio_id?: string | null
           fornadas: number
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
+          peso_cubos?: number | null
+          peso_final?: number | null
           receita_id: string
           situacao?: Database["public"]["Enums"]["situacao_producao"]
           unidades_perdidas?: number | null
@@ -699,12 +709,17 @@ export type Database = {
           concluida_por?: string | null
           criado_em?: string
           criado_por?: string | null
+          custo_cobertura?: number | null
+          custo_massa?: number | null
+          custo_por_grama?: number | null
           data_planejada?: string | null
           desafio_id?: string | null
           fornadas?: number
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
+          peso_cubos?: number | null
+          peso_final?: number | null
           receita_id?: string
           situacao?: Database["public"]["Enums"]["situacao_producao"]
           unidades_perdidas?: number | null
@@ -839,33 +854,48 @@ export type Database = {
           alterado_em: string | null
           alterado_por: string | null
           ativa: boolean
+          cobertura_estimada: number | null
+          cobertura_insumo_id: string | null
           criado_em: string
           criado_por: string | null
+          custeio_por_peso: boolean
+          gramagem_unidade: number | null
           id: string
           nome: string
           observacao: string | null
+          peso_cubos_estimado: number | null
           rendimento_unidades: number
         }
         Insert: {
           alterado_em?: string | null
           alterado_por?: string | null
           ativa?: boolean
+          cobertura_estimada?: number | null
+          cobertura_insumo_id?: string | null
           criado_em?: string
           criado_por?: string | null
+          custeio_por_peso?: boolean
+          gramagem_unidade?: number | null
           id?: string
           nome: string
           observacao?: string | null
+          peso_cubos_estimado?: number | null
           rendimento_unidades: number
         }
         Update: {
           alterado_em?: string | null
           alterado_por?: string | null
           ativa?: boolean
+          cobertura_estimada?: number | null
+          cobertura_insumo_id?: string | null
           criado_em?: string
           criado_por?: string | null
+          custeio_por_peso?: boolean
+          gramagem_unidade?: number | null
           id?: string
           nome?: string
           observacao?: string | null
+          peso_cubos_estimado?: number | null
           rendimento_unidades?: number
         }
         Relationships: []
@@ -1240,6 +1270,27 @@ export type Database = {
         }
         Relationships: []
       }
+      v_custeio_peso: {
+        Row: {
+          cobertura: string | null
+          cobertura_base: number | null
+          cobertura_insumo_id: string | null
+          cobertura_sem_preco: boolean | null
+          cubos_base: number | null
+          custo_cobertura_g: number | null
+          custo_massa_fornada: number | null
+          custo_por_grama: number | null
+          custo_unidade: number | null
+          final_base: number | null
+          fornadas_base: number | null
+          gramagem: number | null
+          origem: string | null
+          pesada_em: string | null
+          receita_id: string | null
+          sem_preco: boolean | null
+        }
+        Relationships: []
+      }
       v_custo_embalagens: {
         Row: {
           custo: number | null
@@ -1273,12 +1324,16 @@ export type Database = {
       v_custo_receitas: {
         Row: {
           ativa: boolean | null
+          custeio_por_peso: boolean | null
+          custo_por_grama: number | null
           custo_por_unidade: number | null
           custo_receita: number | null
+          gramagem_unidade: number | null
           insumos_sem_preco: string | null
           itens: number | null
           itens_sem_preco: number | null
           nome: string | null
+          origem_custo_peso: string | null
           receita_id: string | null
           rendimento_unidades: number | null
         }
@@ -1593,6 +1648,17 @@ export type Database = {
         }
         Returns: string
       }
+      cadastrar_receita_peso: {
+        Args: {
+          p_cobertura: number
+          p_cobertura_insumo: string
+          p_gramagem: number
+          p_itens: Json
+          p_peso_cubos: number
+          p_variacao: string
+        }
+        Returns: string
+      }
       cadastrar_receita_variacao: {
         Args: { p_itens: Json; p_rendimento: number; p_variacao: string }
         Returns: string
@@ -1623,6 +1689,8 @@ export type Database = {
       }
       concluir_producao: {
         Args: {
+          p_peso_cubos?: number
+          p_peso_final?: number
           p_producao: string
           p_unidades_boas: number
           p_unidades_perdidas?: number
@@ -1636,6 +1704,16 @@ export type Database = {
       criar_receita_variacao: {
         Args: { p_rendimento: number; p_variacao: string }
         Returns: string
+      }
+      definir_custeio_peso: {
+        Args: {
+          p_cobertura: number
+          p_cobertura_insumo: string
+          p_gramagem: number
+          p_peso_cubos: number
+          p_receita: string
+        }
+        Returns: undefined
       }
       definir_custo_insumo: {
         Args: { p_insumo: string; p_preco: number; p_unidade: string }
@@ -1746,6 +1824,10 @@ export type Database = {
           p_valor_recebido?: number
         }
         Returns: Json
+      }
+      voltar_custeio_por_rendimento: {
+        Args: { p_receita: string; p_rendimento: number }
+        Returns: undefined
       }
     }
     Enums: {

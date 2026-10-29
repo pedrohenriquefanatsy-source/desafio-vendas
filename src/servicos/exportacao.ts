@@ -224,6 +224,8 @@ export const EXPORTACOES: Record<string, Definicao> = {
     colunas: [
       t("id", "ID"), dh("criado_em", "Planejada em"), t("produto", "Produto"), n("fornadas", "Fornadas"), n("unidades_previstas", "Previstas"),
       t("situacao", "Situação"), n("unidades_produzidas", "Boas"), n("unidades_perdidas", "Perdidas"), dh("concluida_em", "Concluída em"),
+      n("peso_cubos", "Peso dos cubos (g)"), n("peso_final", "Peso com o chocolate (g)"), n("custo_massa", "Custo da massa"),
+      n("custo_cobertura", "Custo do chocolate"), n("custo_por_grama", "Custo por grama"),
       t("motivo_cancelamento", "Motivo do cancelamento"),
     ],
     carregar: async (s, f) => {

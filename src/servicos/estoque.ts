@@ -71,6 +71,11 @@ export async function listarProducoes() {
   return { planejadas, concluidas };
 }
 
+export async function listarCusteioPeso() {
+  const s = await criarClienteServidor();
+  return lista(s.from("v_custeio_peso").select("*"));
+}
+
 export async function listarCompras() {
   const s = await criarClienteServidor();
   const compras = await lista(s.from("compras").select("*").order("criado_em", { ascending: false }).limit(40));
@@ -135,9 +140,19 @@ export async function planejarProducao(chave: string, variacaoId: string, fornad
 
 type Falta = { insumo_id: string; insumo: string; unidade: string; necessario: number; disponivel: number; falta: number };
 
-export async function concluirProducao(id: string, boas: number, perdidas: number): Promise<Resultado> {
+export async function concluirProducao(
+  id: string,
+  boas: number,
+  perdidas: number,
+  pesos?: { cubos: number; final: number },
+): Promise<Resultado> {
   const s = await criarClienteServidor();
-  const { data, error } = await s.rpc("concluir_producao", { p_producao: id, p_unidades_boas: boas, p_unidades_perdidas: perdidas });
+  const { data, error } = await s.rpc("concluir_producao", {
+    p_producao: id,
+    p_unidades_boas: boas,
+    p_unidades_perdidas: perdidas,
+    ...(pesos ? { p_peso_cubos: pesos.cubos, p_peso_final: pesos.final } : {}),
+  });
   if (error) return falhou(error);
   const resposta = data as { ok: boolean; faltas?: Falta[] };
   if (!resposta.ok) {

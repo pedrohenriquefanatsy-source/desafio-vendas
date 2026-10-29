@@ -429,3 +429,48 @@ Pedido do administrador depois de usar o sistema.
   banco, `cadastrar_receita_variacao`, só para o administrador).
 - Ingrediente sem preço cadastrado avisa que o custo está incompleto.
 - O banco continua calculando o custo oficial; o da tela é só prévia.
+
+## 14. Custeio por peso: cubos de brownie com cobertura (fatia 11, 29/10/2026)
+
+Pedido do administrador: o jeito mais certeiro de custear é pelo peso. A massa é feita, cortada em
+cubos (as avarias e os farelos saem), os cubos são pesados, molhados no chocolate e pesados de novo
+depois de esfriar. O potinho tem uma gramagem padrão.
+
+### Duas formas de custear uma receita
+- **Por unidades** (como era): custo da fornada ÷ quantas unidades ela rende.
+- **Por peso**: escolhida ao cadastrar a receita ("Como calcular o custo?") ou depois, no sabor
+  ("Custear por peso"). É possível voltar para unidades ("Voltar a custear por unidades").
+
+### Receita por peso
+- Ingredientes da **massa**, como sempre (quantidade de uma fornada).
+- **Cobertura**: o insumo do chocolate (precisa ser medido em gramas).
+- **Estimativas de uma fornada** (só para começar): peso esperado dos cubos bons e chocolate esperado.
+- **Gramagem do potinho** (g), que pode ser editada a qualquer momento.
+- O rendimento previsto vira (cubos + chocolate) ÷ gramagem, só como previsão de potinhos.
+
+### Concluir a produção pesando
+- Pede o **peso dos cubos** e o **peso com o chocolate**; o peso com o chocolate precisa ser maior.
+- **Chocolate gasto = peso com o chocolate − peso dos cubos.** Esse chocolate sai do estoque, junto
+  com a massa (receita × fornadas) e a embalagem (pelos potinhos prontos). Se faltar algo, nada é
+  baixado (como antes), inclusive o chocolate.
+- **Custo da fornada** = custo da massa (ingredientes × fornadas) + chocolate gasto × preço do chocolate.
+  O custo das sobras e farelos fica dentro dos cubos bons.
+- **Custo por grama real** = custo da fornada ÷ peso com o chocolate. Fica gravado na produção.
+- **Quantos potinhos saíram é digitado** pela pessoa (o peso nunca é 100% fiel). A tela mostra
+  quantos potinhos o peso comporta e avisa se a quantidade digitada destoa mais de 10%, sem impedir.
+- **Custo de cada potinho pronto** = gramagem × custo por grama real + embalagem. Potinho perdido:
+  gramagem × custo por grama (sem embalagem). Os dois ficam gravados no movimento de estoque.
+- Insumo sem preço (da massa, do chocolate ou da embalagem): não conclui por peso e diz o que falta.
+
+### Custo por grama para preço e margem (custo atual do produto)
+- Depois da primeira fornada pesada: **proporções da última fornada pesada** (quanto de chocolate
+  por peso de cubos, perdas de corte etc.) com **os preços de hoje** dos insumos. Assim o custo
+  acompanha mudança de preço, e o que já foi produzido continua com o custo do dia.
+- Antes de qualquer pesagem: usa a **estimativa** da receita, e a tela marca "estimativa".
+- Custo do produto = gramagem × custo por grama + embalagens. Margem e markup seguem como antes.
+
+### Lista de compras e produção planejada
+- A lista de compras inclui o chocolate esperado (estimativa × fornadas) das produções por peso.
+- Copiar a receita de outro sabor leva cobertura, estimativas e gramagem.
+- O chocolate usado como cobertura não pode ser excluído enquanto estiver em alguma receita.
+- Exportação "Produção": colunas novas de pesos, custo da massa, do chocolate e por grama.

@@ -342,3 +342,22 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
   repetida.
 - Os testes pegaram dois detalhes de tela (link pequeno demais para o toque; frases do resumo
   quebrando mal), já corrigidos.
+
+## Fatia 11: custeio por peso (29/10/2026)
+
+- **Banco** (`supabase/testes/fatia11.sql`, Postgres local e projeto de teste): receita por peso
+  guarda cobertura, estimativas e gramagem; recusas (gramagem zero, cobertura em unidades, sem
+  cobertura) não deixam receita pela metade; antes de pesar o custo vem da estimativa
+  (36,50 ÷ 2800 g); concluir sem pesos ou com peso final igual ao dos cubos é recusado; concluir
+  2 fornadas com cubos 3800 g e 5200 g com chocolate baixa **1400 g** de chocolate, a massa e a
+  embalagem; a produção guarda pesos e custos (massa 21,80 + chocolate 44,80 = 66,60 ÷ 5200 g);
+  potinho bom = gramagem × custo por grama + embalagem, perdido = sem embalagem; concluir de novo
+  não baixa duas vezes; preço novo do chocolate muda o custo por grama sem mexer na fornada já
+  feita; falta de chocolate bloqueia e diz quanto falta (900 g); chocolate sem preço deixa o
+  custo vazio e não conclui; copiar leva os dados de peso; voltar para unidades; membro só lê.
+  Os testes das fatias 1 a 10 continuam passando.
+- **Telas** (`testes-e2e/fatia11.mjs`, 375 px): **30 de 30**. Receita por peso com custo ao vivo,
+  produto custeado por peso, concluir pesando (chocolate gasto, custo por grama, aviso de
+  quantidade que destoa), estoque depois de concluir (chocolate 5 kg → 3,6 kg), custo por grama
+  vindo da última fornada, voltar para unidades. Sem rolagem lateral e alvos ≥ 44 px.
+- **Testes antigos** (fatias 2 a 10) rodados de novo, todos passaram.

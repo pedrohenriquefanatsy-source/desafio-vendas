@@ -99,7 +99,17 @@ export async function concluirProducao(_a: Resultado | null, d: FormData): Promi
   if (boas == null || boas < 0) return erro("Informe quantas unidades ficaram boas, como 20.");
   if (perdidas == null || perdidas < 0) return erro("Informe quantas se perderam (ou deixe em branco).");
   if (boas + perdidas === 0) return erro("Informe pelo menos uma unidade, boa ou perdida.");
-  const r = await estoque.concluirProducao(texto(d, "id"), boas, perdidas);
+  const cubosTexto = texto(d, "peso_cubos");
+  const finalTexto = texto(d, "peso_final");
+  let pesos: { cubos: number; final: number } | undefined;
+  if (cubosTexto || finalTexto) {
+    const cubos = lerNumero(cubosTexto);
+    const final = lerNumero(finalTexto);
+    if (cubos == null || cubos <= 0) return erro("Informe o peso dos cubos, em gramas, como 3800.");
+    if (final == null || final <= cubos) return erro("O peso com o chocolate precisa ser maior que o peso dos cubos. Confira as duas pesagens.");
+    pesos = { cubos, final };
+  }
+  const r = await estoque.concluirProducao(texto(d, "id"), boas, perdidas, pesos);
   if (!r.ok) return r;
   atualizarEstoque();
   // A produção sai da lista de planejadas; a confirmação aparece no topo da aba.

@@ -49,7 +49,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/mais
   const admin = ehAdmin(perfil);
   const dados = /^[0-9a-f-]{36}$/i.test(id) ? await obterProduto(id) : null;
   if (!dados) notFound();
-  const { produto, custos, embalagens, componentes, margens, receitas, itensReceita, custosReceita, usoReceita } = dados;
+  const { produto, custos, embalagens, componentes, margens, receitas, itensReceita, custosReceita, usoReceita, custeioPeso } = dados;
   const kit = produto.tipo === "kit";
   const [insumos, unidades, todas] = admin ? await Promise.all([listarInsumos(), unidadesPorInsumo(), listarCustosVariacoes()]) : [[], {}, []];
   const opcoesIngrediente = opcoesInsumo(insumos, unidades);
@@ -132,6 +132,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/mais
                   receita={receita}
                   itens={itensReceita.filter((i) => i.receita_id === v.receita_id)}
                   custo={custosReceita.find((c) => c.receita_id === v.receita_id)}
+                  custeioPeso={custeioPeso.find((c) => c.receita_id === v.receita_id)}
                   opcoes={opcoesIngrediente}
                   unidades={unidades}
                   origens={origens}

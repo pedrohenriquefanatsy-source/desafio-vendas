@@ -11,6 +11,8 @@ const BLOCOS: { titulo: string; itens: string[] }[] = [
       "Preço de cada insumo por grama (ou ml, ou unidade) = preço da embalagem ÷ quanto vem nela. Ex.: R$ 16,00 por 500 g = R$ 0,032 por g.",
       "Custo da receita = soma de (quantidade de cada insumo × preço por grama, ml ou unidade). Cada sabor tem a sua receita.",
       "Custo por unidade = custo da receita ÷ quantas unidades ela rende + embalagens de cada unidade.",
+      "Receita por peso (cubos com cobertura): o chocolate gasto é o peso com o chocolate menos o peso dos cubos. Custo por grama = (custo da massa + chocolate gasto) ÷ peso com o chocolate. O potinho custa a gramagem dele × custo por grama + embalagem.",
+      "O custo por grama usa as proporções da última fornada pesada, com os preços de hoje. Antes da primeira pesagem, usa a estimativa da receita.",
       "Kit = soma do custo dos produtos que o formam + a embalagem própria do kit.",
       "O preço de cada insumo é o da última compra (ou o que o administrador cadastrou).",
       "Sobra (margem de contribuição, MC) = preço de venda − custo. É o que sobra de cada unidade para pagar despesas e dar lucro.",

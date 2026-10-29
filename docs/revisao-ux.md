@@ -78,3 +78,12 @@ Ainda **depende de vocês**: ver se alguém novo cadastra um insumo e um sabor s
 | "Na compra de insumo já cadastrado, sem trocar a unidade; mostrar o que já foi cadastrado" | A compra mostra a embalagem e o último preço e pergunta só "quantas embalagens" e "valor pago" (já sugerido). Menos campos, menos erro (Nielsen 5 e 6; Hick). Outro tamanho de embalagem = outro insumo |
 | "Nome do cliente e localização, para ver quem mais compra e os bairros; ícone de desconhecido" | Escolha "Informar cliente" ou "Desconhecido" (padrão, para vender rápido); bairro opcional com sugestões; tela "Clientes e bairros" com ranking |
 | "Cadastrar a lista toda da receita e, no fim, a quantidade que rende" | Ingredientes primeiro, custo da fornada ao vivo, rendimento no fim com o custo por unidade; grava tudo num toque (modelo mental de quem cozinha) |
+
+## Fatia 11 (29/10/2026): custeio por peso
+
+| O que foi pedido | O que mudou |
+|---|---|
+| "O mais acertivo é custear pelo peso: pesar os cubos, molhar no chocolate e pesar de novo" | A receita ganha o modo "Por peso". Ao concluir a produção a pessoa informa só dois pesos; o sistema mostra na hora o chocolate gasto, o custo por grama e o custo do potinho (feedback imediato, Nielsen 1) |
+| "Cada potinho terá uma gramagem padrão, editável" | Campo "Gramagem de cada potinho" na receita, com edição depois |
+| "O peso nunca é 100% fiel; a quantidade pode variar" | Quantos potinhos saíram é digitado; o peso só confere e avisa, sem impedir (usuário no controle, Nielsen 3) |
+| "Estimativa antes da primeira fornada" | Estimativa de cubos e chocolate na receita, marcada como "estimativa" até a primeira pesagem |

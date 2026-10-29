@@ -1,13 +1,15 @@
 import { Abas, Aviso, Campo, Cartao, EstadoVazio, ItemLista, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
+import { ConcluirPeso } from "@/componentes/concluir-peso";
 import { ItemEditavel } from "@/componentes/item-editavel";
-import { formatarQuantidade, formatarReais, formatarSaldo } from "@/lib/numeros";
+import { formatarCustoUnidade, formatarQuantidade, formatarReais, formatarSaldo } from "@/lib/numeros";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { exigirParticipante } from "@/servicos/sessao";
 import { listarCustosVariacoes, NOMES_TIPO_INSUMO, type TipoInsumo } from "@/servicos/catalogo";
 import {
   listarEstoqueInsumos,
   listarEstoqueProdutos,
+  listarCusteioPeso,
   listarListaCompras,
   listarProducaoPossivel,
   listarProducoes,
@@ -173,6 +175,7 @@ async function AbaProducao({
   concluidas,
 }: Awaited<ReturnType<typeof listarProducoes>>) {
   const variacoes = (await listarCustosVariacoes()).filter((v) => v.tipo === "simples" && v.ativa);
+  const custeioPeso = new Map((await listarCusteioPeso()).map((c) => [c.receita_id, c]));
   const nomes = new Map(variacoes.map((v) => [v.variacao_id, nomeVariacao(v.produto, v.variacao)]));
   const comReceita = variacoes.filter((v) => v.receita_id);
   const nome = (id: string) => nomes.get(id) ?? "Produto desativado";
@@ -192,6 +195,19 @@ async function AbaProducao({
                 apoio={`${formatarQuantidade(p.fornadas)} fornada(s) · ${formatarQuantidade(p.unidades_previstas)} previstas${p.data_planejada ? ` · para ${formatarData(p.data_planejada)}` : ""}`}
                 direita={<Selo>Planejada</Selo>}
               >
+                {custeioPeso.get(p.receita_id) ? (
+                  <ConcluirPeso
+                    acao={concluirProducao}
+                    id={p.id}
+                    fornadas={Number(p.fornadas)}
+                    previstas={Number(p.unidades_previstas)}
+                    gramagem={Number(custeioPeso.get(p.receita_id)?.gramagem)}
+                    custoMassaFornada={custeioPeso.get(p.receita_id)?.custo_massa_fornada ?? null}
+                    custoCoberturaG={custeioPeso.get(p.receita_id)?.custo_cobertura_g ?? null}
+                    cobertura={custeioPeso.get(p.receita_id)?.cobertura ?? "chocolate"}
+                    textoPrevisto={`Previsto: cerca de ${formatarQuantidade(p.unidades_previstas)} potinhos. Informe as pesagens desta fornada.`}
+                  />
+                ) : (
                 <Formulario acao={concluirProducao} textoBotao="Concluir produção" textoEnviando="Conferindo insumos…" className="flex flex-col gap-3">
                   <input type="hidden" name="id" value={p.id} />
                   <div className="grid grid-cols-2 gap-3">
@@ -209,6 +225,7 @@ async function AbaProducao({
                     Ao concluir, os insumos e as embalagens saem do estoque e as unidades boas entram como produto pronto.
                   </p>
                 </Formulario>
+                )}
                 <div className="mt-4 border-t border-borda pt-4">
                   <Formulario acao={cancelarProducao} textoBotao="Cancelar esta produção" textoEnviando="Cancelando…" variante="perigo">
                     <input type="hidden" name="id" value={p.id} />
@@ -254,6 +271,9 @@ async function AbaProducao({
                   <span className="text-sm text-texto-suave">
                     {formatarQuantidade(p.unidades_produzidas)} boas
                     {Number(p.unidades_perdidas) > 0 ? ` · ${formatarQuantidade(p.unidades_perdidas)} perdidas` : ""}
+                    {p.peso_final != null && p.peso_cubos != null
+                      ? ` · cubos ${formatarQuantidade(p.peso_cubos)} g → ${formatarQuantidade(p.peso_final)} g · ${formatarCustoUnidade(p.custo_por_grama, "g")}`
+                      : ""}
                   </span>
                 </span>
                 <span className="text-sm text-texto-suave">{formatarDataHora(p.concluida_em)}</span>
