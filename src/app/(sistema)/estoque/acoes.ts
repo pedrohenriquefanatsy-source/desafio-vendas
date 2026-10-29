@@ -91,29 +91,71 @@ export async function planejarProducao(_a: Resultado | null, d: FormData): Promi
   return r;
 }
 
-export async function concluirProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
+function voltarParaProducao(feito: string, aviso?: string): never {
+  atualizarEstoque();
+  redirect(`/estoque?aba=producao&feito=${feito}${aviso ? `&aviso=${encodeURIComponent(aviso)}` : ""}`);
+}
+
+function lerQuantidades(d: FormData): { boas: number; perdidas: number } | Resultado {
   const boas = lerNumero(texto(d, "boas"));
   const perdidasTexto = texto(d, "perdidas");
   const perdidas = perdidasTexto ? lerNumero(perdidasTexto) : 0;
-  if (boas == null || boas < 0) return erro("Informe quantas unidades ficaram boas, como 20.");
-  if (perdidas == null || perdidas < 0) return erro("Informe quantas se perderam (ou deixe em branco).");
-  if (boas + perdidas === 0) return erro("Informe pelo menos uma unidade, boa ou perdida.");
-  const cubosTexto = texto(d, "peso_cubos");
-  const finalTexto = texto(d, "peso_final");
-  let pesos: { cubos: number; final: number } | undefined;
-  if (cubosTexto || finalTexto) {
-    const cubos = lerNumero(cubosTexto);
-    const final = lerNumero(finalTexto);
-    if (cubos == null || cubos <= 0) return erro("Informe o peso dos cubos, em gramas, como 3800.");
-    if (final == null || final <= cubos) return erro("O peso com o chocolate precisa ser maior que o peso dos cubos. Confira as duas pesagens.");
-    pesos = { cubos, final };
-  }
-  const r = await estoque.concluirProducao(texto(d, "id"), boas, perdidas, pesos);
+  if (boas == null || boas < 0) return erro("Informe quantos renderam, como 24.");
+  if (perdidas == null || perdidas < 0) return erro("Informe quantos se perderam (ou deixe em branco).");
+  if (boas + perdidas === 0) return erro("Informe pelo menos um potinho pronto ou perdido.");
+  return { boas, perdidas };
+}
+
+// Concluir uma produção que já estava planejada.
+export async function concluirProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const q = lerQuantidades(d);
+  if ("ok" in q) return q;
+  const r = await estoque.concluirProducao(texto(d, "id"), q.boas, q.perdidas);
   if (!r.ok) return r;
+  voltarParaProducao("concluida", r.aviso);
+}
+
+// Registrar uma produção de uma vez: produto, fornadas e quantos renderam.
+export async function registrarProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const variacao = texto(d, "variacao_id");
+  const fornadas = lerNumero(texto(d, "fornadas"));
+  if (!UUID.test(variacao)) return erro("Escolha o produto que foi feito.");
+  if (fornadas == null || fornadas <= 0 || fornadas > 100) return erro("Informe quantas fornadas, como 1 ou 2,5.");
+  const q = lerQuantidades(d);
+  if ("ok" in q) return q;
+  const r = await estoque.registrarProducao(texto(d, "chave"), variacao, fornadas, q.boas, q.perdidas);
+  if (!r.ok) return r;
+  voltarParaProducao("registrada", r.aviso);
+}
+
+export async function corrigirProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const boas = lerNumero(texto(d, "boas"));
+  if (boas == null || boas < 0) return erro("Informe quantos renderam, como 24.");
+  const r = await estoque.corrigirProducao(texto(d, "id"), boas);
+  if (r.ok) atualizarEstoque();
+  return r;
+}
+
+// Contagem do dia: cada campo `i_<id>` (insumo) ou `p_<id>` (produto pronto) traz o que foi contado.
+export async function registrarContagem(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const itens: { insumo_id?: string; variacao_id?: string; contado: number }[] = [];
+  for (const [campo, valor] of d.entries()) {
+    const m = /^([ip])_([0-9a-f-]{36})$/i.exec(campo);
+    const bruto = String(valor ?? "").trim();
+    if (!m || bruto === "") continue;
+    const contado = lerNumero(bruto);
+    if (contado == null || contado < 0) return erro("Confira os números da contagem: use zero ou mais, como 250 ou 1,5.");
+    itens.push(m[1].toLowerCase() === "i" ? { insumo_id: m[2], contado } : { variacao_id: m[2], contado });
+  }
+  if (itens.length === 0) return erro("Preencha o que você contou.");
+  const { resultado, alterados } = await estoque.registrarContagem(texto(d, "chave"), itens, `Contagem do dia ${texto(d, "dia") || ""}`.trim());
+  if (!resultado.ok) return resultado;
   atualizarEstoque();
-  // A produção sai da lista de planejadas; a confirmação aparece no topo da aba.
-  redirect("/estoque?aba=producao&feito=concluida");
+  redirect(`/estoque?aba=insumos&feito=contagem&n=${alterados}`);
 }
 
 export async function cancelarProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {

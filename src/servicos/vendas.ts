@@ -182,6 +182,16 @@ export async function registrarRecebimento(chave: string, venda: string, valor: 
   return { ok: true, mensagem: "Recebimento registrado. Entrou no caixa." };
 }
 
+// Recebe o que falta de uma venda (a encomenda paga o restante na entrega).
+export async function receberRestante(chave: string, vendaId: string, forma: string): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.from("v_vendas").select("a_receber").eq("id", vendaId).maybeSingle();
+  if (error) return falhou(error);
+  const falta = Number(data?.a_receber ?? 0);
+  if (falta <= 0) return { ok: true, mensagem: "Nada a receber." };
+  return registrarRecebimento(chave, vendaId, falta, forma);
+}
+
 export async function marcarPronta(venda: string): Promise<Resultado> {
   const s = await criarClienteServidor();
   const { error } = await s.rpc("marcar_encomenda_pronta", { p_venda: venda });
@@ -195,7 +205,7 @@ export async function entregarEncomenda(venda: string, confirmar: boolean): Prom
   if (error) return falhou(error);
   const r = data as { ok: boolean; faltas?: Falta[] };
   if (!r.ok) return avisoFalta(r.faltas ?? [], "Entregar mesmo assim");
-  return { ok: true, mensagem: "Encomenda entregue: o estoque baixou e a venda entrou no resultado." };
+  return { ok: true, mensagem: "Encomenda entregue: o estoque baixou e a venda entrou no faturamento." };
 }
 
 export async function cancelarVenda(venda: string, motivo: string): Promise<Resultado> {

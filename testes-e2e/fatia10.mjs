@@ -126,7 +126,7 @@ await p.locator("summary").filter({ hasText: CHOC }).first().waitFor({ timeout: 
 await p.reload();
 await p.getByText("Rende").first().waitFor();
 t = await texto(p);
-confere(/Rende 20 unidades/.test(t) && /fornada\s?R\$\s?14,30/.test(t) && /R\$\s?0,72 cada/.test(t), "Receita cadastrada de uma vez: rende 20, fornada R$ 14,30, R$ 0,72 por unidade");
+confere(/Rende cerca de 20 unidades/.test(t) && /fornada\s?R\$\s?14,30/.test(t) && /R\$\s?0,72 cada/.test(t), "Receita cadastrada de uma vez: rende 20, fornada R$ 14,30, R$ 0,72 por unidade");
 await p.screenshot({ path: `${CAPTURAS}/03-receita-pronta.png`, fullPage: true });
 
 // ── 3. Venda: desconhecido, com nome e bairro, pendente exige nome ─────────────

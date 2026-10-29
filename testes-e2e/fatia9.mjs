@@ -2,7 +2,7 @@
 // Roda contra o app ligado ao Supabase de TESTE. Antes: supabase/testes/preparar-e2e-fatia2.sql.
 // Confere: logo, ícones e manifesto do app; cores da marca nos dois temas; menu Mais em grupos;
 // insumo com embalagem e preço (com a conta na tela); produto com sabores e a receita dentro;
-// copiar receita de outro sabor; excluir só o que nunca foi usado; resultado negativo na meta.
+// copiar receita de outro sabor; excluir só o que nunca foi usado; despesa grande não mexe no faturamento.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { cadastrarInsumo, criarProduto, idInsumo, montarReceita } from "./cadastro.mjs";
@@ -144,7 +144,7 @@ const cartaoNinho = p.locator("details").filter({ has: p.locator("summary").filt
 await abrirCartao(cartaoNinho);
 await cartaoNinho.getByText("Rende").first().waitFor();
 const tn = (await cartaoNinho.textContent()).replace(/\s+/g, " ");
-confere(/Rende 20 unidades/.test(tn) && /fornada\s?R\$\s?14,30/.test(tn) && /Choc|Chocolate/.test(tn), "O sabor Ninho tem os mesmos ingredientes, rendimento e custo");
+confere(/Rende cerca de 20 unidades/.test(tn) && /fornada\s?R\$\s?14,30/.test(tn) && /Choc|Chocolate/.test(tn), "O sabor Ninho tem os mesmos ingredientes, rendimento e custo");
 await verificarTela(p, "Produto com dois sabores");
 await p.screenshot({ path: `${CAPTURAS}/06-dois-sabores.png`, fullPage: true });
 
@@ -202,19 +202,20 @@ await pm.goto(urlBites);
 await pm.getByText("Rende").first().waitFor();
 confere((await pm.getByRole("button", { name: /^Excluir/ }).count()) === 0 && (await pm.getByText("＋ Adicionar sabor").count()) === 0, "Membro vê a receita, sem editar nem excluir");
 
-// ── Resultado negativo na meta ──────────────────────────────────────────────
+// ── Despesa grande: o faturamento da meta não é afetado; o lucro estimado fica negativo ─────
 await pm.goto(`${BASE}/caixa/despesa`);
 await pm.fill("#valor", "5000,00");
 await pm.fill("#descricao", `Despesa grande ${S}`);
 await pm.getByRole("button", { name: "Registrar despesa" }).click();
 await sucesso(pm).waitFor();
 await p.goto(`${BASE}/`);
-await p.getByText("O resultado está negativo").waitFor();
+await p.getByText("Faturamento").first().waitFor();
 t = await texto(p);
-confere(/-R\$\s?\d/.test(t) && !/-\d+(,\d+)?% da meta/.test(t), "Início: resultado negativo explicado, sem porcentagem negativa");
-confere((await p.locator("[role=progressbar]").getAttribute("aria-valuenow")) === "0", "Barra da meta fica em 0%, sem passar do limite");
-await verificarTela(p, "Início com resultado negativo");
-await p.screenshot({ path: `${CAPTURAS}/09-resultado-negativo.png`, fullPage: false });
+confere(!t.includes("O resultado está negativo") && !/-\d+(,\d+)?% da meta/.test(t), "Início: despesa grande não gera aviso de resultado negativo nem porcentagem negativa");
+confere(/Lucro estimado:\s?-R\$\s?\d/.test(t), "Início: o lucro estimado negativo aparece só como informação");
+confere(Number(await p.locator("[role=progressbar]").getAttribute("aria-valuenow")) >= 0, "Barra da meta (faturamento) segue válida");
+await verificarTela(p, "Início com lucro negativo");
+await p.screenshot({ path: `${CAPTURAS}/09-lucro-negativo.png`, fullPage: false });
 // desfaz: cancela a despesa para não sujar os outros testes
 await pm.reload();
 await pm.locator("summary", { hasText: `Despesa grande ${S}` }).click();
@@ -222,7 +223,7 @@ await pm.locator('input[name="motivo"]').first().fill("Teste da tela");
 await pm.getByRole("button", { name: "Cancelar despesa" }).first().click();
 await pm.getByText(/Cancelada em .*Teste da tela/).first().waitFor();
 await p.goto(`${BASE}/`);
-confere((await p.getByText("O resultado está negativo").count()) === 0, "Cancelada a despesa, o aviso de resultado negativo some");
+confere(!/Lucro estimado:\s?-R\$/.test(await texto(p)), "Cancelada a despesa, o lucro estimado deixa de ser negativo");
 
 // ── Tema escuro com as cores da marca ───────────────────────────────────────
 const ctxE = await navegador.newContext({ ...celular, colorScheme: "dark" });

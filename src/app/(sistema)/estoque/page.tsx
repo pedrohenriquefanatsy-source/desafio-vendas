@@ -1,21 +1,19 @@
 import { Abas, Aviso, Campo, Cartao, EstadoVazio, ItemLista, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
-import { ConcluirPeso } from "@/componentes/concluir-peso";
 import { ItemEditavel } from "@/componentes/item-editavel";
-import { formatarCustoUnidade, formatarQuantidade, formatarReais, formatarSaldo } from "@/lib/numeros";
+import { formatarQuantidade, formatarReais, formatarSaldo } from "@/lib/numeros";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { exigirParticipante } from "@/servicos/sessao";
 import { listarCustosVariacoes, NOMES_TIPO_INSUMO, type TipoInsumo } from "@/servicos/catalogo";
 import {
   listarEstoqueInsumos,
   listarEstoqueProdutos,
-  listarCusteioPeso,
   listarListaCompras,
   listarProducaoPossivel,
   listarProducoes,
 } from "@/servicos/estoque";
 import { listarCobertura } from "@/servicos/painel";
-import { cancelarProducao, concluirProducao, planejarProducao } from "./acoes";
+import { cancelarProducao, concluirProducao, corrigirProducao, registrarProducao } from "./acoes";
 
 type Aba = "produtos" | "insumos" | "producao";
 
@@ -24,7 +22,7 @@ const nomeVariacao = (produto: string | null, variacao: string | null) =>
 
 export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
   await exigirParticipante();
-  const { aba: abaPedida, feito } = await searchParams;
+  const { aba: abaPedida, feito, aviso, n } = await searchParams;
   const aba: Aba = abaPedida === "insumos" || abaPedida === "producao" ? abaPedida : "produtos";
   const { planejadas, concluidas } = await listarProducoes();
 
@@ -39,13 +37,26 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
           { valor: "producao", rotulo: "Produção", href: "/estoque?aba=producao", contagem: planejadas.length },
         ]}
       />
-      {feito === "concluida" || feito === "cancelada" ? (
-        <div className="mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <LinkBotao href="/estoque/contagem" variante="secundario">
+          Contagem do dia
+        </LinkBotao>
+        <LinkBotao href="/estoque/simular" variante="secundario">
+          Simular produção
+        </LinkBotao>
+      </div>
+      {feito === "concluida" || feito === "registrada" || feito === "cancelada" || feito === "contagem" ? (
+        <div className="mb-4 flex flex-col gap-2">
           <Aviso tipo="sucesso">
-            {feito === "concluida"
-              ? "Produção concluída: insumos e embalagens baixados e produtos prontos no estoque."
-              : "Produção planejada cancelada. O estoque não mudou."}
+            {feito === "contagem"
+              ? `Contagem registrada: ${typeof n === "string" && Number(n) > 0 ? `${n} ${Number(n) === 1 ? "item ajustado" : "itens ajustados"}` : "nada mudou, os saldos já estavam certos"}.`
+              : feito === "cancelada"
+                ? "Produção planejada cancelada. O estoque não mudou."
+                : "Produção registrada: os insumos e as embalagens saíram do estoque e os potinhos prontos entraram."}
           </Aviso>
+          {typeof aviso === "string" && aviso ? (
+            <Aviso tipo="erro">Atenção, o estoque não tinha tudo: {aviso}. Confira os saldos na Contagem do dia.</Aviso>
+          ) : null}
         </div>
       ) : null}
       {aba === "produtos" ? <AbaProdutos /> : aba === "insumos" ? <AbaInsumos /> : <AbaProducao planejadas={planejadas} concluidas={concluidas} />}
@@ -175,75 +186,19 @@ async function AbaProducao({
   concluidas,
 }: Awaited<ReturnType<typeof listarProducoes>>) {
   const variacoes = (await listarCustosVariacoes()).filter((v) => v.tipo === "simples" && v.ativa);
-  const custeioPeso = new Map((await listarCusteioPeso()).map((c) => [c.receita_id, c]));
   const nomes = new Map(variacoes.map((v) => [v.variacao_id, nomeVariacao(v.produto, v.variacao)]));
   const comReceita = variacoes.filter((v) => v.receita_id);
   const nome = (id: string) => nomes.get(id) ?? "Produto desativado";
 
   return (
     <div className="flex flex-col gap-4">
-      <section>
-        <h2 className="mb-2 font-semibold">Planejadas</h2>
-        {planejadas.length === 0 ? (
-          <p className="text-sm text-texto-suave">Nenhuma produção planejada. Planeje abaixo: o estoque só muda quando você concluir.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {planejadas.map((p) => (
-              <ItemEditavel
-                key={p.id}
-                titulo={nome(p.variacao_id)}
-                apoio={`${formatarQuantidade(p.fornadas)} fornada(s) · ${formatarQuantidade(p.unidades_previstas)} previstas${p.data_planejada ? ` · para ${formatarData(p.data_planejada)}` : ""}`}
-                direita={<Selo>Planejada</Selo>}
-              >
-                {custeioPeso.get(p.receita_id) ? (
-                  <ConcluirPeso
-                    acao={concluirProducao}
-                    id={p.id}
-                    fornadas={Number(p.fornadas)}
-                    previstas={Number(p.unidades_previstas)}
-                    gramagem={Number(custeioPeso.get(p.receita_id)?.gramagem)}
-                    custoMassaFornada={custeioPeso.get(p.receita_id)?.custo_massa_fornada ?? null}
-                    custoCoberturaG={custeioPeso.get(p.receita_id)?.custo_cobertura_g ?? null}
-                    cobertura={custeioPeso.get(p.receita_id)?.cobertura ?? "chocolate"}
-                    textoPrevisto={`Previsto: cerca de ${formatarQuantidade(p.unidades_previstas)} potinhos. Informe as pesagens desta fornada.`}
-                  />
-                ) : (
-                <Formulario acao={concluirProducao} textoBotao="Concluir produção" textoEnviando="Conferindo insumos…" className="flex flex-col gap-3">
-                  <input type="hidden" name="id" value={p.id} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <Campo
-                      id={`boas-${p.id}`}
-                      name="boas"
-                      rotulo="Ficaram boas"
-                      inputMode="decimal"
-                      defaultValue={String(Number(p.unidades_previstas)).replace(".", ",")}
-                      required
-                    />
-                    <Campo id={`perdidas-${p.id}`} name="perdidas" rotulo="Perdidas (opcional)" inputMode="decimal" placeholder="0" />
-                  </div>
-                  <p className="text-xs text-texto-suave">
-                    Ao concluir, os insumos e as embalagens saem do estoque e as unidades boas entram como produto pronto.
-                  </p>
-                </Formulario>
-                )}
-                <div className="mt-4 border-t border-borda pt-4">
-                  <Formulario acao={cancelarProducao} textoBotao="Cancelar esta produção" textoEnviando="Cancelando…" variante="perigo">
-                    <input type="hidden" name="id" value={p.id} />
-                    <Campo id={`motivo-${p.id}`} name="motivo" rotulo="Motivo (opcional)" maxLength={200} />
-                  </Formulario>
-                </div>
-              </ItemEditavel>
-            ))}
-          </div>
-        )}
-      </section>
-
       <Cartao>
-        <h2 className="mb-3 font-semibold">Planejar produção</h2>
+        <h2 className="mb-1 font-semibold">Registrar produção</h2>
+        <p className="mb-3 text-sm text-texto-suave">Diga o produto, quantas fornadas fez e quantos potinhos renderam. O estoque e o custo se ajustam sozinhos.</p>
         {comReceita.length === 0 ? (
           <p className="text-sm text-texto-suave">Nenhum produto tem receita ainda. Crie a receita do sabor em Mais → Produtos e sabores.</p>
         ) : (
-          <Formulario acao={planejarProducao} textoBotao="Planejar" limparAoSalvar>
+          <Formulario acao={registrarProducao} textoBotao="Registrar produção" textoEnviando="Registrando…" limparAoSalvar>
             <Selecao id="variacao_id" name="variacao_id" rotulo="Produto" required defaultValue="">
               <option value="">Escolha…</option>
               {comReceita.map((v) => (
@@ -254,32 +209,65 @@ async function AbaProducao({
             </Selecao>
             <div className="grid grid-cols-2 gap-3">
               <Campo id="fornadas" name="fornadas" rotulo="Fornadas" inputMode="decimal" defaultValue="1" required />
-              <Campo id="data" name="data" rotulo="Para quando (opcional)" type="date" />
+              <Campo id="boas" name="boas" rotulo="Quantos renderam" inputMode="decimal" placeholder="Ex.: 24" required />
             </div>
+            <Campo id="perdidas" name="perdidas" rotulo="Perdidos (opcional)" inputMode="decimal" placeholder="0" />
           </Formulario>
         )}
       </Cartao>
 
       {concluidas.length ? (
         <section>
-          <h2 className="mb-2 font-semibold">Concluídas recentes</h2>
-          <Cartao className="divide-y divide-borda p-0">
+          <h2 className="mb-2 font-semibold">Produções recentes</h2>
+          <div className="flex flex-col gap-2">
             {concluidas.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <span>
-                  <span className="block font-medium">{nome(p.variacao_id)}</span>
-                  <span className="text-sm text-texto-suave">
-                    {formatarQuantidade(p.unidades_produzidas)} boas
-                    {Number(p.unidades_perdidas) > 0 ? ` · ${formatarQuantidade(p.unidades_perdidas)} perdidas` : ""}
-                    {p.peso_final != null && p.peso_cubos != null
-                      ? ` · cubos ${formatarQuantidade(p.peso_cubos)} g → ${formatarQuantidade(p.peso_final)} g · ${formatarCustoUnidade(p.custo_por_grama, "g")}`
-                      : ""}
-                  </span>
-                </span>
-                <span className="text-sm text-texto-suave">{formatarDataHora(p.concluida_em)}</span>
-              </div>
+              <ItemEditavel
+                key={p.id}
+                titulo={nome(p.variacao_id)}
+                apoio={`${formatarQuantidade(p.fornadas)} fornada(s) · ${formatarQuantidade(p.unidades_produzidas)} renderam${
+                  Number(p.unidades_perdidas) > 0 ? ` · ${formatarQuantidade(p.unidades_perdidas)} perdidos` : ""
+                } · ${formatarDataHora(p.concluida_em)}`}
+              >
+                <Formulario acao={corrigirProducao} textoBotao="Corrigir quanto rendeu" textoEnviando="Corrigindo…" className="flex flex-col gap-3">
+                  <input type="hidden" name="id" value={p.id} />
+                  <Campo id={`corr-${p.id}`} name="boas" rotulo="Quantos renderam de verdade" inputMode="decimal" defaultValue={String(Number(p.unidades_produzidas)).replace(".", ",")} required />
+                  <p className="text-xs text-texto-suave">
+                    Ajusta o estoque do produto e das embalagens. O custo de cada potinho passa a considerar o novo número.
+                  </p>
+                </Formulario>
+              </ItemEditavel>
             ))}
-          </Cartao>
+          </div>
+        </section>
+      ) : null}
+
+      {planejadas.length ? (
+        <section>
+          <h2 className="mb-2 font-semibold">Planejadas (antigas)</h2>
+          <div className="flex flex-col gap-2">
+            {planejadas.map((p) => (
+              <ItemEditavel
+                key={p.id}
+                titulo={nome(p.variacao_id)}
+                apoio={`${formatarQuantidade(p.fornadas)} fornada(s) · ${formatarQuantidade(p.unidades_previstas)} previstas${p.data_planejada ? ` · para ${formatarData(p.data_planejada)}` : ""}`}
+                direita={<Selo>Planejada</Selo>}
+              >
+                <Formulario acao={concluirProducao} textoBotao="Registrar produção" textoEnviando="Registrando…" className="flex flex-col gap-3">
+                  <input type="hidden" name="id" value={p.id} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Campo id={`boas-${p.id}`} name="boas" rotulo="Quantos renderam" inputMode="decimal" defaultValue={String(Number(p.unidades_previstas)).replace(".", ",")} required />
+                    <Campo id={`perdidas-${p.id}`} name="perdidas" rotulo="Perdidos (opcional)" inputMode="decimal" placeholder="0" />
+                  </div>
+                </Formulario>
+                <div className="mt-4 border-t border-borda pt-4">
+                  <Formulario acao={cancelarProducao} textoBotao="Cancelar esta produção" textoEnviando="Cancelando…" variante="perigo">
+                    <input type="hidden" name="id" value={p.id} />
+                    <Campo id={`motivo-${p.id}`} name="motivo" rotulo="Motivo (opcional)" maxLength={200} />
+                  </Formulario>
+                </div>
+              </ItemEditavel>
+            ))}
+          </div>
         </section>
       ) : null}
     </div>

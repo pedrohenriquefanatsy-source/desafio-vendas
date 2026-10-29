@@ -87,3 +87,14 @@ Ainda **depende de vocês**: ver se alguém novo cadastra um insumo e um sabor s
 | "Cada potinho terá uma gramagem padrão, editável" | Campo "Gramagem de cada potinho" na receita, com edição depois |
 | "O peso nunca é 100% fiel; a quantidade pode variar" | Quantos potinhos saíram é digitado; o peso só confere e avisa, sem impedir (usuário no controle, Nielsen 3) |
 | "Estimativa antes da primeira fornada" | Estimativa de cubos e chocolate na receita, marcada como "estimativa" até a primeira pesagem |
+
+## Fatia 12 (30/10/2026): simplificar
+
+| O que foi pedido | O que mudou |
+|---|---|
+| "O resultado deve ser o faturamento, não o lucro" | A meta e o painel contam o faturamento; o lucro estimado virou uma linha pequena de informação (menos conceitos na tela principal; Hick) |
+| "Na encomenda, dizer quanto recebi ou vou receber" | Encomenda à vista; pagou tudo / na entrega / uma parte; "falta receber na entrega"; receber o restante junto com a entrega |
+| "A receita ficou muito complicada" | Uma receita fixa por fornada com todos os ingredientes; produção só pede fornadas e quantos renderam; as pesagens saíram |
+| "Estoque para controle, atualizado no fim do dia" | Contagem do dia numa tela só; produção não trava por falta de insumo, só avisa |
+| "Simulação de produção" | Fornadas por produto → quanto comprar de cada insumo, com botão para registrar a compra |
+| "Título: vendedor - cliente e horário" | Lista de vendas com título "vendedor - cliente · horário" (reconhecimento em vez de lembrança; Nielsen 6) |

@@ -57,7 +57,7 @@ export const EXPORTACOES: Record<string, Definicao> = {
       t("participante", "Quem vendeu"), t("cliente", "Cliente"), t("bairro", "Bairro"), t("cliente_desconhecido", "Cliente desconhecido"), t("forma_pagamento", "Forma de pagamento"), n("taxa_percentual", "Taxa (%)"),
       n("subtotal", "Subtotal"), n("desconto", "Desconto"), n("total", "Total"), n("recebido", "Recebido"), n("a_receber", "A receber"),
       t("situacao_pagamento", "Pagamento"), t("situacao_entrega", "Entrega"), d("entrega_prevista", "Entrega prevista"),
-      dh("reconhecida_em", "Entrou no resultado em"), n("margem_total", "Margem (MC)"), t("itens_resumo", "Itens"),
+      dh("reconhecida_em", "Entrou no faturamento em"), n("margem_total", "Margem (MC)"), t("itens_resumo", "Itens"),
       t("motivo_cancelamento", "Motivo do cancelamento"), t("observacao", "Observação"),
     ],
     carregar: async (s, f) =>
@@ -327,11 +327,11 @@ export const EXPORTACOES: Record<string, Definicao> = {
     carregar: async (s) => tudo((a, b) => s.from("v_painel_meta").select("*").order("inicio").range(a, b)),
   },
   resultado_diario: {
-    titulo: "Resultado por dia",
+    titulo: "Faturamento e lucro por dia",
     filtros: ["periodo"],
     colunas: [
       t("desafio_id", "ID do desafio"), d("dia", "Dia"), n("margem_vendas", "Margem das vendas"), n("custo_perdas", "Perdas"), n("despesas", "Despesas"),
-      n("resultado", "Resultado"), n("vendido", "Vendido"), n("vendas", "Vendas"), n("unidades", "Unidades"),
+      n("resultado", "Lucro estimado"), n("vendido", "Vendido"), n("vendas", "Vendas"), n("unidades", "Unidades"),
     ],
     carregar: async (s, f) =>
       tudo((a, b) => {

@@ -22,12 +22,12 @@ export default async function Reembolsos({ searchParams }: PageProps<"/caixa/ree
       <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
         ← Caixa
       </Link>
-      <TituloPagina apoio="Compras e despesas pagas do próprio bolso. O reembolso sai do caixa e não mexe no resultado de novo.">
+      <TituloPagina apoio="Compras e despesas pagas do próprio bolso. O reembolso sai do caixa e não mexe no lucro de novo.">
         A reembolsar
       </TituloPagina>
       {feito === "pago" ? (
         <div className="mb-3">
-          <Aviso tipo="sucesso">Reembolso registrado. Saiu do caixa; o resultado não muda.</Aviso>
+          <Aviso tipo="sucesso">Reembolso registrado. Saiu do caixa; o lucro não muda.</Aviso>
         </div>
       ) : null}
 

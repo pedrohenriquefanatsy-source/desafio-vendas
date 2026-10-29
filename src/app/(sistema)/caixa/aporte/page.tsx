@@ -22,7 +22,7 @@ export default async function Aporte() {
       <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
         ← Caixa
       </Link>
-      <TituloPagina apoio="Entra no caixa. Não é venda: não muda o resultado.">Aportes</TituloPagina>
+      <TituloPagina apoio="Entra no caixa. Não é venda: não muda o faturamento.">Aportes</TituloPagina>
       {admin ? (
         <Cartao className="mb-6">
           <Formulario acao={registrarAporte} textoBotao="Registrar aporte" limparAoSalvar>

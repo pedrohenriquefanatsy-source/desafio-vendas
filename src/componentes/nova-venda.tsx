@@ -56,6 +56,7 @@ export function NovaVenda({
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState<Tipo>("venda");
   const [pagamento, setPagamento] = useState<Pagamento>("paga");
+  const [valorRecebido, setValorRecebido] = useState("");
   const [forma, setForma] = useState(inicial?.forma ?? formaPadrao ?? formas[0]?.id ?? "");
   const [desconto, setDesconto] = useState("");
   const [maisOpcoes, setMaisOpcoes] = useState(Boolean(inicial?.observacao));
@@ -172,6 +173,25 @@ export function NovaVenda({
         </section>
       ) : null}
 
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium">Tipo</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {(["venda", "encomenda", "doacao"] as const).map((t) => (
+            <button key={t} type="button" aria-pressed={tipo === t} onClick={() => setTipo(t)} className={chip(tipo === t)}>
+              {t === "venda" ? "Venda" : t === "encomenda" ? "Encomenda" : "Doação"}
+            </button>
+          ))}
+        </div>
+        {tipo === "encomenda" ? (
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Data de entrega
+            <input name="entrega" type="date" min={hoje} required className={campo} />
+            <span className="text-xs font-normal text-texto-suave">O estoque só baixa quando você marcar como entregue.</span>
+          </label>
+        ) : null}
+        {doacao ? <p className="text-xs text-texto-suave">Doação ou brinde: sai do estoque e o custo entra no lucro estimado, sem receita.</p> : null}
+      </fieldset>
+
       {!doacao ? (
         <>
           <fieldset className="flex flex-col gap-2">
@@ -189,15 +209,25 @@ export function NovaVenda({
             <div className="grid grid-cols-3 gap-2">
               {(["paga", "pendente", "parcial"] as const).map((p) => (
                 <button key={p} type="button" aria-pressed={pagamento === p} onClick={() => setPagamento(p)} className={chip(pagamento === p)}>
-                  {p === "paga" ? "Paga" : p === "pendente" ? "Pendente" : "Parcial"}
+                  {tipo === "encomenda"
+                    ? p === "paga" ? "Pagou tudo" : p === "pendente" ? "Paga na entrega" : "Pagou uma parte"
+                    : p === "paga" ? "Paga" : p === "pendente" ? "Pendente" : "Parcial"}
                 </button>
               ))}
             </div>
             {pagamento === "parcial" ? (
               <label className="flex flex-col gap-1 text-sm font-medium">
-                Quanto recebeu agora (R$)
-                <input name="valor_recebido" inputMode="decimal" required placeholder="0,00" className={campo} />
+                {tipo === "encomenda" ? "Quanto já recebeu (R$)" : "Quanto recebeu agora (R$)"}
+                <input name="valor_recebido" inputMode="decimal" required placeholder="0,00" value={valorRecebido} onChange={(e) => setValorRecebido(e.target.value)} className={campo} />
               </label>
+            ) : null}
+            {tipo === "encomenda" && escolhidos.length ? (
+              <p className="text-sm" aria-live="polite">
+                <span className="text-texto-suave">Falta receber na entrega: </span>
+                <strong className="tabular-nums">
+                  {formatarReais(pagamento === "paga" ? 0 : pagamento === "pendente" ? total : Math.max(0, total - (lerNumero(valorRecebido) ?? 0)))}
+                </strong>
+              </p>
             ) : null}
           </fieldset>
         </>
@@ -269,27 +299,9 @@ export function NovaVenda({
 
       <details open={maisOpcoes} onToggle={(e) => setMaisOpcoes(e.currentTarget.open)} className="rounded-cartao border border-borda bg-superficie">
         <summary className="flex min-h-toque cursor-pointer list-none items-center px-4 font-medium [&::-webkit-details-marker]:hidden">
-          Mais opções: encomenda, doação, desconto, preço…
+          Mais opções: desconto, preço, observação…
         </summary>
         <div className="flex flex-col gap-3 border-t border-borda p-4">
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-medium">Tipo</legend>
-            <div className="grid grid-cols-3 gap-2">
-              {(["venda", "encomenda", "doacao"] as const).map((t) => (
-                <button key={t} type="button" aria-pressed={tipo === t} onClick={() => setTipo(t)} className={chip(tipo === t)}>
-                  {t === "venda" ? "Venda" : t === "encomenda" ? "Encomenda" : "Doação"}
-                </button>
-              ))}
-            </div>
-            {tipo === "encomenda" ? (
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Data de entrega
-                <input name="entrega" type="date" min={hoje} required className={campo} />
-                <span className="text-xs font-normal text-texto-suave">O estoque só baixa quando você marcar como entregue.</span>
-              </label>
-            ) : null}
-            {doacao ? <p className="text-xs text-texto-suave">Doação ou brinde: sai do estoque e o custo entra no resultado, sem receita.</p> : null}
-          </fieldset>
           {!doacao ? (
             <>
               <label className="flex flex-col gap-1 text-sm font-medium">

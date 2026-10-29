@@ -53,10 +53,6 @@ async function itemCompra(p, n, { insumo, quantidade, valor }) {
   if (valor) await g.locator("input").nth(1).fill(valor);
 }
 
-async function abrirPlanejada(p, produto) {
-  await p.goto(`${BASE}/estoque?aba=producao`);
-  await p.locator("summary", { hasText: produto }).first().click();
-}
 
 const ctx = await navegador.newContext(celular);
 const p = await ctx.newPage();
@@ -102,33 +98,22 @@ confere(t.includes(`${FARINHA}`) && /1 kg/.test(t) && /395 g/.test(t) && /10 und
 await verificarTela(p, "Estoque · insumos");
 await p.screenshot({ path: `${CAPTURAS}/03-estoque-insumos.png`, fullPage: true });
 
-// ── Teste de aceite 5: planejar 2 fornadas e tentar concluir sem insumo ──────
-await p.goto(`${BASE}/estoque?aba=producao`);
-await p.selectOption("#variacao_id", { label: BOLO });
-await p.fill("#fornadas", "2");
-await p.getByRole("button", { name: "Planejar" }).click();
-await sucesso(p).waitFor();
-confere((await sucesso(p).textContent()).includes("Produção planejada"), "Produção planejada (o estoque não muda)");
-
-await p.goto(`${BASE}/estoque?aba=insumos`);
-await p.getByText("Lista de compras").waitFor();
+// ── Simular a produção: 2 fornadas dizem o que falta comprar ─────────────────
+await p.goto(`${BASE}/estoque/simular`);
+await p.getByLabel(`Fornadas de ${BOLO}`).fill("2");
+await p.getByRole("button", { name: "Simular", exact: true }).click();
+await p.getByText("O que isso rende").waitFor();
 t = await texto(p);
-confere(t.includes(LC) && t.includes(POTE) && /Lista de compras/.test(t), "Lista de compras mostra o leite e os potes que faltam para a produção planejada");
+confere(/2 fornadas de .*≈ 20 potinhos/.test(t), "Simulação: 2 fornadas rendem cerca de 20 potinhos");
+confere(new RegExp(`${LC}\\s?precisa 790 g · tem 395\\s?comprar 395 g`).test(t), "Simulação: leite condensado precisa 790 g, tem 395, comprar 395 g");
+confere(new RegExp(`${POTE}\\s?precisa 20 und · tem 10\\s?comprar 10 und`).test(t), "Simulação: potes precisa 20, tem 10, comprar 10");
+confere(new RegExp(`${FARINHA}\\s?precisa 1\\.000 g[^]*?tem o bastante`).test(t), "Simulação: a farinha basta");
+await verificarTela(p, "Simular produção");
+await p.screenshot({ path: `${CAPTURAS}/04-simulacao.png`, fullPage: true });
 
-await abrirPlanejada(p, BOLO);
-confere((await p.locator('input[name="boas"]').first().inputValue()) === "20", "Concluir já vem com as 20 unidades previstas");
-await verificarTela(p, "Estoque · produção");
-await p.getByRole("button", { name: "Concluir produção" }).first().click();
-await p.locator("p[role=alert]").first().waitFor();
-const alerta = await p.locator("main").textContent();
-confere(alerta.includes("falta insumo") && alerta.includes("Nada foi baixado"), "Aceite 5: produção bloqueada, nada baixado");
-confere(alerta.includes(`${LC}: faltam 395 g (precisa 790, tem 395)`), "Aceite 5: mostra que faltam 395 g de leite condensado");
-confere(alerta.includes(`${POTE}: faltam 10 und (precisa 20, tem 10)`), "Aceite 5: mostra que faltam 10 potes");
-await p.screenshot({ path: `${CAPTURAS}/04-producao-bloqueada.png`, fullPage: true });
-
-// "Registrar compra" já abre com o que falta.
-await p.getByRole("link", { name: "Registrar compra" }).click();
-await esperarPagina(p, /^\/compras\/nova$/);
+// "Registrar compra com esta lista" já abre com o que falta.
+await p.getByRole("link", { name: "Registrar compra com esta lista" }).click();
+await esperarPagina(p, /^\/compras\/nova/);
 await p.getByRole("group", { name: "Item 2" }).locator("input").first().waitFor();
 const prontos = [];
 for (const n of [1, 2]) {
@@ -136,25 +121,31 @@ for (const n of [1, 2]) {
   const insumo = await g.locator("select").first().evaluate((s) => s.selectedOptions[0]?.textContent);
   prontos.push(`${insumo}=${await g.locator("input").first().inputValue()}`);
 }
-confere(prontos.includes(`${LC}=1`) && prontos.includes(`${POTE}=10`), `Compra aberta pela falta já vem com 1 embalagem de leite (395 g) e 10 potes (${prontos.join(", ")})`);
+confere(prontos.includes(`${LC}=1`) && prontos.includes(`${POTE}=10`), `Compra aberta pela simulação já vem com 1 embalagem de leite (395 g) e 10 potes (${prontos.join(", ")})`);
 // A ordem dos itens não é fixa: o valor vai pelo insumo de cada item.
 for (const n of [1, 2]) await itemCompra(p, n, { valor: prontos[n - 1].startsWith(`${LC}=`) ? "7,90" : "5,00" });
-await p.screenshot({ path: `${CAPTURAS}/05-compra-da-falta.png`, fullPage: true });
+await p.screenshot({ path: `${CAPTURAS}/05-compra-da-simulacao.png`, fullPage: true });
 await p.getByRole("button", { name: "Registrar compra" }).click();
-await esperarPagina(p, /^\/compras$/);
+await esperarPagina(p, /^\/compras(\?|$)/);
 
-// ── Teste de aceite 4: concluir ───────────────────────────────────────────
-await abrirPlanejada(p, BOLO);
-await p.getByRole("button", { name: "Concluir produção" }).first().click();
-await esperarPagina(p, /^\/estoque$/);
-await p.getByText("Produção concluída").waitFor();
-confere(!(await texto(p)).includes(`${BOLO} 2 fornada`), "Aceite 4: produção concluída e fora da lista de planejadas");
+// ── Registrar a produção: 2 fornadas renderam 20 ───────────────────────────
+await p.goto(`${BASE}/estoque?aba=producao`);
+await p.selectOption("#variacao_id", { label: BOLO });
+await p.fill("#fornadas", "2");
+await p.fill("#boas", "20");
+await verificarTela(p, "Estoque · produção");
+await p.screenshot({ path: `${CAPTURAS}/06-producao.png`, fullPage: true });
+await p.getByRole("button", { name: "Registrar produção" }).first().click();
+await p.waitForURL((u) => u.pathname === "/estoque" && u.searchParams.get("feito") === "registrada", { timeout: 20000, waitUntil: "commit" });
+await p.getByText("Produção registrada").first().waitFor();
+confere(!(await texto(p)).includes("o estoque não tinha tudo"), "Aceite 4: com os insumos em dia, a produção registra sem aviso");
+confere(/2 fornada\(s\) · 20 renderam/.test(await texto(p)), "Aceite 4: a produção aparece em Produções recentes");
 await p.goto(`${BASE}/estoque`);
 await p.getByText(BOLO).waitFor();
 t = await texto(p);
 confere(new RegExp(`${BOLO}.*20 und`).test(t), "Aceite 4: 20 bolos prontos no estoque");
 await verificarTela(p, "Estoque · produtos");
-await p.screenshot({ path: `${CAPTURAS}/06-estoque-produtos.png`, fullPage: true });
+await p.screenshot({ path: `${CAPTURAS}/07-estoque-produtos.png`, fullPage: true });
 await p.goto(`${BASE}/estoque?aba=insumos`);
 await p.getByText(FARINHA).waitFor();
 t = await texto(p);

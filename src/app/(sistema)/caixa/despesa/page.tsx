@@ -23,7 +23,7 @@ export default async function Despesa() {
       <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
         ← Caixa
       </Link>
-      <TituloPagina apoio="Gasto que não vira estoque (Uber, adesivos…). Entra no resultado uma vez.">Nova despesa</TituloPagina>
+      <TituloPagina apoio="Gasto que não vira estoque (Uber, adesivos…). Entra no lucro estimado uma vez.">Nova despesa</TituloPagina>
       <Cartao className="mb-6">
         <Formulario acao={registrarDespesa} textoBotao="Registrar despesa" limparAoSalvar>
           <Campo id="valor" name="valor" rotulo="Valor (R$)" inputMode="decimal" placeholder="0,00" required />

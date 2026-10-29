@@ -1334,7 +1334,9 @@ export type Database = {
           itens_sem_preco: number | null
           nome: string | null
           origem_custo_peso: string | null
+          origem_rendimento: string | null
           receita_id: string | null
+          rendimento_efetivo: number | null
           rendimento_unidades: number | null
         }
         Relationships: []
@@ -1467,6 +1469,7 @@ export type Database = {
           fim: string | null
           hoje: string | null
           inicio: string | null
+          lucro_estimado: number | null
           margem: number | null
           mc_media_unidade: number | null
           media_por_dia: number | null
@@ -1476,6 +1479,7 @@ export type Database = {
           percentual: number | null
           percentual_vendas: number | null
           perdas: number | null
+          preco_medio_unidade: number | null
           realizado: number | null
           ritmo_necessario: number | null
           sem_custo: boolean | null
@@ -1701,6 +1705,10 @@ export type Database = {
         Args: { p_destino: string; p_origem: string }
         Returns: string
       }
+      corrigir_producao: {
+        Args: { p_producao: string; p_unidades_boas: number }
+        Returns: undefined
+      }
       criar_receita_variacao: {
         Args: { p_rendimento: number; p_variacao: string }
         Returns: string
@@ -1777,6 +1785,10 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_contagem: {
+        Args: { p_chave: string; p_itens: Json; p_justificativa?: string }
+        Returns: number
+      }
       registrar_despesa: {
         Args: {
           p_categoria: string
@@ -1798,6 +1810,17 @@ export type Database = {
           p_variacao: string
         }
         Returns: undefined
+      }
+      registrar_producao: {
+        Args: {
+          p_chave: string
+          p_fornadas: number
+          p_observacao?: string
+          p_unidades_boas: number
+          p_unidades_perdidas?: number
+          p_variacao: string
+        }
+        Returns: Json
       }
       registrar_recebimento: {
         Args: {
@@ -1825,6 +1848,7 @@ export type Database = {
         }
         Returns: Json
       }
+      simular_producao: { Args: { p_itens: Json }; Returns: Json }
       voltar_custeio_por_rendimento: {
         Args: { p_receita: string; p_rendimento: number }
         Returns: undefined

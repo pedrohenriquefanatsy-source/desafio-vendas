@@ -44,13 +44,14 @@ async function lerPainel(p) {
   await p.goto(`${BASE}/`);
   await p.getByText("Ritmo necessário").waitFor();
   const t = await texto(p);
-  const realizado = reais(t.match(/Resultado realizado\s?(-?R\$\s?[\d.]+,\d{2})/)[1]);
+  const realizado = reais(t.match(/Faturamento realizado\s?(-?R\$\s?[\d.]+,\d{2})/)[1]);
   const linhaMeta = (await p.locator("p", { hasText: "da meta de" }).first().textContent()).replace(/\s+/g, " ");
   const [, pct, meta] = linhaMeta.match(/([\d.,]+)% da meta de (R\$\s?[\d.]+,\d{2})/);
   const falta = reais(t.match(/falta (R\$\s?[\d.]+,\d{2})/)[1]);
   const dias = Number(t.match(/Faltam \(com hoje\)\s?(\d+) dias?/)[1]);
   const ritmo = reais(t.match(/Ritmo necessário\s?(R\$\s?[\d.]+,\d{2})/)[1]);
-  return { realizado, percentual: num(pct), meta: reais(meta), falta, dias, ritmo };
+  const lucro = reais(t.match(/Lucro estimado:\s?(-?R\$\s?[\d.]+,\d{2})/)[1]);
+  return { realizado, percentual: num(pct), meta: reais(meta), falta, dias, ritmo, lucro };
 }
 
 const ctx = await navegador.newContext(celular);
@@ -78,14 +79,15 @@ await p.getByText("Ver em tabela").click();
 confere((await p.locator("table tbody tr").count()) >= 1, "Gráficos têm a mesma informação em tabela");
 confere((await texto(p)).includes("projeção"), "A projeção vem rotulada como “projeção”");
 
-// Uma despesa de 10,00 pelo caixa: o realizado cai 10,00 e as contas acompanham.
+// Uma despesa de 10,00 pelo caixa: o faturamento não muda (despesa não é venda); o lucro estimado cai 10,00.
 await p.goto(`${BASE}/caixa/despesa`);
 await p.fill("#valor", "10,00");
 await p.fill("#descricao", `Painel ${S}`);
 await p.getByRole("button", { name: "Registrar despesa" }).click();
 await sucesso(p).waitFor();
 const b = await lerPainel(p);
-confere(igual(b.realizado, a.realizado - 10), `Aceite 13: despesa de 10,00 → realizado ${a.realizado} → ${b.realizado}`);
+confere(igual(b.realizado, a.realizado), `Aceite 13: despesa não muda o faturamento (${a.realizado} → ${b.realizado})`);
+confere(igual(b.lucro, a.lucro - 10), `Aceite 13: o lucro estimado cai 10,00 (${a.lucro} → ${b.lucro})`);
 conferirContas(b, "depois");
 
 // ── Demanda estimada e cobertura de estoque ─────────────────────────────────

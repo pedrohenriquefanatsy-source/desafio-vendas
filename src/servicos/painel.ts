@@ -36,7 +36,7 @@ export async function obterPainel() {
   const desafio = await obterDesafioAtual();
   const [meta, diario, caixa, aReceber, encomendas, devidos, minimos] = await Promise.all([
     desafio ? s.from("v_painel_meta").select("*").eq("desafio_id", desafio.id ?? "").maybeSingle() : Promise.resolve({ data: null, error: null }),
-    desafio ? s.from("v_resultado_diario").select("dia, resultado").eq("desafio_id", desafio.id ?? "") : Promise.resolve({ data: [], error: null }),
+    desafio ? s.from("v_resultado_diario").select("dia, vendido").eq("desafio_id", desafio.id ?? "") : Promise.resolve({ data: [], error: null }),
     saldoCaixa(),
     s.from("v_vendas").select("a_receber").gt("a_receber", 0),
     s.from("v_vendas").select("id", { count: "exact", head: true }).eq("situacao", "ativa").eq("tipo", "encomenda").neq("situacao_entrega", "entregue"),
@@ -44,7 +44,7 @@ export async function obterPainel() {
     s.from("v_estoque_insumos").select("insumo_id", { count: "exact", head: true }).eq("ativo", true).eq("abaixo_minimo", true),
   ]);
   if (meta.error) throw new Error(mensagemDeErro(meta.error));
-  const porDia = new Map(lista(diario).map((d) => [d.dia ?? "", Number(d.resultado ?? 0)]));
+  const porDia = new Map(lista(diario).map((d) => [d.dia ?? "", Number(d.vendido ?? 0)]));
   const m = meta.data;
   return {
     desafio,
@@ -88,7 +88,7 @@ export async function definirDemanda(desafioId: string, variacaoId: string, unid
   return { ok: true, mensagem: unidades == null ? "Estimativa retirada." : "Estimativa salva." };
 }
 
-// "Primeiros passos" do administrador: o que falta para o sistema calcular custo, meta e resultado.
+// "Primeiros passos" do administrador: o que falta para o sistema calcular custo, meta e faturamento.
 export type Passo = { feito: boolean; texto: string; href: string; opcional?: boolean };
 
 export async function obterPassos(): Promise<Passo[]> {

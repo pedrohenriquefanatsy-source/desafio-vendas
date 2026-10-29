@@ -20,3 +20,11 @@ export function formatarDataHora(iso: string | null | undefined): string {
   if (!iso) return "—";
   return dataHora.format(new Date(iso));
 }
+
+const hora = new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" });
+
+// Instante do banco (timestamptz) → "17:24" no horário de Fortaleza.
+export function formatarHora(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  return hora.format(new Date(iso));
+}

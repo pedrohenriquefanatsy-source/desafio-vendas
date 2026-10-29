@@ -52,9 +52,9 @@ async function entrar(p, quem) {
 async function lerCaixa(p) {
   await p.goto(`${BASE}/caixa`);
   await p.getByText("Saldo de caixa").waitFor();
-  const cartoes = p.locator("section").filter({ hasText: /^Saldo de caixa|^Resultado/ });
-  const saldo = reais(await cartoes.filter({ hasText: "Saldo de caixa" }).first().textContent());
-  const resultado = reais(await cartoes.filter({ hasText: /^Resultado/ }).first().textContent());
+  const saldo = reais(await p.locator("section").filter({ hasText: "Saldo de caixa" }).first().textContent());
+  // O lucro estimado (margem − perdas − despesas) vem na nota abaixo dos cartões; o cartão ao lado é o faturamento.
+  const resultado = reais((await texto(p)).match(/Lucro estimado\s?(-?R\$\s?[\d.]+,\d{2})/)[1]);
   const linha = p.locator("li", { hasText: "Membro Teste" });
   const devido = (await linha.count()) ? reais(await linha.first().textContent()) : 0;
   return { saldo, resultado, devido };
@@ -82,7 +82,7 @@ await sucesso(pa).waitFor();
 await verificarTela(pa, "Aportes");
 let depois = await lerCaixa(pa);
 confere(igual(depois.saldo, antes.saldo + 100), `Aceite 11: aporte de R$ 100,00 sobe o caixa (${antes.saldo} → ${depois.saldo})`);
-confere(igual(depois.resultado, antes.resultado), "Aceite 11: o resultado não muda");
+confere(igual(depois.resultado, antes.resultado), "Aceite 11: o lucro estimado não muda");
 
 // ── Teste de aceite 10: despesa do bolso, depois reembolso ──────────────────
 antes = depois;
@@ -97,7 +97,7 @@ await pm.getByRole("button", { name: "Registrar despesa" }).click();
 await sucesso(pm).waitFor();
 confere((await sucesso(pm).textContent()).includes("o desafio te deve"), "Aceite 10: despesa do bolso registrada");
 depois = await lerCaixa(pa);
-confere(igual(depois.resultado, antes.resultado - 15), "Aceite 10: o resultado reconhece o gasto uma vez (−15,00)");
+confere(igual(depois.resultado, antes.resultado - 15), "Aceite 10: o lucro estimado reconhece o gasto uma vez (−15,00)");
 confere(igual(depois.saldo, antes.saldo), "Aceite 10: o caixa não cai (foi do bolso)");
 confere(igual(depois.devido, antes.devido + 15), `Aceite 10: "A reembolsar" mostra 15,00 a mais para o membro (${depois.devido})`);
 await pa.screenshot({ path: `${CAPTURAS}/03-caixa-a-reembolsar.png`, fullPage: true });
@@ -112,7 +112,7 @@ await verificarTela(pa, "A reembolsar");
 await pa.screenshot({ path: `${CAPTURAS}/04-reembolsos.png`, fullPage: true });
 depois = await lerCaixa(pa);
 confere(igual(depois.saldo, antes.saldo - antes.devido), `Aceite 10: o caixa cai só no reembolso (−${antes.devido})`);
-confere(igual(depois.resultado, antes.resultado), "Aceite 10: o reembolso não mexe no resultado de novo");
+confere(igual(depois.resultado, antes.resultado), "Aceite 10: o reembolso não mexe no lucro de novo");
 confere(igual(depois.devido, 0), "Aceite 10: o saldo devido zera");
 
 // ── Despesa pelo caixa e cancelamento ───────────────────────────────────────

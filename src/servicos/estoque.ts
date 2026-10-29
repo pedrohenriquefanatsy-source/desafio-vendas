@@ -71,11 +71,6 @@ export async function listarProducoes() {
   return { planejadas, concluidas };
 }
 
-export async function listarCusteioPeso() {
-  const s = await criarClienteServidor();
-  return lista(s.from("v_custeio_peso").select("*"));
-}
-
 export async function listarCompras() {
   const s = await criarClienteServidor();
   const compras = await lista(s.from("compras").select("*").order("criado_em", { ascending: false }).limit(40));
@@ -140,38 +135,72 @@ export async function planejarProducao(chave: string, variacaoId: string, fornad
 
 type Falta = { insumo_id: string; insumo: string; unidade: string; necessario: number; disponivel: number; falta: number };
 
-export async function concluirProducao(
-  id: string,
+// Falta de insumo não trava a produção: ela é registrada e o aviso diz o que faltava no estoque.
+export type ResultadoProducao = Resultado & { aviso?: string };
+
+function avisoDeFaltas(faltas: Falta[] | undefined): string | undefined {
+  if (!faltas?.length) return undefined;
+  return faltas.map((f) => `${f.insumo}: faltavam ${formatarQuantidade(f.falta)} ${f.unidade}`).join("; ");
+}
+
+export async function concluirProducao(id: string, boas: number, perdidas: number): Promise<ResultadoProducao> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("concluir_producao", { p_producao: id, p_unidades_boas: boas, p_unidades_perdidas: perdidas });
+  if (error) return falhou(error);
+  const resposta = data as { ok: boolean; faltas?: Falta[] };
+  return { ok: true, mensagem: "Produção registrada.", aviso: avisoDeFaltas(resposta.faltas) };
+}
+
+// Registrar uma produção de uma vez: produto, fornadas e quantos renderam.
+export async function registrarProducao(
+  chave: string,
+  variacaoId: string,
+  fornadas: number,
   boas: number,
   perdidas: number,
-  pesos?: { cubos: number; final: number },
-): Promise<Resultado> {
+): Promise<ResultadoProducao> {
   const s = await criarClienteServidor();
-  const { data, error } = await s.rpc("concluir_producao", {
-    p_producao: id,
+  const { data, error } = await s.rpc("registrar_producao", {
+    p_chave: chave,
+    p_variacao: variacaoId,
+    p_fornadas: fornadas,
     p_unidades_boas: boas,
     p_unidades_perdidas: perdidas,
-    ...(pesos ? { p_peso_cubos: pesos.cubos, p_peso_final: pesos.final } : {}),
   });
   if (error) return falhou(error);
   const resposta = data as { ok: boolean; faltas?: Falta[] };
-  if (!resposta.ok) {
-    const faltas = resposta.faltas ?? [];
-    const compra = faltas.map((f) => `insumo=${f.insumo_id}&quantidade=${Number(f.falta)}`).join("&");
-    return {
-      ok: false,
-      erro: "Não dá para concluir: falta insumo. Nada foi baixado do estoque.",
-      itens: faltas.map(
-        (f) =>
-          `${f.insumo}: faltam ${formatarQuantidade(f.falta)} ${f.unidade} (precisa ${formatarQuantidade(f.necessario)}, tem ${formatarQuantidade(f.disponivel)})`,
-      ),
-      links: [
-        { href: `/compras/nova?${compra}`, texto: "Registrar compra" },
-        { href: faltas.length === 1 ? `/estoque/item/insumo/${faltas[0].insumo_id}` : "/estoque?aba=insumos", texto: "Ajustar estoque" },
-      ],
-    };
-  }
-  return { ok: true, mensagem: "Produção concluída: insumos baixados e produtos prontos no estoque." };
+  return { ok: true, mensagem: "Produção registrada.", aviso: avisoDeFaltas(resposta.faltas) };
+}
+
+export async function corrigirProducao(id: string, boas: number): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("corrigir_producao", { p_producao: id, p_unidades_boas: boas });
+  if (error) return falhou(error);
+  return { ok: true, mensagem: "Corrigido: o estoque do produto e a embalagem foram ajustados." };
+}
+
+// Contagem do dia: vários itens de uma vez. itens = [{insumo_id | variacao_id, contado}].
+export async function registrarContagem(
+  chave: string,
+  itens: { insumo_id?: string; variacao_id?: string; contado: number }[],
+  justificativa: string,
+): Promise<{ resultado: Resultado; alterados: number }> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("registrar_contagem", { p_chave: chave, p_itens: itens as unknown as Json, p_justificativa: justificativa });
+  if (error) return { resultado: falhou(error), alterados: 0 };
+  return { resultado: { ok: true }, alterados: Number(data ?? 0) };
+}
+
+export type SimulacaoProducao = {
+  produtos: { variacao_id: string; produto: string; fornadas: number; unidades: number }[];
+  insumos: { insumo_id: string; insumo: string; unidade: string; necessario: number; saldo: number; falta: number; custo_falta: number | null }[];
+};
+
+export async function simularProducao(itens: { variacao_id: string; fornadas: number }[]): Promise<SimulacaoProducao> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("simular_producao", { p_itens: itens as unknown as Json });
+  if (error) throw new Error(mensagemDeErro(error));
+  return data as unknown as SimulacaoProducao;
 }
 
 export async function cancelarProducao(id: string, motivo: string): Promise<Resultado> {
@@ -223,5 +252,5 @@ export async function registrarPerda(
     p_motivo: motivo,
   });
   if (error) return falhou(error);
-  return { ok: true, mensagem: "Perda registrada. O custo dela entra no resultado do desafio." };
+  return { ok: true, mensagem: "Perda registrada. O custo dela entra no lucro estimado do desafio." };
 }

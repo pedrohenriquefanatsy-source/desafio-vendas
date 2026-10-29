@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: { default: "Choc Bites", template: "%s · Choc Bites" },
-  description: "Gestão do desafio de vendas: vendas, estoque, produção, caixa e resultado.",
+  description: "Gestão do desafio de vendas: vendas, estoque, produção, caixa e faturamento.",
   applicationName: "Choc Bites",
   // iPhone: ao adicionar à tela inicial, abre como aplicativo, com o nome e a logo da Choc Bites.
   appleWebApp: { capable: true, title: "Choc Bites", statusBarStyle: "default" },

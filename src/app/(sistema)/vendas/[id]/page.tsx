@@ -15,7 +15,7 @@ const MOTIVOS = ["Lancei errado", "Cliente desistiu", "Valor errado", "Venda rep
 const FEITOS: Record<string, string> = {
   recebido: "Recebimento registrado. Entrou no caixa.",
   pronta: "Encomenda marcada como pronta.",
-  entregue: "Encomenda entregue: os produtos saíram do estoque e a venda entrou no resultado.",
+  entregue: "Encomenda entregue: os produtos saíram do estoque e a venda entrou no faturamento.",
   cancelada: "Cancelada. O estoque e o dinheiro recebido voltaram; o registro fica no histórico.",
 };
 
@@ -149,7 +149,22 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
             ) : null}
             <Formulario acao={entregarEncomenda} textoBotao="Marcar como entregue" textoEnviando="Entregando…">
               <input type="hidden" name="id" value={v.id ?? ""} />
-              <p className="text-xs text-texto-suave">Ao entregar, os produtos saem do estoque e a venda entra no resultado.</p>
+              {aReceber > 0 ? (
+                <>
+                  <label className="flex min-h-toque items-center gap-3 text-sm font-medium">
+                    <input type="checkbox" name="receber_restante" value="1" className="size-5" />
+                    Recebi o restante ({formatarReais(aReceber)}) na entrega
+                  </label>
+                  <Selecao id="forma-entrega" name="forma" rotulo="Como pagou" defaultValue={v.forma_pagamento_id ?? formas[0]?.id}>
+                    {formas.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.nome}
+                      </option>
+                    ))}
+                  </Selecao>
+                </>
+              ) : null}
+              <p className="text-xs text-texto-suave">Ao entregar, os produtos saem do estoque e a venda entra no faturamento.</p>
             </Formulario>
           </Cartao>
         ) : null}

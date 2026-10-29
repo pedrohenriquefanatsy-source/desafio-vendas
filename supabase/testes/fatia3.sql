@@ -204,7 +204,9 @@ begin
 end
 $$;
 
--- ── Teste de aceite 5: estoque insuficiente ──────────────────────────────────
+-- ── Teste de aceite 5 (nova regra): estoque insuficiente avisa, mas conclui ──────
+-- Como o estoque virou controle do dia a dia, faltar insumo não trava mais a produção: ela conclui, o saldo pode
+-- ficar negativo e a resposta traz a lista do que faltava. O teste desfaz o que fez (a produção segue planejada).
 do $$
 declare
   v_var uuid := (select id from ids_f3 where chave = 'var');
@@ -214,17 +216,25 @@ declare
   f jsonb;
 begin
   v_prod := public.planejar_producao(gen_random_uuid(), v_var, 2);
-  v_res := public.concluir_producao(v_prod, 20, 0);
-  assert not (v_res ->> 'ok')::boolean, 'Aceite 5: produção bloqueada';
-  assert jsonb_array_length(v_res -> 'faltas') = 2, 'Aceite 5: faltam 2 insumos: ' || (v_res -> 'faltas')::text;
-  select x into f from jsonb_array_elements(v_res -> 'faltas') x where x ->> 'insumo' = 'Leite condensado F3';
-  assert (f ->> 'necessario')::numeric = 790 and (f ->> 'disponivel')::numeric = 395 and (f ->> 'falta')::numeric = 395 and f ->> 'unidade' = 'g',
-    'Aceite 5: leite condensado: precisa 790 g, tem 395, falta 395: ' || f::text;
-  select x into f from jsonb_array_elements(v_res -> 'faltas') x where x ->> 'insumo' = 'Pote F3';
-  assert (f ->> 'falta')::numeric = 18, 'Aceite 5: faltam 18 potes: ' || f::text;
-  assert (select count(*) from public.movimentos_estoque) = v_movs, 'Aceite 5: nada foi gravado no estoque';
-  assert (select situacao = 'planejada' from public.producoes where id = v_prod), 'Aceite 5: produção continua planejada';
   insert into ids_f3 values ('prod2', v_prod);
+  begin
+    v_res := public.concluir_producao(v_prod, 20, 0);
+    assert (v_res ->> 'ok')::boolean, 'Aceite 5: a produção conclui mesmo faltando insumo';
+    assert jsonb_array_length(v_res -> 'faltas') = 2, 'Aceite 5: avisa de 2 insumos em falta: ' || (v_res -> 'faltas')::text;
+    select x into f from jsonb_array_elements(v_res -> 'faltas') x where x ->> 'insumo' = 'Leite condensado F3';
+    assert (f ->> 'necessario')::numeric = 790 and (f ->> 'disponivel')::numeric = 395 and (f ->> 'falta')::numeric = 395 and f ->> 'unidade' = 'g',
+      'Aceite 5: leite condensado: precisa 790 g, tem 395, falta 395: ' || f::text;
+    select x into f from jsonb_array_elements(v_res -> 'faltas') x where x ->> 'insumo' = 'Pote F3';
+    assert (f ->> 'falta')::numeric = 18, 'Aceite 5: faltam 18 potes: ' || f::text;
+    assert (select count(*) from public.movimentos_estoque) > v_movs, 'Aceite 5: a produção foi gravada no estoque';
+    assert (select saldo from public.saldos_estoque where insumo_id = (select id from ids_f3 where chave = 'pote')) = -18,
+      'Aceite 5: o saldo do pote ficou negativo (−18), à vista na contagem';
+    raise exception 'DESFAZER_TESTE';
+  exception when others then
+    if sqlerrm <> 'DESFAZER_TESTE' then raise; end if;
+  end;
+  assert (select count(*) from public.movimentos_estoque) = v_movs, 'Aceite 5: o teste desfez o que fez';
+  assert (select situacao = 'planejada' from public.producoes where id = v_prod), 'Aceite 5: produção continua planejada';
 end
 $$;
 

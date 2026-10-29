@@ -430,7 +430,9 @@ Pedido do administrador depois de usar o sistema.
 - Ingrediente sem preço cadastrado avisa que o custo está incompleto.
 - O banco continua calculando o custo oficial; o da tela é só prévia.
 
-## 14. Custeio por peso: cubos de brownie com cobertura (fatia 11, 29/10/2026)
+## 14. Custeio por peso: cubos de brownie com cobertura (fatia 11, 29/10/2026) — SUBSTITUÍDA PELA SEÇÃO 15
+
+> Na fatia 12 (30/10/2026) o administrador pediu para simplificar: as pesagens saíram da tela e a receita voltou a ter o chocolate como um ingrediente comum. As funções do banco da fatia 11 continuam existindo (sem uso na tela). O que vale hoje está na seção 15.
 
 Pedido do administrador: o jeito mais certeiro de custear é pelo peso. A massa é feita, cortada em
 cubos (as avarias e os farelos saem), os cubos são pesados, molhados no chocolate e pesados de novo
@@ -474,3 +476,34 @@ depois de esfriar. O potinho tem uma gramagem padrão.
 - Copiar a receita de outro sabor leva cobertura, estimativas e gramagem.
 - O chocolate usado como cobertura não pode ser excluído enquanto estiver em alguma receita.
 - Exportação "Produção": colunas novas de pesos, custo da massa, do chocolate e por grama.
+
+## 15. Faturamento, produção simples, contagem do dia e simulação (fatia 12, 30/10/2026)
+
+Pedido do administrador depois de usar o sistema: "está muito complexo".
+
+### Meta pelo faturamento
+- O **resultado** que a meta acompanha agora é o **faturamento**: soma do valor das vendas que já contam (sem doações, sem canceladas; encomenda só quando entregue). Despesas e perdas **não** mexem nele.
+- O **lucro estimado** (margem das vendas − perdas − despesas) continua calculado e aparece só como informação (nota no Início e no Caixa).
+- Falta, ritmo por dia e média por dia usam o faturamento. A **projeção** = falta ÷ **preço médio** por unidade vendida até agora. O aviso de "resultado negativo" saiu.
+
+### Encomenda
+- "Encomenda" fica à vista na tela de venda (não está mais escondida em "Mais opções").
+- Para encomenda, o pagamento se escolhe como: **Pagou tudo / Paga na entrega / Pagou uma parte** (com quanto já recebeu). A tela mostra **"Falta receber na entrega: R$ X"**.
+- Na entrega há a opção **"Recebi o restante"** (com a forma de pagamento): recebe o que falta e entrega de uma vez.
+
+### Título da venda na lista
+- **Vendedor - cliente · horário** (ex.: "Lyncon - Monteiro · 17:24"). O número e o dia ficam na linha de baixo, com os itens e o bairro.
+
+### Receita fixa por fornada e produção simples
+- Cada sabor tem **uma receita fixa por fornada**, editável, com **todos** os ingredientes (o chocolate é um ingrediente em gramas). O rendimento da receita é só o **esperado**.
+- **Registrar produção** (Estoque → Produção): produto, **fornadas** e **quantos renderam** (e perdidos, se houver). Pode registrar várias produções do mesmo produto.
+- **Custo do potinho** = (custo da receita × fornadas) ÷ (renderam + perdidos) + embalagem. Fica gravado no estoque. Potinho perdido: sem embalagem.
+- O **custo do produto** passa a usar quanto uma fornada **realmente rende**: (renderam + perdidos) ÷ fornadas da **última produção registrada**, com os preços de hoje. Antes de qualquer produção, vale o rendimento esperado da receita.
+- **Corrigir quanto rendeu**: ajusta o estoque do produto e das embalagens pela diferença. O administrador corrige qualquer produção; o membro, as próprias, em até 30 minutos.
+- **Faltar insumo não trava**: a produção é registrada, o saldo pode ficar negativo e a tela avisa o que faltava ("Atenção, o estoque não tinha tudo…").
+
+### Estoque como controle e contagem do dia
+- No fim de cada dia: **Contagem do dia** (Estoque). Mostra todos os insumos e produtos prontos com o saldo do sistema; a pessoa escreve o que contou e o sistema ajusta só as diferenças, com o motivo "Contagem do dia". Saldo negativo vem em branco, para contar de verdade. Reenviar a mesma contagem não repete.
+
+### Simulação de produção
+- **Simular produção** (Estoque): informa quantas fornadas de cada produto e vê, por insumo e embalagem, quanto precisa, quanto tem e **quanto falta comprar** (com custo estimado), mais quantos potinhos rende. Não grava nada; tem o botão "Registrar compra com esta lista".

@@ -306,48 +306,6 @@ export async function cadastrarReceitaSabor(_a: Resultado | null, d: FormData): 
   return r;
 }
 
-// Cobertura (o chocolate), peso esperado dos cubos, chocolate esperado e gramagem do potinho.
-function lerPesos(d: FormData): { cobertura: string; cubos: number; chocolate: number; gramagem: number } | Resultado {
-  const cobertura = texto(d, "cobertura_insumo");
-  const cubos = positivo(d, "peso_cubos");
-  const chocolate = positivo(d, "cobertura");
-  const gramagem = positivo(d, "gramagem");
-  if (!/^[0-9a-f-]{36}$/i.test(cobertura)) return erro("Escolha o chocolate da cobertura.");
-  if (cubos == null) return erro("Informe o peso esperado dos cubos de uma fornada, em gramas, como 2000.");
-  if (chocolate == null) return erro("Informe quanto chocolate se espera gastar em uma fornada, em gramas, como 700.");
-  if (gramagem == null) return erro("Informe a gramagem de cada potinho, em gramas, como 150.");
-  return { cobertura, cubos, chocolate, gramagem };
-}
-
-export async function cadastrarReceitaPeso(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const itens = lerItens(d);
-  if (!Array.isArray(itens)) return itens;
-  const pesos = lerPesos(d);
-  if ("ok" in pesos) return pesos;
-  const r = await catalogo.cadastrarReceitaPeso(texto(d, "variacao_id"), itens, pesos);
-  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`, "/estoque", "/");
-  return r;
-}
-
-export async function salvarCusteioPeso(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const pesos = lerPesos(d);
-  if ("ok" in pesos) return pesos;
-  const r = await catalogo.definirCusteioPeso(texto(d, "receita_id"), pesos);
-  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`, "/estoque", "/");
-  return r;
-}
-
-export async function voltarCusteioRendimento(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const rendimento = positivo(d, "rendimento");
-  if (rendimento == null) return erro("Informe quantas unidades uma fornada rende, como 24.");
-  const r = await catalogo.voltarCusteioRendimento(texto(d, "receita_id"), rendimento);
-  if (r.ok) atualizar("/mais/produtos", `/mais/produtos/${texto(d, "produto_id")}`, "/estoque", "/");
-  return r;
-}
-
 export async function copiarReceitaSabor(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const origem = texto(d, "origem");

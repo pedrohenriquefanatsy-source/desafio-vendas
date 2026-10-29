@@ -33,8 +33,8 @@ export function GraficoResultadoDia({ dias, hoje }: { dias: DiaDoDesafio[]; hoje
 
   return (
     <figure>
-      <figcaption className="mb-1 text-sm font-medium">Resultado de cada dia</figcaption>
-      <svg viewBox={`0 0 ${L} ${A}`} className="w-full" role="img" aria-label="Resultado por dia do desafio">
+      <figcaption className="mb-1 text-sm font-medium">Faturamento de cada dia</figcaption>
+      <svg viewBox={`0 0 ${L} ${A}`} className="w-full" role="img" aria-label="Faturamento por dia do desafio">
         <line x1={M.esq} x2={L - M.dir} y1={zero} y2={zero} className="stroke-borda" strokeWidth={1} />
         {dias.map((d, n) => {
           const x = M.esq + n * passo + (passo - largura) / 2;
@@ -90,7 +90,7 @@ export function GraficoAcumulado({ dias, meta, hoje }: { dias: DiaDoDesafio[]; m
       <figcaption className="mb-1 text-sm font-medium">
         Acumulado <span className="text-texto-suave">contra a meta</span>
       </figcaption>
-      <svg viewBox={`0 0 ${L} ${A}`} className="w-full" role="img" aria-label="Resultado acumulado do desafio comparado com a meta">
+      <svg viewBox={`0 0 ${L} ${A}`} className="w-full" role="img" aria-label="Faturamento acumulado do desafio comparado com a meta">
         <line x1={M.esq} x2={L - M.dir} y1={y(0)} y2={y(0)} className="stroke-borda" strokeWidth={1} />
         {meta != null ? (
           <g>
@@ -141,7 +141,7 @@ export function TabelaDias({ dias }: { dias: DiaDoDesafio[] }) {
         <thead>
           <tr className="text-left text-texto-suave">
             <th className="py-1 font-normal">Dia</th>
-            <th className="py-1 text-right font-normal">Resultado</th>
+            <th className="py-1 text-right font-normal">Faturamento</th>
             <th className="py-1 text-right font-normal">Acumulado</th>
           </tr>
         </thead>

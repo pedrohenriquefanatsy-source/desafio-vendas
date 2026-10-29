@@ -10,7 +10,6 @@ export type Insumo = Tables<"insumos">;
 export type TipoInsumo = Enums<"tipo_insumo">;
 export type TipoProduto = Enums<"tipo_produto">;
 export type CustoReceita = Tables<"v_custo_receitas">;
-export type CusteioPeso = Tables<"v_custeio_peso">;
 export type CustoItemReceita = Tables<"v_custo_receita_itens">;
 export type CustoVariacao = Tables<"v_custo_variacoes">;
 export type CustoEmbalagem = Tables<"v_custo_embalagens">;
@@ -195,16 +194,15 @@ export async function obterProduto(id: string) {
       ])
     : [[], [], []];
   const receitaIds = [...new Set(custos.map((c) => c.receita_id).filter((r): r is string => Boolean(r)))];
-  const [receitas, itensReceita, custosReceita, usoReceita, custeioPeso] = receitaIds.length
+  const [receitas, itensReceita, custosReceita, usoReceita] = receitaIds.length
     ? await Promise.all([
         lista(s.from("receitas").select("*").in("id", receitaIds)),
         lista(s.from("v_custo_receita_itens").select("*").in("receita_id", receitaIds).order("insumo")),
         lista(s.from("v_custo_receitas").select("*").in("receita_id", receitaIds)),
         lista(s.from("v_custo_variacoes").select("receita_id, variacao_id, produto, variacao").in("receita_id", receitaIds)),
-        lista(s.from("v_custeio_peso").select("*").in("receita_id", receitaIds)),
       ])
-    : [[], [], [], [], []];
-  return { produto, custos, embalagens, componentes, margens, receitas, itensReceita, custosReceita, usoReceita, custeioPeso };
+    : [[], [], [], []];
+  return { produto, custos, embalagens, componentes, margens, receitas, itensReceita, custosReceita, usoReceita };
 }
 
 export async function criarProduto(dados: {
@@ -303,47 +301,6 @@ export async function cadastrarReceitaSabor(
   const { error } = await s.rpc("cadastrar_receita_variacao", { p_variacao: variacaoId, p_rendimento: rendimento, p_itens: itens });
   if (error) return falhou(error);
   return { ok: true, mensagem: "Receita cadastrada." };
-}
-
-export async function cadastrarReceitaPeso(
-  variacaoId: string,
-  itens: { insumo_id: string; quantidade: number; unidade: string }[],
-  pesos: { cobertura: string; cubos: number; chocolate: number; gramagem: number },
-): Promise<Resultado> {
-  const s = await db();
-  const { error } = await s.rpc("cadastrar_receita_peso", {
-    p_variacao: variacaoId,
-    p_itens: itens,
-    p_cobertura_insumo: pesos.cobertura,
-    p_peso_cubos: pesos.cubos,
-    p_cobertura: pesos.chocolate,
-    p_gramagem: pesos.gramagem,
-  });
-  if (error) return falhou(error);
-  return { ok: true, mensagem: "Receita cadastrada. O custo por grama real vem da primeira fornada que você pesar." };
-}
-
-export async function definirCusteioPeso(
-  receitaId: string,
-  pesos: { cobertura: string; cubos: number; chocolate: number; gramagem: number },
-): Promise<Resultado> {
-  const s = await db();
-  const { error } = await s.rpc("definir_custeio_peso", {
-    p_receita: receitaId,
-    p_cobertura_insumo: pesos.cobertura,
-    p_peso_cubos: pesos.cubos,
-    p_cobertura: pesos.chocolate,
-    p_gramagem: pesos.gramagem,
-  });
-  if (error) return falhou(error);
-  return { ok: true, mensagem: "Custeio por peso salvo." };
-}
-
-export async function voltarCusteioRendimento(receitaId: string, rendimento: number): Promise<Resultado> {
-  const s = await db();
-  const { error } = await s.rpc("voltar_custeio_por_rendimento", { p_receita: receitaId, p_rendimento: rendimento });
-  if (error) return falhou(error);
-  return { ok: true, mensagem: "Receita voltou a ser custeada pelo rendimento." };
 }
 
 export async function copiarReceitaSabor(origemId: string, destinoId: string): Promise<Resultado> {

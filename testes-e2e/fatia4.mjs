@@ -48,12 +48,9 @@ async function produzir(p, produto) {
   await p.goto(`${BASE}/estoque?aba=producao`);
   await p.selectOption("#variacao_id", { label: produto });
   await p.fill("#fornadas", "1");
-  await p.getByRole("button", { name: "Planejar" }).click();
-  await sucesso(p).waitFor();
-  await p.reload();
-  await p.locator("summary", { hasText: produto }).first().click();
-  await p.getByRole("button", { name: "Concluir produção" }).first().click();
-  await p.getByText("Produção concluída").waitFor();
+  await p.fill("#boas", "10");
+  await p.getByRole("button", { name: "Registrar produção" }).first().click();
+  await p.getByText("Produção registrada").first().waitFor();
 }
 
 const tile = (p, n) => p.getByRole("list", { name: "Produtos" }).getByRole("button", { name: new RegExp(`^${n},`) });

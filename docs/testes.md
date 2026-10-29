@@ -361,3 +361,10 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
   quantidade que destoa), estoque depois de concluir (chocolate 5 kg → 3,6 kg), custo por grama
   vindo da última fornada, voltar para unidades. Sem rolagem lateral e alvos ≥ 44 px.
 - **Testes antigos** (fatias 2 a 10) rodados de novo, todos passaram.
+
+## Fatia 12: faturamento, produção simples, contagem e simulação (30/10/2026)
+
+- **Banco** (`supabase/testes/fatia12.sql`): registrar produção em um passo (2 fornadas, 23 renderam: baixa a receita × 2 e 23 potes; custo do potinho = 31,60 ÷ 23 + pote); reenvio não duplica; o custo do produto passa a usar o rendimento real (11,5 por fornada); faltar chocolate **registra e avisa** (1000 g), saldo negativo à vista; corrigir quanto rendeu ajusta produto e embalagem e o rendimento; contagem do dia (só as diferenças, motivo gravado, reenvio não repete, negativo e linha sem item recusados); simulação (chocolate: precisa 800, tem 150, falta 650 = R$ 20,80); membro simula, registra, corrige a própria e conta, mas não corrige a de outra pessoa.
+- **Testes antigos ajustados ao comportamento novo**: fatia 3 (faltar insumo avisa em vez de travar), fatia 6 (realizado = faturamento 15,00; lucro estimado 10,00 à parte), fatia 11 (faltar chocolate avisa). Todos os testes de banco das fatias 1 a 12 passam.
+- **Telas** (`testes-e2e/fatia12.mjs`, 375 px): **31 de 31**. Faturamento no Início; receita fixa; simulação; registrar produção; rendimento real (23 ÷ 2 = 11,5); corrigir para 24; aviso de falta de chocolate; contagem do dia; encomenda de R$ 24,00 com R$ 10,00 recebidos ("falta receber R$ 14,00") entregue recebendo o restante; título "vendedor - cliente · horário". Sem rolagem lateral e com alvos ≥ 44 px.
+- **Testes de tela antigos adaptados** (fatia 3 agora simula e registra a produção; fatia 4 produz pelo novo formulário; fatia 5 lê o lucro estimado; fatia 6 confere faturamento e lucro; fatia 9 troca o "resultado negativo" por "despesa não mexe no faturamento"; fatia 10 com o novo texto de rendimento): fatias 2 a 10 passam. O teste de tela da fatia 11 (pesagem) foi removido junto com a tela.

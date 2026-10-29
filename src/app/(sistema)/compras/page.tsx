@@ -21,7 +21,7 @@ export default async function Compras({ searchParams }: PageProps<"/compras">) {
 
   return (
     <>
-      <TituloPagina apoio="Compras aumentam o estoque. Não entram no resultado: o custo entra quando o produto é vendido.">
+      <TituloPagina apoio="Compras aumentam o estoque. Não entram no lucro: o custo entra quando o produto é vendido.">
         Compras
       </TituloPagina>
       {salva ? (

@@ -121,8 +121,8 @@ export async function registrarDespesa(d: {
     ok: true,
     mensagem:
       d.pagoPor === "participante"
-        ? "Despesa registrada. Entrou no resultado e ficou anotado que o desafio te deve esse valor."
-        : "Despesa registrada. Saiu do caixa e entrou no resultado.",
+        ? "Despesa registrada. Entrou no lucro estimado e ficou anotado que o desafio te deve esse valor."
+        : "Despesa registrada. Saiu do caixa e entrou no lucro estimado.",
   };
 }
 
@@ -137,7 +137,7 @@ export async function pagarReembolso(chave: string, participante: string, valor:
   const s = await criarClienteServidor();
   const { error } = await s.rpc("pagar_reembolso", { p_chave: chave, p_participante: participante, p_valor: valor, p_observacao: observacao });
   if (error) return falhou(error);
-  return { ok: true, mensagem: "Reembolso registrado. Saiu do caixa; o resultado não muda." };
+  return { ok: true, mensagem: "Reembolso registrado. Saiu do caixa; o lucro não muda." };
 }
 
 export async function cancelarReembolso(id: string, motivo: string): Promise<Resultado> {

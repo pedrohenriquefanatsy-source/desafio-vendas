@@ -46,7 +46,7 @@ export default async function ItemEstoque({ params }: PageProps<"/estoque/item/[
         <Cartao>
           <h2 className="font-semibold">Corrigir a contagem</h2>
           <p className="mb-3 text-sm text-texto-suave">
-            Conte o que tem de verdade e informe o total. O sistema lança a diferença, com o motivo. Não entra no resultado.
+            Conte o que tem de verdade e informe o total. O sistema lança a diferença, com o motivo. Não entra no faturamento.
           </p>
           <Formulario acao={ajustarEstoque} textoBotao="Salvar contagem" limparAoSalvar>
             <input type="hidden" name="item" value={valorItem} />
@@ -57,7 +57,7 @@ export default async function ItemEstoque({ params }: PageProps<"/estoque/item/[
 
         <Cartao>
           <h2 className="font-semibold">Registrar perda</h2>
-          <p className="mb-3 text-sm text-texto-suave">Estragou, caiu, venceu. Sai do estoque e o custo entra no resultado.</p>
+          <p className="mb-3 text-sm text-texto-suave">Estragou, caiu, venceu. Sai do estoque e o custo entra no lucro estimado.</p>
           <Formulario acao={registrarPerda} textoBotao="Registrar perda" limparAoSalvar>
             <input type="hidden" name="item" value={valorItem} />
             <div className="grid grid-cols-2 gap-3">

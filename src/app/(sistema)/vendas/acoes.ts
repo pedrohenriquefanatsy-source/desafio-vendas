@@ -117,6 +117,12 @@ export async function marcarPronta(_a: Resultado | null, d: FormData): Promise<R
 
 export async function entregarEncomenda(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
+  if (texto(d, "receber_restante") === "1") {
+    const forma = texto(d, "forma");
+    if (!UUID.test(forma)) return erro("Escolha como o restante foi pago.");
+    const recebimento = await vendas.receberRestante(texto(d, "chave"), texto(d, "id"), forma);
+    if (!recebimento.ok) return recebimento;
+  }
   const r = await vendas.entregarEncomenda(texto(d, "id"), texto(d, "confirmar") === "1");
   if (!r.ok) return r;
   voltarParaVenda(d, "entregue");

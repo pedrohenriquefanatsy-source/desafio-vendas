@@ -14,7 +14,7 @@ export default async function Clientes({ searchParams }: PageProps<"/mais/client
 
   return (
     <>
-      <TituloPagina apoio="Quem mais comprou e onde você mais vende. Só entram vendas ativas que já contam no resultado, sem doações.">
+      <TituloPagina apoio="Quem mais comprou e onde você mais vende. Só entram vendas ativas que já contam no faturamento, sem doações.">
         Clientes e bairros
       </TituloPagina>
 

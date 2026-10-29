@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Choc Bites · Desafio de vendas",
     short_name: "Choc Bites",
-    description: "Vendas, estoque, produção, caixa e resultado do desafio.",
+    description: "Vendas, estoque, produção, caixa e faturamento do desafio.",
     lang: "pt-BR",
     start_url: "/",
     scope: "/",

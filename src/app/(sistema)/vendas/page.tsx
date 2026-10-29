@@ -1,6 +1,6 @@
 import { Abas, Cartao, EstadoVazio, ItemLista, LinkBotao, Selo, TituloPagina, classeBotao } from "@/componentes/ui";
 import { formatarReais } from "@/lib/numeros";
-import { formatarData, formatarDataHora, hojeIso } from "@/lib/datas";
+import { formatarData, formatarDataHora, formatarHora, hojeIso } from "@/lib/datas";
 import { exigirParticipante } from "@/servicos/sessao";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
 import { listarParticipantes } from "@/servicos/participantes";
@@ -106,10 +106,10 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
                 href={`/vendas/${v.id}`}
                 titulo={
                   <span className={v.situacao === "cancelada" ? "line-through decoration-1" : undefined}>
-                    nº {v.numero} · {formatarDataHora(v.data_hora)}
+                    {v.participante ?? "—"} - {v.cliente ?? (v.cliente_desconhecido ? "cliente desconhecido" : "sem cliente")} · {formatarHora(v.data_hora)}
                   </span>
                 }
-                apoio={`${v.itens_resumo ?? ""}${v.cliente ? ` · ${v.cliente}` : v.cliente_desconhecido ? " · desconhecido" : ""}${v.bairro ? ` (${v.bairro})` : ""}`}
+                apoio={`nº ${v.numero} · ${formatarDataHora(v.data_hora).split(",")[0]} · ${v.itens_resumo ?? ""}${v.bairro ? ` · ${v.bairro}` : ""}`}
                 direita={
                   <span className="flex shrink-0 flex-col items-end gap-1">
                     <span className="font-semibold tabular-nums">{formatarReais(v.total)}</span>

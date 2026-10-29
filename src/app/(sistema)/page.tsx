@@ -9,7 +9,7 @@ import { exigirParticipante, ehAdmin } from "@/servicos/sessao";
 import { NOMES_SITUACAO } from "@/servicos/desafios";
 import { obterPainel, obterPassos, type Passo } from "@/servicos/painel";
 
-// Início (Seção 3.2): resultado e meta, caixa, a receber, pendências e gráficos de 7 dias.
+// Início (Seção 3.2): faturamento e meta, caixa, a receber, pendências e gráficos de 7 dias.
 // Cada número leva aos registros que o formam. Realizado, projeção e estimativa rotulados.
 function Numero({ href, rotulo, children, apoio }: { href: string; rotulo: string; children: React.ReactNode; apoio?: string }) {
   return (
@@ -29,7 +29,7 @@ function PrimeirosPassos({ passos }: { passos: Passo[] }) {
   return (
     <Cartao className="p-0">
       <h2 className="px-4 pt-3 font-semibold">Primeiros passos</h2>
-      <p className="px-4 pb-1 text-sm text-texto-suave">Falta pouco para o sistema calcular custo, meta e resultado.</p>
+      <p className="px-4 pb-1 text-sm text-texto-suave">Falta pouco para o sistema calcular custo, meta e faturamento.</p>
       <ul className="divide-y divide-borda">
         {passos.map((p) => (
           <li key={p.texto}>
@@ -75,7 +75,6 @@ export default async function Inicio() {
   const meta = m.meta_resultado == null ? null : Number(m.meta_resultado);
   const realizado = Number(m.realizado ?? 0);
   const pct = Math.max(0, Math.min(100, Number(m.percentual ?? 0)));
-  const negativo = realizado < 0;
   const pendencias = [
     p.encomendas ? { href: "/vendas?ver=encomendas", texto: `${p.encomendas} ${p.encomendas === 1 ? "encomenda" : "encomendas"} para entregar` } : null,
     p.reembolsos > 0 ? { href: "/caixa/reembolsos", texto: `${formatarReais(p.reembolsos)} a reembolsar a participantes` } : null,
@@ -98,31 +97,26 @@ export default async function Inicio() {
       <div className="flex flex-col gap-3">
         {faltaEssencial ? <PrimeirosPassos passos={passos} /> : null}
 
-        {/* 1. Resultado e meta */}
+        {/* 1. Faturamento e meta */}
         <Link href="/caixa" className="block rounded-cartao border border-borda bg-superficie p-4">
           <span className="flex items-center justify-between text-sm text-texto-suave">
-            Resultado <span className="text-xs">realizado</span>
+            Faturamento <span className="text-xs">realizado</span>
           </span>
-          <Valor valor={realizado} className={`text-3xl ${realizado < 0 ? "text-negativo" : ""}`} />
+          <Valor valor={realizado} className="text-3xl" />
           {meta != null ? (
             <>
               <div className="mt-3 h-3 overflow-hidden rounded-full bg-fundo" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Quanto da meta já foi alcançado">
                 <div className="h-full rounded-full bg-acao" style={{ width: `${pct}%` }} />
               </div>
               <p className="mt-2 flex flex-wrap justify-between gap-x-3 text-sm">
-                <span>{negativo ? `Meta de ${formatarReais(meta)}` : `${formatarPercentual(m.percentual)} da meta de ${formatarReais(meta)}`}</span>
+                <span>{formatarPercentual(m.percentual)} da meta de {formatarReais(meta)}</span>
                 <span className="text-texto-suave">falta {formatarReais(m.falta)}</span>
               </p>
-              {negativo ? (
-                <p className="mt-2 rounded-xl border border-negativo p-2 text-sm text-negativo">
-                  O resultado está negativo: as despesas e perdas ({formatarReais(Number(m.despesas ?? 0) + Number(m.perdas ?? 0))}) passam da margem das vendas ({formatarReais(m.margem)}). A meta só volta a andar quando as vendas cobrirem esse valor.
-                </p>
-              ) : null}
             </>
           ) : (
             <p className="mt-2 text-sm text-texto-suave">Meta ainda não definida.</p>
           )}
-          {m.sem_custo ? <p className="mt-2 text-xs text-alerta">Há venda de produto sem custo cadastrado: o resultado está incompleto.</p> : null}
+          {m.sem_custo ? <p className="mt-2 text-xs text-alerta">Há venda de produto sem custo cadastrado: o lucro estimado está incompleto.</p> : null}
         </Link>
 
         {meta != null ? (
@@ -154,8 +148,8 @@ export default async function Inicio() {
               </p>
               {m.unidades_para_meta != null && Number(m.unidades_para_meta) > 0 ? (
                 <p className="mt-1 text-xs text-texto-suave">
-                  Premissas: margem média de {formatarReais(m.mc_media_unidade)} por unidade, pelo mix vendido até agora ({formatarQuantidade(m.unidades_vendidas)} unidades);
-                  sem novas despesas nem perdas. É uma conta, não uma promessa.
+                  Premissas: preço médio de {formatarReais(m.preco_medio_unidade)} por unidade, pelo mix vendido até agora ({formatarQuantidade(m.unidades_vendidas)} unidades).
+                  É uma conta, não uma promessa.
                 </p>
               ) : null}
             </div>
@@ -204,7 +198,7 @@ export default async function Inicio() {
         ) : null}
 
         <p className="text-xs text-texto-suave">
-          Resultado = margem das vendas ({formatarReais(m.margem)}) − perdas ({formatarReais(m.perdas)}) − despesas ({formatarReais(m.despesas)}).
+          Faturamento = o que foi vendido (sem doações e sem canceladas). Lucro estimado: {formatarReais(m.lucro_estimado)} = margem das vendas ({formatarReais(m.margem)}) − perdas ({formatarReais(m.perdas)}) − despesas ({formatarReais(m.despesas)}).
         </p>
       </div>
     </>

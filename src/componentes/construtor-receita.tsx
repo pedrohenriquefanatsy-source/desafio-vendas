@@ -11,35 +11,22 @@ import type { Resultado } from "@/servicos/erros";
 type Linha = { chave: number; insumo_id: string; quantidade: string; unidade: string };
 
 const campo = "min-h-toque w-full rounded-xl border border-borda bg-superficie px-3 text-base";
-const chipModo = (ativo: boolean) =>
-  `inline-flex min-h-toque items-center justify-center rounded-full border px-4 text-sm font-medium ${
-    ativo ? "border-acao bg-acao text-acao-texto" : "border-borda bg-superficie text-texto"
-  }`;
 
 // Monta a receita de um sabor do jeito que se pensa: primeiro todos os ingredientes e as quantidades
 // (o custo da fornada aparece na hora), e só no fim quantas unidades ela rende (uma receita pode
 // render mais ou menos). Nada é gravado até tocar em "Cadastrar receita"; aí vai tudo de uma vez.
 // As contas daqui são só prévia: o custo oficial é calculado pelo banco.
-type Acao = (anterior: Resultado | null, dados: FormData) => Promise<Resultado>;
-
 export function ConstrutorReceita({
   insumos,
   variacaoId,
   produtoId,
   acao,
-  acaoPeso,
 }: {
   insumos: OpcaoInsumo[];
   variacaoId: string;
   produtoId: string;
-  acao: Acao;
-  acaoPeso: Acao;
+  acao: (anterior: Resultado | null, dados: FormData) => Promise<Resultado>;
 }) {
-  const [modo, setModo] = useState<"rendimento" | "peso">("rendimento");
-  const [cobertura, setCobertura] = useState("");
-  const [cubos, setCubos] = useState("");
-  const [chocolate, setChocolate] = useState("");
-  const [gramagem, setGramagem] = useState("");
   const [linhas, setLinhas] = useState<Linha[]>([{ chave: 0, insumo_id: "", quantidade: "", unidade: "" }]);
   const [proxima, setProxima] = useState(1);
   const [rendimento, setRendimento] = useState("");
@@ -67,48 +54,14 @@ export function ConstrutorReceita({
   const escolhidos = new Set(linhas.map((l) => l.insumo_id).filter(Boolean));
   const json = JSON.stringify(preenchidas.map((l) => ({ insumo_id: l.insumo_id, quantidade: l.quantidade, unidade: l.unidade })));
 
-  // Modo por peso: o chocolate é um insumo medido em gramas; o resto é estimativa de uma fornada.
-  const coberturas = insumos.filter((i) => i.unidadeBase === "g");
-  const insumoCobertura = achar(cobertura);
-  const pesoCubos = lerNumero(cubos);
-  const pesoChocolate = lerNumero(chocolate);
-  const pesoPote = lerNumero(gramagem);
-  const pesoCompleto = Boolean(insumoCobertura) && (pesoCubos ?? 0) > 0 && (pesoChocolate ?? 0) > 0 && (pesoPote ?? 0) > 0;
-  const custoChocolate = pesoCompleto && insumoCobertura?.custoBase != null ? (pesoChocolate ?? 0) * insumoCobertura.custoBase : null;
-  const custoPorGrama = pesoCompleto && completo && custoChocolate != null ? (total + custoChocolate) / ((pesoCubos ?? 0) + (pesoChocolate ?? 0)) : null;
-
-  const peso = modo === "peso";
   return (
-    <Formulario
-      key={modo}
-      acao={peso ? acaoPeso : acao}
-      textoBotao="Cadastrar receita"
-      textoEnviando="Cadastrando…"
-      desabilitado={preenchidas.length === 0 || (peso ? !pesoCompleto : !(rende && rende > 0))}
-    >
+    <Formulario acao={acao} textoBotao="Cadastrar receita" textoEnviando="Cadastrando…" desabilitado={preenchidas.length === 0 || !(rende && rende > 0)}>
       <input type="hidden" name="variacao_id" value={variacaoId} />
       <input type="hidden" name="produto_id" value={produtoId} />
       <input type="hidden" name="itens" value={json} />
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Como calcular o custo?</legend>
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" aria-pressed={!peso} onClick={() => setModo("rendimento")} className={chipModo(!peso)}>
-            Por unidades
-          </button>
-          <button type="button" aria-pressed={peso} onClick={() => setModo("peso")} className={chipModo(peso)}>
-            Por peso
-          </button>
-        </div>
-        <p className="text-xs text-texto-suave">
-          {peso
-            ? "Para cubos com cobertura: o custo sai do peso dos cubos e do chocolate que você pesa a cada fornada."
-            : "A fornada rende um número de unidades; o custo de cada uma é o custo da fornada dividido por esse número."}
-        </p>
-      </fieldset>
-
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-medium">{peso ? "1. Ingredientes da massa (uma fornada)" : "1. Ingredientes de uma fornada"}</legend>
+        <legend className="mb-1 text-sm font-medium">1. Ingredientes de uma fornada</legend>
         {linhas.map((l, n) => {
           const insumo = achar(l.insumo_id);
           const custo = custoDa(l);
@@ -211,76 +164,9 @@ export function ConstrutorReceita({
         ) : null}
       </div>
 
-      {peso ? (
-        <fieldset className="flex flex-col gap-3">
-          <legend className="mb-1 text-sm font-medium">2. Cobertura e pesos de uma fornada (estimativa)</legend>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Chocolate da cobertura
-            <select
-              id="rc-cobertura"
-              name="cobertura_insumo"
-              value={cobertura}
-              onChange={(e) => setCobertura(e.target.value)}
-              className={campo}
-            >
-              <option value="">Escolha…</option>
-              {coberturas.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              Cubos bons (g)
-              <input id="rc-cubos" name="peso_cubos" inputMode="decimal" value={cubos} onChange={(e) => setCubos(e.target.value)} placeholder="Ex.: 2000" className={campo} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              Chocolate gasto (g)
-              <input id="rc-chocolate" name="cobertura" inputMode="decimal" value={chocolate} onChange={(e) => setChocolate(e.target.value)} placeholder="Ex.: 700" className={campo} />
-            </label>
-          </div>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Gramagem de cada potinho (g)
-            <input id="rc-gramagem" name="gramagem" inputMode="decimal" value={gramagem} onChange={(e) => setGramagem(e.target.value)} placeholder="Ex.: 150" className={campo} />
-          </label>
-          <p className="text-xs text-texto-suave">
-            Só para começar: quanto esperam que dê de cubos bons (sem sobras e farelos) e de chocolate numa fornada. Quando vocês pesarem a primeira
-            fornada de verdade, o sistema passa a usar os números reais.
-          </p>
-          <div className="rounded-xl bg-fundo px-3 py-2 text-sm" aria-live="polite">
-            {pesoCompleto && custoPorGrama != null ? (
-              <>
-                <p className="flex items-baseline justify-between">
-                  <span className="text-texto-suave">Chocolate esperado</span>
-                  <span className="tabular-nums">{formatarReais(custoChocolate)}</span>
-                </p>
-                <p className="flex items-baseline justify-between">
-                  <span className="text-texto-suave">Custo por grama</span>
-                  <span className="tabular-nums">{formatarCustoUnidade(custoPorGrama, "g")}</span>
-                </p>
-                <p className="flex items-baseline justify-between">
-                  <span className="text-texto-suave">Potinho de {formatarQuantidade(pesoPote ?? 0)} g (sem a embalagem)</span>
-                  <span className="font-semibold tabular-nums">{formatarReais(custoPorGrama * (pesoPote ?? 0))}</span>
-                </p>
-                <p className="mt-1 text-xs text-texto-suave">
-                  Uma fornada deve dar cerca de {formatarQuantidade(Math.floor(((pesoCubos ?? 0) + (pesoChocolate ?? 0)) / (pesoPote ?? 1)))} potinhos.
-                </p>
-              </>
-            ) : pesoCompleto && !completo ? (
-              <p className="text-alerta">Falta o preço de algum ingrediente: o custo fica incompleto.</p>
-            ) : pesoCompleto && custoChocolate == null ? (
-              <p className="text-alerta">O chocolate escolhido está sem preço. Cadastre em Mais → Insumos.</p>
-            ) : (
-              <p className="text-texto-suave">Preencha o chocolate, os pesos e a gramagem para ver o custo do potinho.</p>
-            )}
-          </div>
-        </fieldset>
-      ) : (
       <div className="flex flex-col gap-1">
         <label htmlFor="rc-rendimento" className="text-sm font-medium">
-          2. Quantas unidades essa fornada rende?
+          2. Quantas unidades essa fornada costuma render?
         </label>
         <input
           id="rc-rendimento"
@@ -297,11 +183,10 @@ export function ConstrutorReceita({
               Cada unidade custa <strong>{formatarReais(total / rende)}</strong> de ingredientes (sem a embalagem do produto).
             </>
           ) : (
-            "Depois de listar os ingredientes, diga quantas unidades saem. Se rende mais ou menos, é só mudar este número."
+            "Uma estimativa para começar. Quando vocês registrarem uma produção, o sistema passa a usar quanto rendeu de verdade."
           )}
         </span>
       </div>
-      )}
     </Formulario>
   );
 }

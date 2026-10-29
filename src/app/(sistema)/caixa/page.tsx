@@ -5,7 +5,7 @@ import { formatarData, formatarDataHora } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { NOMES_LANCAMENTO, listarDevidos, livroCaixa, resultadoAtual, saldoCaixa, type LancamentoCaixa } from "@/servicos/caixa";
 
-// Caixa: saldo e resultado lado a lado, separados (Seção 3.2). Botões de lançamento,
+// Caixa: saldo e faturamento lado a lado, separados (Seção 3.2). Botões de lançamento,
 // "a reembolsar" por participante e o livro de caixa por dia.
 export default async function Caixa() {
   const perfil = await exigirParticipante();
@@ -25,15 +25,16 @@ export default async function Caixa() {
           <p className="mt-1 text-xs text-texto-suave">Dinheiro que está na conta</p>
         </Cartao>
         <Cartao>
-          <p className="text-sm text-texto-suave">Resultado</p>
-          <Valor valor={resultado.resultado} className={`text-2xl ${resultado.resultado < 0 ? "text-negativo" : ""}`} />
+          <p className="text-sm text-texto-suave">Faturamento</p>
+          <Valor valor={resultado.vendido} className="text-2xl" />
           <p className="mt-1 text-xs text-texto-suave">{resultado.desafio ? resultado.desafio.nome : "Sem desafio em andamento"}</p>
         </Cartao>
       </div>
       <p className="mb-4 text-xs text-texto-suave">
-        Resultado = margem das vendas {formatarReais(resultado.margem)} − perdas {formatarReais(resultado.perdas)} − despesas{" "}
-        {formatarReais(resultado.despesas)}. Compras e aportes mexem no caixa, não no resultado.
-        {resultado.semCusto ? " Há venda de produto sem custo cadastrado: o resultado está incompleto." : ""}
+        Faturamento = o que foi vendido (sem doações e sem canceladas). Lucro estimado {formatarReais(resultado.resultado)} = margem das vendas{" "}
+        {formatarReais(resultado.margem)} − perdas {formatarReais(resultado.perdas)} − despesas {formatarReais(resultado.despesas)}.
+        Compras e aportes mexem no caixa, não no faturamento.
+        {resultado.semCusto ? " Há venda de produto sem custo cadastrado: o lucro estimado está incompleto." : ""}
       </p>
 
       <div className="mb-4 grid grid-cols-2 gap-2">

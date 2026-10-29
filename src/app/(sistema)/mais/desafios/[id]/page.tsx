@@ -22,7 +22,7 @@ export default async function Desafio({ params }: PageProps<"/mais/desafios/[id]
         <Cartao>
           <dl className="flex flex-col gap-2">
             <div className="flex justify-between"><dt className="text-texto-suave">Período</dt><dd>{formatarData(desafio.inicio)} a {formatarData(desafio.fim)}</dd></div>
-            <div className="flex justify-between"><dt className="text-texto-suave">Meta de resultado</dt><dd>{desafio.meta_resultado != null ? <Valor valor={desafio.meta_resultado} /> : "Não definida"}</dd></div>
+            <div className="flex justify-between"><dt className="text-texto-suave">Meta de faturamento</dt><dd>{desafio.meta_resultado != null ? <Valor valor={desafio.meta_resultado} /> : "Não definida"}</dd></div>
             <div className="flex justify-between"><dt className="text-texto-suave">Situação</dt><dd><Selo>{desafio.situacao ? NOMES_SITUACAO[desafio.situacao] : "—"}</Selo></dd></div>
           </dl>
         </Cartao>

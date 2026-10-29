@@ -141,7 +141,7 @@ begin
 end
 $$;
 
--- ── Falta de chocolate: não conclui e diz quanto falta ──────────────────────
+-- ── Falta de chocolate: conclui, avisa quanto faltava (o teste desfaz o que fez) ─────────
 do $$
 declare
   v_prod uuid;
@@ -149,11 +149,17 @@ declare
 begin
   perform public.ajustar_estoque(gen_random_uuid(), pg_temp.id('choc'), null, 100, 'Teste F11');
   v_prod := public.planejar_producao(gen_random_uuid(), pg_temp.id('tradicional'), 1);
-  v_res := public.concluir_producao(v_prod, 18, 0, 2000, 3000);
-  assert not (v_res ->> 'ok')::boolean, 'F11: sem chocolate suficiente não conclui';
-  assert (select (f ->> 'falta')::numeric from jsonb_array_elements(v_res -> 'faltas') f where f ->> 'insumo_id' = pg_temp.id('choc')::text) = 900,
-    'F11: mostra que faltam 900 g de chocolate (precisa 1000, tem 100)';
-  assert pg_temp.saldo_insumo('choc') = 100 and pg_temp.saldo_var('tradicional') = 33, 'F11: nada foi baixado';
+  begin
+    v_res := public.concluir_producao(v_prod, 18, 0, 2000, 3000);
+    assert (v_res ->> 'ok')::boolean, 'F11: sem chocolate suficiente, conclui mesmo assim';
+    assert (select (f ->> 'falta')::numeric from jsonb_array_elements(v_res -> 'faltas') f where f ->> 'insumo_id' = pg_temp.id('choc')::text) = 900,
+      'F11: avisa que faltavam 900 g de chocolate (precisa 1000, tinha 100)';
+    assert pg_temp.saldo_insumo('choc') = -900, 'F11: o saldo do chocolate ficou negativo (−900), à vista na contagem';
+    raise exception 'DESFAZER_TESTE';
+  exception when others then
+    if sqlerrm <> 'DESFAZER_TESTE' then raise; end if;
+  end;
+  assert pg_temp.saldo_insumo('choc') = 100 and pg_temp.saldo_var('tradicional') = 33, 'F11: o teste desfez o que fez';
   perform public.cancelar_producao(v_prod, 'Teste F11');
 end
 $$;

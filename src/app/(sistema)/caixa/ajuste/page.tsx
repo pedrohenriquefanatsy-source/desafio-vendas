@@ -28,7 +28,7 @@ export default async function Ajuste() {
           <Formulario acao={ajustarCaixa} textoBotao="Salvar conferência" limparAoSalvar>
             <Campo id="saldo" name="saldo" rotulo="Saldo real na conta (R$)" inputMode="decimal" placeholder="0,00" required />
             <Campo id="justificativa" name="justificativa" rotulo="Motivo" placeholder="Ex.: conferência com o extrato do Pix" required maxLength={200} />
-            <p className="text-xs text-texto-suave">O ajuste muda o saldo de caixa, não o resultado. Fica no livro de caixa com o motivo.</p>
+            <p className="text-xs text-texto-suave">O ajuste muda o saldo de caixa, não o faturamento. Fica no livro de caixa com o motivo.</p>
           </Formulario>
         </Cartao>
       ) : (

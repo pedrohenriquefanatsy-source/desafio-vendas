@@ -55,27 +55,27 @@ begin
   assert m.dias_total = 7 and m.dias_decorridos = 2 and m.dias_restantes = 5, 'M0: 7 dias; 2 passaram; 5 restam (com hoje)';
   assert m.ritmo_necessario = 20, 'M0: ritmo necessário = 100 ÷ 5 = 20,00';
 
-  -- 3 bolos (MC 3 × 4,00 = 12,00) e despesa de 2,00 → realizado 10,00.
+  -- 3 bolos (faturamento 15,00; MC 3 × 4,00 = 12,00) e despesa de 2,00 → realizado = faturamento 15,00; lucro estimado 10,00.
   v_venda := ((public.registrar_venda(gen_random_uuid(), 'venda',
     jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('bolo'), 'quantidade', 3)), pg_temp.id('pix'), null)) ->> 'venda_id')::uuid;
   perform public.registrar_despesa(gen_random_uuid(), 2, 'Sacolas', 'Material', 'caixa');
   insert into ids_f6 values ('venda', v_venda);
 
   select * into m from public.v_painel_meta where desafio_id = pg_temp.id('desafio');
-  assert m.realizado = 10, 'Aceite 13: realizado = 12,00 − 2,00 = 10,00, veio ' || m.realizado;
-  assert m.percentual = 10.0, 'Aceite 13: 10 ÷ 100 = 10,0%';
-  assert m.falta = 90, 'Aceite 13: faltam 90,00';
-  assert m.ritmo_necessario = 18, 'Aceite 13: ritmo necessário = 90 ÷ 5 dias = 18,00 por dia';
-  assert m.media_por_dia = 3.33, 'Aceite 13: média até agora = 10 ÷ 3 dias (contando hoje) = 3,33';
-  assert m.mc_media_unidade = 4, 'Aceite 13: MC média por unidade vendida = 12 ÷ 3 = 4,00';
-  assert m.unidades_para_meta = 23, 'Aceite 13: projeção = 90 ÷ 4,00 = 22,5 → 23 unidades';
+  assert m.realizado = 15, 'Aceite 13: realizado = faturamento = 3 × 5,00 = 15,00, veio ' || m.realizado;
+  assert m.percentual = 15.0, 'Aceite 13: 15 ÷ 100 = 15,0%';
+  assert m.falta = 85, 'Aceite 13: faltam 85,00';
+  assert m.ritmo_necessario = 17, 'Aceite 13: ritmo necessário = 85 ÷ 5 dias = 17,00 por dia';
+  assert m.media_por_dia = 5, 'Aceite 13: média até agora = 15 ÷ 3 dias (contando hoje) = 5,00';
+  assert m.mc_media_unidade = 4 and m.preco_medio_unidade = 5, 'Aceite 13: MC média 4,00 e preço médio 5,00 por unidade';
+  assert m.unidades_para_meta = 17, 'Aceite 13: projeção = 85 ÷ 5,00 = 17 unidades';
   assert m.vendido = 15 and m.percentual_vendas = 7.5, 'Aceite 13: meta de vendas: 15 de 200 = 7,5%';
-  assert m.margem = 12 and m.despesas = 2 and m.perdas = 0, 'Aceite 13: partes do resultado';
+  assert m.margem = 12 and m.despesas = 2 and m.perdas = 0 and m.lucro_estimado = 10, 'Aceite 13: o lucro estimado (12 − 2 = 10) segue à parte';
 
   -- Passar da meta: falta e ritmo zeram, percentual passa de 100.
   update public.desafios set meta_resultado = 8 where id = pg_temp.id('desafio');
   select * into m from public.v_painel_meta where desafio_id = pg_temp.id('desafio');
-  assert m.falta = 0 and m.ritmo_necessario = 0 and m.percentual = 125.0 and m.unidades_para_meta = 0, 'M1: meta batida: falta 0, 125%';
+  assert m.falta = 0 and m.ritmo_necessario = 0 and m.percentual = 187.5 and m.unidades_para_meta = 0, 'M1: meta batida: falta 0, 187,5%';
   update public.desafios set meta_resultado = 100 where id = pg_temp.id('desafio');
 end
 $$;

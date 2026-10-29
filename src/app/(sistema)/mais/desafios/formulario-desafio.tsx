@@ -18,10 +18,10 @@ export function FormularioDesafio({ desafio }: { desafio?: Desafio }) {
       <Campo
         id="meta_resultado"
         name="meta_resultado"
-        rotulo="Meta de resultado (R$)"
+        rotulo="Meta de faturamento (R$)"
         inputMode="decimal"
         placeholder="Ex.: 1.500,00"
-        dica="O resultado é o que sobra das vendas depois dos custos e despesas. Pode deixar em branco e definir depois."
+        dica="Faturamento é tudo o que foi vendido no desafio (sem doações). Pode deixar em branco e definir depois."
         defaultValue={desafio?.meta_resultado != null ? String(desafio.meta_resultado).replace(".", ",") : ""}
       />
       <Campo
