@@ -482,7 +482,7 @@ depois de esfriar. O potinho tem uma gramagem padrão.
 Pedido do administrador depois de usar o sistema: "está muito complexo".
 
 ### Meta pelo faturamento
-- O **resultado** que a meta acompanha agora é o **faturamento**: soma do valor das vendas que já contam (sem doações, sem canceladas; encomenda só quando entregue). Despesas e perdas **não** mexem nele.
+- O **resultado** que a meta acompanha agora é o **faturamento**: soma do valor das vendas que já contam (sem doações, sem canceladas; encomenda **paga por inteiro** já conta no dia do pagamento, sem esperar a entrega; encomenda com valor a receber só conta quando entregue). Despesas e perdas **não** mexem nele.
 - O **lucro estimado** (margem das vendas − perdas − despesas) continua calculado e aparece só como informação (nota no Início e no Caixa).
 - Falta, ritmo por dia e média por dia usam o faturamento. A **projeção** = falta ÷ **preço médio** por unidade vendida até agora. O aviso de "resultado negativo" saiu.
 
@@ -510,3 +510,10 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 
 ### A reembolsar mostra no que o dinheiro foi gasto (30/10/2026)
 - No cartão de cada pessoa em Caixa → A reembolsar há **"Ver no que foi gasto"**: cada compra ou despesa paga do bolso (não cancelada), do mais novo para o mais antigo, com **dia e horário** do lançamento, o tipo, o que foi comprado (compra: "2 embalagem de Margarina"; despesa: descrição e categoria) e o valor. A soma bate com "Pagou" do cartão. Todos os participantes veem.
+
+### Encomenda paga entra no faturamento (fatia 13, 30/10/2026)
+- Encomenda **paga por inteiro** (recebido ≥ total) conta no faturamento e na meta **já no dia do último pagamento**, mesmo antes de entregar. Cancelada sai da conta.
+- Encomenda **paga em parte** ou **sem pagamento** continua fora; entra quando completar o pagamento (por "Receber o restante") ou quando for entregue.
+- Cada encomenda conta uma vez só: ao entregar, passa a contar no dia da entrega (não duplica).
+- Estoque, custo e lucro estimado continuam só na entrega.
+- Banco: `v_resultado_diario` ganhou essa parte (migração `20261030180000_encomenda_paga_no_faturamento.sql`); teste `supabase/testes/fatia13.sql`.

@@ -24,7 +24,7 @@ const BLOCOS: { titulo: string; itens: string[] }[] = [
       "Sobra da venda (margem) = valor da venda − desconto − custo do produto naquele momento − taxa da forma de pagamento.",
       "O custo e a margem ficam guardados na venda: se um insumo ficar mais caro depois, as vendas passadas não mudam.",
       "Desconto da venda é dividido entre os itens pelo valor de cada um.",
-      "Encomenda só entra na conta quando é entregue. Doação entra só com o custo (margem negativa).",
+      "Encomenda paga por inteiro já entra no faturamento na hora do pagamento; se ainda falta receber, entra quando é entregue. O estoque, o custo e o lucro só contam na entrega. Doação entra só com o custo (margem negativa).",
     ],
   },
   {

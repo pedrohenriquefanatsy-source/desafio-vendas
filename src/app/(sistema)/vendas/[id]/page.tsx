@@ -164,7 +164,7 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
                   </Selecao>
                 </>
               ) : null}
-              <p className="text-xs text-texto-suave">Ao entregar, os produtos saem do estoque e a venda entra no faturamento.</p>
+              <p className="text-xs text-texto-suave">Ao entregar, os produtos saem do estoque. A venda já conta no faturamento se estiver paga por inteiro; senão entra ao entregar.</p>
             </Formulario>
           </Cartao>
         ) : null}

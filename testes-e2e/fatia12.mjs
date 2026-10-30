@@ -182,6 +182,23 @@ await p.getByText("Ritmo necessário").waitFor();
 t = await texto(p);
 confere(/Faturamento\s?realizado\s?R\$\s?[\d.]*[1-9]/.test(t), "Início: o faturamento inclui a encomenda entregue");
 
+// ── Encomenda paga por inteiro já conta no faturamento, antes de entregar ───
+const lerFaturamento = (x) => Number(x.match(/Faturamento\s?realizado\s?R\$\s?([\d.]+,\d{2})/)[1].replace(/\./g, "").replace(",", "."));
+const faturamentoAntes = lerFaturamento(t);
+await p.goto(`${BASE}/vendas/nova`);
+await p.getByRole("list", { name: "Produtos" }).getByRole("button", { name: new RegExp(`^${BITES}`) }).first().click();
+await p.getByRole("button", { name: "Encomenda", exact: true }).click();
+await p.fill('input[name="entrega"]', amanha);
+await p.getByRole("button", { name: "Pagou tudo" }).click();
+const antesPaga = p.url();
+await p.getByRole("button", { name: /^Confirmar encomenda/ }).click();
+await p.waitForURL((u) => u.href !== antesPaga && u.searchParams.has("ok"), { timeout: 20000, waitUntil: "commit" });
+await p.goto(`${BASE}/`);
+await p.getByText("Ritmo necessário").waitFor();
+const faturamentoDepois = lerFaturamento(await texto(p));
+confere(Math.abs(faturamentoDepois - faturamentoAntes - 12) < 0.01, `Início: encomenda paga por inteiro (R$ 12,00) entra no faturamento sem entregar (${faturamentoAntes} → ${faturamentoDepois})`);
+await p.screenshot({ path: `${CAPTURAS}/08-encomenda-paga-no-faturamento.png`, fullPage: true });
+
 await navegador.close();
 const falhas = resultados.filter((r) => !r.ok);
 console.log(`\n${resultados.length - falhas.length} de ${resultados.length} verificações passaram.`);
