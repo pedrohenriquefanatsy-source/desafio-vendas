@@ -517,3 +517,12 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Cada encomenda conta uma vez só: ao entregar, passa a contar no dia da entrega (não duplica).
 - Estoque, custo e lucro estimado continuam só na entrega.
 - Banco: `v_resultado_diario` ganhou essa parte (migração `20261030180000_encomenda_paga_no_faturamento.sql`); teste `supabase/testes/fatia13.sql`.
+
+## 16. Venda com data e botão de voltar (fatia 14, 30/10/2026)
+- **Venda e doação** têm o campo **"Data da venda"** (começa em hoje; não aceita dia futuro nem dia antes do início do desafio). A venda fica no dia escolhido na lista, no faturamento, na meta e no resultado do dia. A hora guardada é a do momento do registro.
+- O **caixa** (recebimento) e o **estoque** (baixa) seguem a hora real do registro: o dinheiro entrou e os potinhos saíram agora, mesmo que a venda seja de ontem.
+- A tela da venda mostra "lançada em dd/mm, hh:mm" quando o dia da venda é diferente do dia do registro.
+- **Encomenda** não tem esse campo (ela usa a data de entrega).
+- Prazo de 30 minutos para o membro cancelar a própria venda continua contando a partir do registro.
+- Todas as telas internas usam o mesmo **botão de voltar** (pílula com seta, 44 px).
+- Banco: `registrar_venda` ganhou o parâmetro `p_data` (migração `20261030200000_venda_com_data.sql`); teste `supabase/testes/fatia14.sql`.

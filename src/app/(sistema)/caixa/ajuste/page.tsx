@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Campo, Cartao, TituloPagina, Valor } from "@/componentes/ui";
+import { Campo, Cartao, TituloPagina, Valor, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { saldoCaixa } from "@/servicos/caixa";
@@ -13,9 +12,7 @@ export default async function Ajuste() {
 
   return (
     <>
-      <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Caixa
-      </Link>
+      <BotaoVoltar href="/caixa">Caixa</BotaoVoltar>
       <TituloPagina apoio="Compare com o extrato da conta Pix. Se não bater, lance a diferença com o motivo.">
         Conferir o saldo
       </TituloPagina>

@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Aviso, Campo, Cartao, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
+import { Aviso, Campo, Cartao, LinkBotao, Selecao, Selo, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { formatarQuantidade, formatarReais } from "@/lib/numeros";
-import { formatarData, formatarDataHora } from "@/lib/datas";
+import { formatarData, formatarDataHora, hojeIso } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
 import { obterVenda } from "@/servicos/vendas";
@@ -30,15 +29,14 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
   const ativa = v.situacao === "ativa";
   const podeCancelar = ativa && (ehAdmin(perfil) || (v.criado_por === perfil.id && minutos <= PRAZO_MINUTOS));
   const aReceber = Number(v.a_receber ?? 0);
+  const lancadaDepois = v.criado_em != null && v.data_hora != null && v.dia != null && v.dia !== hojeIso(new Date(v.criado_em));
   const titulo = v.tipo === "doacao" ? "Doação" : v.tipo === "encomenda" ? "Encomenda" : "Venda";
 
   return (
     <>
-      <Link href="/vendas" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Vendas
-      </Link>
+      <BotaoVoltar href="/vendas">Vendas</BotaoVoltar>
       <TituloPagina
-        apoio={`${formatarDataHora(v.data_hora)} · ${v.participante ?? "—"}${v.cliente ? ` · cliente: ${v.cliente}` : v.cliente_desconhecido ? " · cliente desconhecido" : ""}${v.bairro ? ` · bairro ${v.bairro}` : ""}`}
+        apoio={`${formatarDataHora(v.data_hora)} · ${v.participante ?? "—"}${v.cliente ? ` · cliente: ${v.cliente}` : v.cliente_desconhecido ? " · cliente desconhecido" : ""}${v.bairro ? ` · bairro ${v.bairro}` : ""}${lancadaDepois ? ` · lançada em ${formatarDataHora(v.criado_em)}` : ""}`}
       >
         {titulo} nº {v.numero}
       </TituloPagina>

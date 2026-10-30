@@ -69,6 +69,8 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
 
   const entrega = texto(d, "entrega");
   if (tipo === "encomenda" && !DATA.test(entrega)) return erro("Informe a data de entrega da encomenda.");
+  const data = texto(d, "data");
+  if (data && !DATA.test(data)) return erro("Data da venda inválida.");
   const desconhecido = texto(d, "cliente_desconhecido") === "1";
   const cliente = desconhecido ? "" : texto(d, "cliente");
   if (cliente.length > 60) return erro("O nome do cliente pode ter até 60 letras.");
@@ -90,6 +92,7 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     desconhecido,
     observacao,
     entrega: tipo === "encomenda" ? entrega : null,
+    data: tipo === "encomenda" || !data ? null : data,
     confirmar: texto(d, "confirmar") === "1",
   });
   if (!r.ok) return r;

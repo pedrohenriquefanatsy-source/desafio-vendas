@@ -1838,6 +1838,7 @@ export type Database = {
           p_cliente?: string
           p_cliente_desconhecido?: boolean
           p_confirmar_estoque?: boolean
+          p_data?: string
           p_desconto?: number
           p_entrega_prevista?: string
           p_forma?: string

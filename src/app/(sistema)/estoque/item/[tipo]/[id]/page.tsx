@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Campo, Cartao, Selecao, TituloPagina } from "@/componentes/ui";
+import { Campo, Cartao, Selecao, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { formatarReais, formatarSaldo } from "@/lib/numeros";
 import { formatarDataHora } from "@/lib/datas";
@@ -24,9 +23,7 @@ export default async function ItemEstoque({ params }: PageProps<"/estoque/item/[
 
   return (
     <>
-      <Link href={insumo ? "/estoque?aba=insumos" : "/estoque"} className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Estoque
-      </Link>
+      <BotaoVoltar href={insumo ? "/estoque?aba=insumos" : "/estoque"}>Estoque</BotaoVoltar>
       <TituloPagina apoio={insumo ? "Insumo" : "Produto pronto"}>{nome}</TituloPagina>
 
       <Cartao className="mb-4">

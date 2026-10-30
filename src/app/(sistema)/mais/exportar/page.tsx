@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Cartao, TituloPagina, classeBotao } from "@/componentes/ui";
+import { Cartao, TituloPagina, classeBotao, BotaoVoltar } from "@/componentes/ui";
 import { exigirParticipante } from "@/servicos/sessao";
 import { listarParticipantes } from "@/servicos/participantes";
 import { listarCustosVariacoes } from "@/servicos/catalogo";
@@ -16,9 +15,7 @@ export default async function Exportar() {
 
   return (
     <>
-      <Link href="/mais" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Mais
-      </Link>
+      <BotaoVoltar href="/mais">Mais</BotaoVoltar>
       <TituloPagina apoio="Planilha com os dados do banco: números como número, datas como data e o ID de cada registro.">Exportar</TituloPagina>
       <Cartao>
         <form method="get" action="/exportar" className="flex flex-col gap-4">

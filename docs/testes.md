@@ -376,3 +376,8 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia13.sql`): encomenda de R$ 20,00 paga por inteiro já entra no realizado, sem entregar (lucro continua 0 até a entrega); encomenda parcial ou sem pagamento não conta; ao receber o restante passa a contar (R$ 30,00); entregar não duplica; cancelar tira da conta. Testes das fatias 3, 4, 5, 6, 10 e 12 seguem passando.
 - **Telas** (`testes-e2e/fatia12.mjs`, 375 px): **32 de 32**. Nova venda tipo encomenda com "Pagou tudo" de R$ 12,00 sobe o faturamento do Início em R$ 12,00 sem entregar (617 → 629). `fatia4.mjs` 29/29 e `fatia6.mjs` 17/17.
+
+## Fatia 14: venda com data e botão de voltar
+
+- **Banco** (`supabase/testes/fatia14.sql`): venda de ontem fica no dia de ontem (lista, resultado diário e meta) e guarda o momento do registro; sem data = hoje; doação com data passada; data futura, antes do desafio e encomenda com data da venda são recusadas. Fatias 3, 4, 6, 10, 12 e 13 seguem passando.
+- **Telas** (`testes-e2e/fatia14.mjs`, 375 px): **12 de 12**. Campo de data (começa hoje, máximo hoje; some na encomenda), venda de ontem aparece no dia certo e não em "Hoje", aviso "lançada em", botão de voltar com seta e ≥ 44 px. `fatia4` 29/29, `fatia10` 39/39, `fatia12` 32/32.

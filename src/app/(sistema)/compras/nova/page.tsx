@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Campo, Cartao, EstadoVazio, LinkBotao, TituloPagina } from "@/componentes/ui";
+import { Campo, Cartao, EstadoVazio, LinkBotao, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { ItensCompra } from "@/componentes/itens-compra";
 import { hojeIso } from "@/lib/datas";
@@ -22,9 +21,7 @@ export default async function NovaCompra({ searchParams }: PageProps<"/compras/n
 
   return (
     <>
-      <Link href="/compras" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Compras
-      </Link>
+      <BotaoVoltar href="/compras">Compras</BotaoVoltar>
       <TituloPagina apoio="Entra no estoque e o preço do insumo passa a ser o desta compra.">Nova compra</TituloPagina>
       {opcoes.length === 0 ? (
         <EstadoVazio titulo="Nenhum insumo cadastrado" acao={<LinkBotao href="/mais/insumos" variante="secundario">Ir para Insumos</LinkBotao>}>

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Cartao, EstadoVazio, LinkBotao, TituloPagina } from "@/componentes/ui";
+import { Cartao, EstadoVazio, LinkBotao, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { formatarData, hojeIso } from "@/lib/datas";
 import { formatarQuantidade } from "@/lib/numeros";
@@ -26,9 +25,7 @@ export default async function Contagem() {
 
   return (
     <>
-      <Link href="/estoque" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Estoque
-      </Link>
+      <BotaoVoltar href="/estoque">Estoque</BotaoVoltar>
       <TituloPagina apoio="Conte o que tem agora e escreva em cada linha. Só muda o que estiver diferente do sistema; deixe em branco o que não contou.">
         Contagem do dia
       </TituloPagina>

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Cartao, EstadoVazio, LinkBotao, TituloPagina, classeBotao } from "@/componentes/ui";
+import { Cartao, EstadoVazio, LinkBotao, TituloPagina, classeBotao, BotaoVoltar } from "@/componentes/ui";
 import { formatarQuantidade, formatarReais, lerNumero } from "@/lib/numeros";
 import { exigirParticipante } from "@/servicos/sessao";
 import { listarCustosVariacoes } from "@/servicos/catalogo";
@@ -28,9 +27,7 @@ export default async function Simular({ searchParams }: PageProps<"/estoque/simu
 
   return (
     <>
-      <Link href="/estoque?aba=producao" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Estoque
-      </Link>
+      <BotaoVoltar href="/estoque?aba=producao">Estoque</BotaoVoltar>
       <TituloPagina apoio="Quantas fornadas você quer fazer? Veja o que precisa comprar. Nada é gravado.">Simular produção</TituloPagina>
 
       {produtos.length === 0 ? (

@@ -151,6 +151,7 @@ export async function registrarVenda(dados: {
   desconhecido: boolean;
   observacao: string;
   entrega: string | null;
+  data: string | null; // dia em que a venda aconteceu (nulo = hoje)
   confirmar: boolean;
 }): Promise<Resultado & { numero?: number; id?: string }> {
   const s = await criarClienteServidor();
@@ -168,6 +169,7 @@ export async function registrarVenda(dados: {
     p_confirmar_estoque: dados.confirmar,
     p_bairro: dados.bairro || undefined,
     p_cliente_desconhecido: dados.desconhecido,
+    p_data: dados.data ?? undefined,
   });
   if (error) return falhou(error);
   const r = data as { ok: boolean; faltas?: Falta[]; venda_id?: string; numero?: number };

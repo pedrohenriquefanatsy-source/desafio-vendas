@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { CircleAlert, CircleCheck, ChevronRight } from "lucide-react";
+import { ArrowLeft, CircleAlert, CircleCheck, ChevronRight } from "lucide-react";
 import { partesReais } from "@/lib/numeros";
 
 // Componentes visuais reutilizáveis (Seção 6.4): neutros, cor só com significado,
@@ -20,6 +20,19 @@ export function TituloPagina({ children, apoio }: { children: ReactNode; apoio?:
       <h1 className="text-xl font-semibold">{children}</h1>
       {apoio ? <p className="mt-1 text-sm text-texto-suave">{apoio}</p> : null}
     </header>
+  );
+}
+
+// Botão de voltar no topo das telas internas: pílula com seta, alvo de toque de 44 px.
+export function BotaoVoltar({ href, children }: { href: ComponentProps<typeof Link>["href"]; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="mb-3 inline-flex min-h-toque items-center gap-2 rounded-full border border-borda bg-superficie py-1 pl-3 pr-4 text-sm font-medium text-texto shadow-sm active:bg-fundo"
+    >
+      <ArrowLeft aria-hidden className="h-4 w-4 text-acento" />
+      {children}
+    </Link>
   );
 }
 

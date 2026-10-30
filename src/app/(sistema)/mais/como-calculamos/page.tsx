@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Cartao, TituloPagina } from "@/componentes/ui";
+import { Cartao, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { exigirParticipante } from "@/servicos/sessao";
 
 // "Como calculamos" (menu Mais, Seção 3.1): as fórmulas em linguagem simples.
@@ -61,9 +60,7 @@ export default async function ComoCalculamos() {
   await exigirParticipante();
   return (
     <>
-      <Link href="/mais" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Mais
-      </Link>
+      <BotaoVoltar href="/mais">Mais</BotaoVoltar>
       <TituloPagina apoio="Todas as contas são feitas pelo banco de dados, sempre do mesmo jeito.">Como calculamos</TituloPagina>
       <div className="flex flex-col gap-3">
         {BLOCOS.map((b) => (

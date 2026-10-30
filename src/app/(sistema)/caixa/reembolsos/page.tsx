@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Aviso, Campo, Cartao, EstadoVazio, Selo, TituloPagina } from "@/componentes/ui";
+import { Aviso, Campo, Cartao, EstadoVazio, Selo, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { ItemEditavel } from "@/componentes/item-editavel";
 import { formatarReais } from "@/lib/numeros";
@@ -19,9 +18,7 @@ export default async function Reembolsos({ searchParams }: PageProps<"/caixa/ree
 
   return (
     <>
-      <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Caixa
-      </Link>
+      <BotaoVoltar href="/caixa">Caixa</BotaoVoltar>
       <TituloPagina apoio="Compras e despesas pagas do próprio bolso. O reembolso sai do caixa e não mexe no lucro de novo.">
         A reembolsar
       </TituloPagina>

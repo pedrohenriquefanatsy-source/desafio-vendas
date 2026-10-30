@@ -189,6 +189,13 @@ export function NovaVenda({
             <span className="text-xs font-normal text-texto-suave">O estoque só baixa quando você marcar como entregue.</span>
           </label>
         ) : null}
+        {tipo !== "encomenda" ? (
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            {doacao ? "Data da doação" : "Data da venda"}
+            <input name="data" type="date" defaultValue={hoje} max={hoje} required className={campo} />
+            <span className="text-xs font-normal text-texto-suave">Esqueceu de lançar? Escolha o dia em que a venda aconteceu.</span>
+          </label>
+        ) : null}
         {doacao ? <p className="text-xs text-texto-suave">Doação ou brinde: sai do estoque e o custo entra no lucro estimado, sem receita.</p> : null}
       </fieldset>
 

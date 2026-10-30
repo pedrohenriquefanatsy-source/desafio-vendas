@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Cartao, EstadoVazio, LinkBotao, Selo, TituloPagina, classeBotao } from "@/componentes/ui";
+import { Cartao, EstadoVazio, LinkBotao, Selo, TituloPagina, classeBotao, BotaoVoltar } from "@/componentes/ui";
 import { ItemEditavel } from "@/componentes/item-editavel";
 import { formatarDataHora } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
@@ -27,9 +26,7 @@ export default async function Auditoria({ searchParams }: PageProps<"/mais/audit
 
   return (
     <>
-      <Link href="/mais" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Mais
-      </Link>
+      <BotaoVoltar href="/mais">Mais</BotaoVoltar>
       <TituloPagina apoio="Tudo o que foi incluído, alterado ou cancelado, com o antes e o depois. Gravado pelo banco; ninguém edita.">
         Auditoria
       </TituloPagina>

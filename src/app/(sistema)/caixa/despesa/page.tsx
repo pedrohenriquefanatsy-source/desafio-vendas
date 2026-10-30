@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Campo, Cartao, Interruptor, Selo, TituloPagina } from "@/componentes/ui";
+import { Campo, Cartao, Interruptor, Selo, TituloPagina, BotaoVoltar } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { ItemEditavel } from "@/componentes/item-editavel";
 import { formatarReais } from "@/lib/numeros";
@@ -20,9 +19,7 @@ export default async function Despesa() {
 
   return (
     <>
-      <Link href="/caixa" className="mb-2 inline-flex min-h-toque items-center text-sm text-texto-suave">
-        ← Caixa
-      </Link>
+      <BotaoVoltar href="/caixa">Caixa</BotaoVoltar>
       <TituloPagina apoio="Gasto que não vira estoque (Uber, adesivos…). Entra no lucro estimado uma vez.">Nova despesa</TituloPagina>
       <Cartao className="mb-6">
         <Formulario acao={registrarDespesa} textoBotao="Registrar despesa" limparAoSalvar>
