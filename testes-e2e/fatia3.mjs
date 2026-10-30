@@ -189,6 +189,14 @@ await esperarPagina(pm, /^\/compras$/);
 await pm.locator("summary").first().click();
 t = await texto(pm);
 confere(t.includes("Do bolso de Membro Teste"), "Compra do bolso fica no nome de quem pagou");
+// A tela "A reembolsar" mostra no que o dinheiro foi gasto, com dia e horário.
+await pm.goto(`${BASE}/caixa/reembolsos`);
+const meuCartao = pm.locator("section", { hasText: "Membro Teste" }).first();
+await meuCartao.locator("summary", { hasText: "Ver no que foi gasto" }).click();
+const detalheCompra = (await meuCartao.textContent()).replace(/\s+/g, " ");
+confere(/\d{2}\/\d{2}, \d{2}:\d{2} · Compra/.test(detalheCompra) && detalheCompra.includes(`de ${FARINHA}`) && /R\$\s?7,00/.test(detalheCompra), "A reembolsar: mostra a compra do bolso com horário, o que foi comprado e o valor");
+await pm.goto(`${BASE}/compras`);
+await pm.locator("summary").first().click();
 await pm.locator('input[name="motivo"]').first().fill("Lancei errado");
 await pm.getByRole("button", { name: "Cancelar compra" }).first().click();
 // O formulário de cancelar some; a compra continua aberta mostrando quando e por quê.

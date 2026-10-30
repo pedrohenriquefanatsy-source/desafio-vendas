@@ -6,7 +6,7 @@ import { formatarReais } from "@/lib/numeros";
 import { formatarData, formatarDataHora } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarParticipantes } from "@/servicos/participantes";
-import { listarDevidos, listarReembolsos } from "@/servicos/caixa";
+import { listarDevidos, listarGastosDoBolso, listarReembolsos } from "@/servicos/caixa";
 import { cancelarReembolso, pagarReembolso } from "../acoes";
 
 // A reembolsar (Seção 4.5): quanto o desafio deve a cada participante e os reembolsos pagos.
@@ -14,7 +14,7 @@ export default async function Reembolsos({ searchParams }: PageProps<"/caixa/ree
   const perfil = await exigirParticipante();
   const admin = ehAdmin(perfil);
   const { feito } = await searchParams;
-  const [devidos, reembolsos, pessoas] = await Promise.all([listarDevidos(), listarReembolsos(), listarParticipantes()]);
+  const [devidos, reembolsos, pessoas, gastos] = await Promise.all([listarDevidos(), listarReembolsos(), listarParticipantes(), listarGastosDoBolso()]);
   const nome = new Map(pessoas.map((p) => [p.id, p.nome ?? "Sem nome"]));
 
   return (
@@ -51,6 +51,34 @@ export default async function Reembolsos({ searchParams }: PageProps<"/caixa/ree
                     <span className={`text-lg font-semibold tabular-nums ${devido > 0 ? "text-alerta" : ""}`}>{formatarReais(devido)}</span>
                   </span>
                 </div>
+                {(() => {
+                  const meus = gastos.filter((g) => g.participanteId === d.participante_id);
+                  if (meus.length === 0) return null;
+                  return (
+                    <div className="mt-3 border-t border-borda pt-3">
+                      <details className="group">
+                        <summary className="flex min-h-toque cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
+                          <span>Ver no que foi gasto ({meus.length} {meus.length === 1 ? "lançamento" : "lançamentos"})</span>
+                          <span aria-hidden className="text-texto-suave group-open:rotate-180">⌄</span>
+                        </summary>
+                        <ul className="mt-2 flex flex-col divide-y divide-borda">
+                          {meus.map((g) => (
+                            <li key={`${g.tipo}-${g.id}`} className="flex items-start justify-between gap-3 py-2">
+                              <span className="min-w-0">
+                                <span className="block text-xs text-texto-suave">
+                                  {formatarDataHora(g.quando)} · {g.tipo === "compra" ? "Compra" : "Despesa"}
+                                </span>
+                                <span className="block font-medium break-words">{g.titulo}</span>
+                                {g.detalhe ? <span className="block text-sm text-texto-suave break-words">{g.detalhe}</span> : null}
+                              </span>
+                              <span className="shrink-0 font-semibold tabular-nums">{formatarReais(g.valor)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </div>
+                  );
+                })()}
                 {admin && devido > 0 ? (
                   <div className="mt-3 border-t border-borda pt-3">
                     <Formulario acao={pagarReembolso} textoBotao={`Pagar reembolso a ${d.participante ?? "participante"}`} textoEnviando="Registrando…">

@@ -1,6 +1,7 @@
 import "server-only";
 import { criarClienteServidor } from "@/lib/supabase/servidor";
 import type { Enums, Tables } from "@/lib/supabase/tipos-banco";
+import { formatarQuantidade } from "@/lib/numeros";
 import { mensagemDeErro, type Resultado } from "./erros";
 import { obterDesafioAtual } from "./desafios";
 
@@ -69,6 +70,57 @@ export async function resultadoAtual() {
 export async function listarDevidos(): Promise<Devido[]> {
   const s = await criarClienteServidor();
   return lista(s.from("v_reembolsos_devidos").select("*").order("devido", { ascending: false }));
+}
+
+// Cada gasto pago do bolso (compra ou despesa, não cancelado), para mostrar a quem o desafio deve
+// no que o dinheiro foi gasto e quando.
+export type GastoDoBolso = {
+  id: string;
+  participanteId: string;
+  tipo: "compra" | "despesa";
+  quando: string;
+  titulo: string;
+  detalhe: string;
+  valor: number;
+};
+
+export async function listarGastosDoBolso(): Promise<GastoDoBolso[]> {
+  const s = await criarClienteServidor();
+  const [compras, despesas] = await Promise.all([
+    lista(s.from("compras").select("id, participante_id, total, fornecedor, observacao, criado_em").eq("pago_por", "participante").eq("situacao", "ativa")),
+    lista(s.from("despesas").select("id, participante_id, valor, descricao, categoria, criado_em").eq("pago_por", "participante").eq("situacao", "ativa")),
+  ]);
+  const ids = compras.map((c) => c.id);
+  const itens = ids.length ? await lista(s.from("compra_itens").select("compra_id, insumo_id, quantidade, unidade, valor").in("compra_id", ids)) : [];
+  const insumoIds = [...new Set(itens.map((i) => i.insumo_id))];
+  const nomes = new Map(
+    (insumoIds.length ? await lista(s.from("insumos").select("id, nome").in("id", insumoIds)) : []).map((i) => [i.id, i.nome]),
+  );
+  const gastos: GastoDoBolso[] = [
+    ...compras.map((c) => ({
+      id: c.id,
+      participanteId: c.participante_id ?? "",
+      tipo: "compra" as const,
+      quando: c.criado_em,
+      titulo: c.fornecedor ? `Compra · ${c.fornecedor}` : "Compra de insumos",
+      detalhe:
+        itens
+          .filter((i) => i.compra_id === c.id)
+          .map((i) => `${formatarQuantidade(i.quantidade)} ${i.unidade} de ${nomes.get(i.insumo_id) ?? "insumo"}`)
+          .join(", ") + (c.observacao ? ` · ${c.observacao}` : ""),
+      valor: Number(c.total),
+    })),
+    ...despesas.map((d) => ({
+      id: d.id,
+      participanteId: d.participante_id ?? "",
+      tipo: "despesa" as const,
+      quando: d.criado_em,
+      titulo: d.descricao,
+      detalhe: d.categoria ?? "",
+      valor: Number(d.valor),
+    })),
+  ];
+  return gastos.sort((a, b) => b.quando.localeCompare(a.quando));
 }
 
 export async function livroCaixa(limite = 150): Promise<LancamentoCaixa[]> {

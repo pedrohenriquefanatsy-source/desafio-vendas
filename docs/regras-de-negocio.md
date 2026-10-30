@@ -507,3 +507,6 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 
 ### Simulação de produção
 - **Simular produção** (Estoque): informa quantas fornadas de cada produto e vê, por insumo e embalagem, quanto precisa, quanto tem e **quanto falta comprar** (com custo estimado), mais quantos potinhos rende. Não grava nada; tem o botão "Registrar compra com esta lista".
+
+### A reembolsar mostra no que o dinheiro foi gasto (30/10/2026)
+- No cartão de cada pessoa em Caixa → A reembolsar há **"Ver no que foi gasto"**: cada compra ou despesa paga do bolso (não cancelada), do mais novo para o mais antigo, com **dia e horário** do lançamento, o tipo, o que foi comprado (compra: "2 embalagem de Margarina"; despesa: descrição e categoria) e o valor. A soma bate com "Pagou" do cartão. Todos os participantes veem.

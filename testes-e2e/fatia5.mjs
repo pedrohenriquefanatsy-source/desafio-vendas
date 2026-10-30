@@ -101,6 +101,13 @@ confere(igual(depois.resultado, antes.resultado - 15), "Aceite 10: o lucro estim
 confere(igual(depois.saldo, antes.saldo), "Aceite 10: o caixa não cai (foi do bolso)");
 confere(igual(depois.devido, antes.devido + 15), `Aceite 10: "A reembolsar" mostra 15,00 a mais para o membro (${depois.devido})`);
 await pa.screenshot({ path: `${CAPTURAS}/03-caixa-a-reembolsar.png`, fullPage: true });
+await pa.goto(`${BASE}/caixa/reembolsos`);
+const cartaoDetalhe = pa.locator("section", { hasText: "Membro Teste" }).first();
+await cartaoDetalhe.locator("summary", { hasText: "Ver no que foi gasto" }).click();
+const detalheGasto = (await cartaoDetalhe.textContent()).replace(/\s+/g, " ");
+confere(detalheGasto.includes(`Uber ${S}`) && /\d{2}\/\d{2}, \d{2}:\d{2} · Despesa/.test(detalheGasto) && /R\$\s?15,00/.test(detalheGasto), "A reembolsar: mostra a despesa do bolso com dia, horário, descrição e valor");
+await verificarTela(pa, "A reembolsar com detalhes");
+await pa.screenshot({ path: `${CAPTURAS}/03b-reembolsar-detalhes.png`, fullPage: true });
 
 antes = depois;
 await pa.goto(`${BASE}/caixa/reembolsos`);
