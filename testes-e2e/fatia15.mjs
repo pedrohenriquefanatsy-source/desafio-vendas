@@ -130,6 +130,13 @@ const pontos = p.locator('figure:has-text("Acumulado") g[role=button]');
 await pontos.last().click();
 const quadro2 = (await p.locator("p[aria-live=polite]").textContent()).replace(/\s+/g, " ");
 confere(/acumulado R\$/.test(quadro2), "Tocar num ponto da linha também mostra o número");
+const semNumero = await p.evaluate(() =>
+  [...document.querySelectorAll('figure g[role=button]')].filter((g) => g.closest("figure").textContent.includes("Faturamento de cada dia"))
+    .filter((g) => !/R\$\s?0,00$/.test(g.getAttribute("aria-label") ?? "") && g.querySelectorAll("text").length < 2).length,
+);
+confere(semNumero === 0, "Gráfico de barras: toda barra tem o seu número");
+const rotulosLinha = await p.locator('figure:has-text("Acumulado") text', { hasText: /^R\$/ }).count();
+confere(rotulosLinha === 1, `Gráfico de linha: um número só, veio ${rotulosLinha}`);
 await verificarTela(p, "Início com gráficos");
 await p.locator("figure").first().screenshot({ path: `${CAPTURAS}/03-grafico.png` });
 

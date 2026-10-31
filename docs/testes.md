@@ -387,3 +387,7 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 - **Banco** (`supabase/testes/fatia15.sql`): 24 potinhos com receita de ~12 = 2 fornadas (receita × 2 baixada); corrigir para 18 = 1,5 fornada e ingredientes devolvidos; fornadas informadas continuam como antes; pegar 10 (geral 30 → 20); não pega mais do que o geral; admin registra para o membro; venda de 3 sai do que está com quem vendeu; venda de 9 com 7 na mão (7 da pessoa, 2 do geral); cancelar devolve à pessoa; devolver; membro não registra para outra pessoa; encomenda paga há 2 dias e entregue hoje continua no dia do pagamento. Fatias 3, 4, 5, 6, 10, 12, 13 e 14 seguem passando.
 - **Telas** (`testes-e2e/fatia15.mjs`, 375 px): **19 de 19**. `fatia12` 34/34, `fatia3` 34/34, `fatia4` 29/29 (ajustados para registrar produção só com os potinhos).
 - Sistema real: a encomenda paga em 29/10 e entregue em 31/10 voltou para 29/10 (dia 29 = R$ 1.000; total segue R$ 1.360).
+
+## Fatia 16: venda direta sem estoque e gráficos
+
+- **Telas**: `fatia4.mjs` 29/29 (D8 atualizado: 7 Avelã com 6 no estoque grava direto e o saldo fica −1), `fatia15.mjs` 21/21 (toda barra com número; linha com um número só), `fatia10.mjs` 39/39, `fatia14.mjs` 12/12. Sem mudança no banco.

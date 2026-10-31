@@ -18,6 +18,8 @@ const semana = new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "U
 
 const rotuloDia = (iso: string) => `${semana.format(new Date(`${iso}T12:00:00Z`)).replace(".", "")} ${iso.slice(8, 10)}`;
 const reaisCurtos = (v: number) => formatarReais(v).replace(/,00$/, "");
+// Sem "R$" e sem centavos, para caber em cima de cada barra.
+const numeroCurto = (v: number) => Math.round(v).toLocaleString("pt-BR");
 
 // Posição vertical de um valor, com o maior no topo.
 function escala(min: number, max: number) {
@@ -73,7 +75,6 @@ export function GraficoResultadoDia({ dias, hoje, selecionado, aoEscolher }: { d
   const passo = larguraUtil / Math.max(dias.length, 1);
   const largura = Math.min(28, passo - 6);
   const zero = y(0);
-  const destaque = dias.filter((d) => d.resultado != null).reduce<DiaDoDesafio | null>((a, d) => (!a || Math.abs(d.resultado ?? 0) > Math.abs(a.resultado ?? 0) ? d : a), null);
 
   return (
     <figure>
@@ -104,9 +105,14 @@ export function GraficoResultadoDia({ dias, hoje, selecionado, aoEscolher }: { d
               <title>{`${rotuloDia(d.dia)}: ${formatarReais(v)}`}</title>
               <rect x={M.esq + n * passo} y={M.topo} width={passo} height={alturaUtil} fill="transparent" />
               <path d={caminho} className={v < 0 ? "fill-negativo" : d.dia === selecionado ? "fill-acento" : "fill-acao"} />
-              {d === destaque || d.dia === selecionado ? (
-                <text x={cx} y={v >= 0 ? topo - 4 : topo + altura + 11} textAnchor="middle" className="fill-texto text-[10px] font-medium">
-                  {reaisCurtos(v)}
+              {v !== 0 || d.dia === selecionado ? (
+                <text
+                  x={cx}
+                  y={v >= 0 ? topo - 4 : topo + altura + 11}
+                  textAnchor="middle"
+                  className={`text-[9px] ${d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave font-medium"}`}
+                >
+                  {numeroCurto(v)}
                 </text>
               ) : null}
               <text x={cx} y={A - 8} textAnchor="middle" className={`text-[10px] ${d.dia === hoje || d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave"}`}>
@@ -127,8 +133,8 @@ export function GraficoAcumulado({ dias, meta, hoje, selecionado, aoEscolher }: 
   const y = escala(min, max);
   const x = (n: number) => M.esq + 14 + n * ((larguraUtil - 28) / Math.max(dias.length - 1, 1));
   const pontos = dias.map((d, n) => ({ d, n })).filter((p) => p.d.acumulado != null);
-  const ultimo = pontos.at(-1);
-  const escolhido = pontos.find((p) => p.d.dia === selecionado);
+  // Um número só na linha: o do dia escolhido (ou o último, se nenhum).
+  const rotulado = pontos.find((p) => p.d.dia === selecionado) ?? pontos.at(-1);
 
   return (
     <figure>
@@ -167,14 +173,9 @@ export function GraficoAcumulado({ dias, meta, hoje, selecionado, aoEscolher }: 
             />
           </g>
         ))}
-        {escolhido && escolhido !== ultimo ? (
-          <text x={x(escolhido.n)} y={y(escolhido.d.acumulado ?? 0) - 10} textAnchor="middle" className="fill-texto text-[10px] font-medium">
-            {reaisCurtos(escolhido.d.acumulado ?? 0)}
-          </text>
-        ) : null}
-        {ultimo ? (
-          <text x={x(ultimo.n)} y={y(ultimo.d.acumulado ?? 0) - 9} textAnchor="middle" className="fill-texto text-[10px] font-medium">
-            {reaisCurtos(ultimo.d.acumulado ?? 0)}
+        {rotulado ? (
+          <text x={x(rotulado.n)} y={y(rotulado.d.acumulado ?? 0) - 10} textAnchor="middle" className="fill-texto text-[10px] font-medium">
+            {reaisCurtos(rotulado.d.acumulado ?? 0)}
           </text>
         ) : null}
         {dias.map((d, n) => (

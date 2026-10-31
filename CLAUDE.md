@@ -19,3 +19,4 @@
 - Fatia 13 (30/10/2026, pedido do administrador): encomenda paga por inteiro já conta no faturamento antes da entrega. Ver `docs/regras-de-negocio.md`, fim da seção 15.
 - Fatia 14 (30/10/2026, pedido do administrador): botão de voltar mais bonito e venda/doação com data (para lançar o que foi esquecido). Ver `docs/regras-de-negocio.md`, seção 16.
 - Fatia 15 (31/10/2026, pedido do administrador): produção só pelos potinhos prontos (fornadas calculadas), estoque de cada pessoa (pegar, vender do que está com a pessoa, devolver), gráficos que mostram o número ao tocar e encomenda paga antes fica no dia do pagamento. Ver `docs/regras-de-negocio.md`, seção 17.
+- Fatia 16 (31/10/2026, pedido do administrador): venda/doação/entrega sem estoque registrado grava direto (estoque negativo, sem perguntar); gráficos com número em toda barra e um número só na linha. Ver `docs/regras-de-negocio.md`, seção 18.

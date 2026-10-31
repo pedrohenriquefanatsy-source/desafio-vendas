@@ -548,3 +548,8 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Tocar numa barra ou num ponto da linha escolhe o dia: o quadro acima dos gráficos mostra o faturamento e o acumulado dele, e os dois gráficos destacam o dia com o número.
 
 - Banco: migração `20261031120000_estoque_pessoas_producao_por_potinhos.sql`; teste `supabase/testes/fatia15.sql`.
+
+## 18. Venda sem perguntar do estoque e gráficos mais legíveis (fatia 16, 31/10/2026)
+- **Venda, doação e entrega de encomenda não perguntam mais** quando o estoque registrado não tem tudo: gravam direto e o estoque fica **negativo** (a conferência é feita à noite, na Contagem do dia). A venda continua marcada "Lançada com aviso" no detalhe. Substitui a confirmação da decisão D8.
+- Gráfico **Faturamento de cada dia**: toda barra com valor mostra o seu número (sem "R$" e sem centavos, para caber); o dia escolhido fica em destaque.
+- Gráfico **Acumulado**: um número só — o do dia tocado (ou o último dia, se nenhum foi tocado) —, para os valores não ficarem um em cima do outro.

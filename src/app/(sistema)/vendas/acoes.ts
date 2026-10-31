@@ -93,7 +93,8 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     observacao,
     entrega: tipo === "encomenda" ? entrega : null,
     data: tipo === "encomenda" || !data ? null : data,
-    confirmar: texto(d, "confirmar") === "1",
+    // Sem estoque registrado, a venda é gravada direto (o estoque fica negativo e acerta na contagem).
+    confirmar: true,
   });
   if (!r.ok) return r;
   atualizar();
@@ -126,7 +127,7 @@ export async function entregarEncomenda(_a: Resultado | null, d: FormData): Prom
     const recebimento = await vendas.receberRestante(texto(d, "chave"), texto(d, "id"), forma);
     if (!recebimento.ok) return recebimento;
   }
-  const r = await vendas.entregarEncomenda(texto(d, "id"), texto(d, "confirmar") === "1");
+  const r = await vendas.entregarEncomenda(texto(d, "id"), true);
   if (!r.ok) return r;
   voltarParaVenda(d, "entregue");
 }

@@ -197,17 +197,13 @@ t = await texto(p);
 confere(t.includes("Doação nº") && /Total\s?R\$\s?0,00/.test(t) && /Sobra da venda\s?-R\$\s?0,30/.test(t), "Aceite 9: doação sem receita, custo −0,30 no resultado");
 confere((await saldoProduto(p, CLASSICO)) === 5, "Aceite 9: doação baixa o estoque (6 → 5)");
 
-// ── D8: mais do que o estoque → avisa e deixa seguir ────────────────────────
+// ── D8 (atualizado na fatia 16): mais do que o estoque → grava direto, sem perguntar ──
 await p.goto(`${BASE}/vendas/nova`);
 for (let i = 0; i < 7; i++) await tile(p, AVELA).click();
 await p.getByRole("button", { name: /^Confirmar/ }).click();
-await p.locator("p[role=alert]").first().waitFor();
-t = await texto(p);
-confere(t.includes(`${AVELA}: precisa 7 und, tem 6`), "D8: avisa que falta produto pronto (precisa 7, tem 6)");
-await p.screenshot({ path: `${CAPTURAS}/05-aviso-estoque.png`, fullPage: true });
-await p.getByRole("button", { name: "Vender mesmo assim" }).click();
 await p.waitForURL((u) => u.searchParams.has("ok"), { timeout: 20000, waitUntil: "commit" });
-confere((await saldoProduto(p, AVELA)) === -1, "D8: confirmada, a venda passa e o estoque mostra −1");
+confere(true, "D8: venda com mais do que o estoque registrado é gravada direto, sem pedir confirmação");
+confere((await saldoProduto(p, AVELA)) === -1, "D8: o estoque fica negativo (−1) para acertar na contagem");
 
 // ── Teste de aceite 14: duplo toque → uma venda só ──────────────────────────
 await p.goto(`${BASE}/vendas/nova`);
