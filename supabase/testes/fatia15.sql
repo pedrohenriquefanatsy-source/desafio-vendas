@@ -97,9 +97,6 @@ begin
     jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('trad'), 'quantidade', 10)));
   assert pg_temp.pessoa(v_admin) = 10 and pg_temp.geral() = 20 and pg_temp.saldo_var('trad') = 30,
     'F15: pegou 10: com a pessoa 10, estoque geral 20, total 30';
-  assert pg_temp.erro(format('select public.mover_estoque_pessoa(gen_random_uuid(), ''retirada'', %L)',
-    jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('trad'), 'quantidade', 21)))) like 'No estoque geral só tem 20%',
-    'F15: não pega mais do que tem no estoque geral';
   -- Admin registra para o membro.
   perform public.mover_estoque_pessoa(gen_random_uuid(), 'retirada',
     jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('trad'), 'quantidade', 5)), v_membro::uuid);
@@ -136,6 +133,17 @@ begin
   perform public.mover_estoque_pessoa(gen_random_uuid(), 'retirada',
     jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('trad'), 'quantidade', 2)));
   assert pg_temp.pessoa('00000000-0000-4000-8000-000000000fbb') = 7, 'F15: membro pega para si';
+end
+$$;
+
+-- Fatia 17: pegar mais do que tem no estoque geral é permitido (fica negativo).
+do $$
+declare
+  v_geral numeric := pg_temp.geral();
+begin
+  perform public.mover_estoque_pessoa(gen_random_uuid(), 'retirada',
+    jsonb_build_array(jsonb_build_object('variacao_id', pg_temp.id('trad'), 'quantidade', v_geral + 5)));
+  assert pg_temp.geral() = -5, 'F17: pegou 5 a mais do que o estoque geral: ele fica em −5, veio ' || pg_temp.geral();
 end
 $$;
 

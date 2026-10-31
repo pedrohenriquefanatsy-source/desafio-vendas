@@ -553,3 +553,8 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - **Venda, doação e entrega de encomenda não perguntam mais** quando o estoque registrado não tem tudo: gravam direto e o estoque fica **negativo** (a conferência é feita à noite, na Contagem do dia). A venda continua marcada "Lançada com aviso" no detalhe. Substitui a confirmação da decisão D8.
 - Gráfico **Faturamento de cada dia**: toda barra com valor mostra o seu número (sem "R$" e sem centavos, para caber); o dia escolhido fica em destaque.
 - Gráfico **Acumulado**: um número só — o do dia tocado (ou o último dia, se nenhum foi tocado) —, para os valores não ficarem um em cima do outro.
+
+## 19. Pegar sem estoque e Minhas vendas (fatia 17, 31/10/2026)
+- **"Peguei para vender"** aceita qualquer quantidade de qualquer sabor, mesmo que o estoque geral não tenha (ele fica **negativo**, como na venda, e acerta na Contagem do dia ou ao registrar a produção). "Devolvi" continua limitado ao que está com a pessoa.
+- Estoque de cada pessoa ganhou a aba **Minhas vendas**: as vendas da pessoa (sem as canceladas), do mais novo para o mais antigo, agrupadas por dia com o total do dia; quadros com o total de **hoje** e o **total** (com o que falta receber). Toque abre a venda. O administrador escolhe de quem ver.
+- Banco: migração `20261031150000_pegar_sem_estoque.sql`; teste em `supabase/testes/fatia15.sql`.

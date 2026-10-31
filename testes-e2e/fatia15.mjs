@@ -82,10 +82,6 @@ t = await texto(p);
 confere(new RegExp(`Com você.*${SABOR}\\s?6 und`).test(t), "Com você: 6 potinhos");
 confere(/14 no estoque geral · 6 com as pessoas/.test(t), "Estoque geral 14 e 6 com as pessoas");
 await p.screenshot({ path: `${CAPTURAS}/02-estoque-pessoas.png`, fullPage: true });
-await p.getByLabel(`Peguei de ${SABOR}`).fill("15");
-await p.getByRole("button", { name: "Registrar o que peguei" }).click();
-await p.getByText(/No estoque geral só tem 14/).waitFor({ timeout: 20000 });
-confere(true, "Não deixa pegar mais do que tem no estoque geral (15 > 14)");
 
 await p.goto(`${BASE}/estoque`);
 await p.getByText(BITES).first().waitFor();
@@ -117,6 +113,26 @@ confere(/18 no estoque geral · 0 com as pessoas/.test(t), "Devolveu 4: estoque 
 // ── Contagem do dia conta só o estoque geral ─────────────────────────────────
 await p.goto(`${BASE}/estoque/contagem`);
 confere((await p.getByLabel(`Contagem de ${SABOR}`).inputValue()) === "18", "Contagem do dia: começa no estoque geral (18)");
+
+// ── Fatia 17: pegar mais do que o estoque geral tem (fica negativo) ─────────
+await p.goto(`${BASE}/estoque/pessoas`);
+await p.getByRole("heading", { name: "Com você" }).waitFor();
+await p.getByLabel(`Peguei de ${SABOR}`).fill("20");
+await p.getByRole("button", { name: "Registrar o que peguei" }).click();
+await p.getByText("20 potinhos saíram do estoque geral").waitFor({ timeout: 20000 });
+await p.reload();
+await p.getByRole("heading", { name: "Com você" }).waitFor();
+t = await texto(p);
+confere(/-2 no estoque geral · 20 com as pessoas/.test(t), "Pegou 20 com 18 no estoque geral: registra e o geral fica −2");
+
+// ── Fatia 17: aba Minhas vendas ──────────────────────────────────────────────
+await p.getByRole("link", { name: "Minhas vendas" }).click();
+await p.waitForURL((u) => u.searchParams.get("aba") === "vendas", { timeout: 20000, waitUntil: "commit" });
+await p.getByText("No total").waitFor();
+t = await texto(p);
+confere(new RegExp(`Hoje.*R\\$\\s?[\\d.]+,\\d{2}`).test(t) && new RegExp(`2× ${BITES}`).test(t), "Minhas vendas: totais de hoje e no total, e a venda de 2 potinhos na lista");
+await verificarTela(p, "Minhas vendas");
+await p.screenshot({ path: `${CAPTURAS}/04-minhas-vendas.png`, fullPage: false });
 
 // ── Gráficos: tocar num dia mostra o número ──────────────────────────────────
 await p.goto(`${BASE}/`);

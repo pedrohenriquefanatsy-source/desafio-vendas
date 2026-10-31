@@ -1,10 +1,11 @@
-import { BotaoVoltar, Cartao, EstadoVazio, LinkBotao, Selecao, TituloPagina } from "@/componentes/ui";
+import { Abas, BotaoVoltar, Cartao, EstadoVazio, ItemLista, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
-import { formatarDataHora } from "@/lib/datas";
-import { formatarQuantidade } from "@/lib/numeros";
+import { formatarData, formatarDataHora, formatarHora, hojeIso } from "@/lib/datas";
+import { formatarQuantidade, formatarReais } from "@/lib/numeros";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarParticipantes } from "@/servicos/participantes";
 import { listarEstoquePessoas, listarEstoqueProdutos, type EstoqueProduto } from "@/servicos/estoque";
+import { listarVendas } from "@/servicos/vendas";
 import { moverEstoquePessoa } from "../acoes";
 
 // Estoque de cada pessoa: quem pega potinhos para vender registra aqui. Sai do estoque geral e fica com a pessoa;
@@ -14,9 +15,32 @@ const campo = "min-h-toque w-24 rounded-xl border border-borda bg-superficie px-
 const nomeSabor = (produto: string | null, variacao: string | null) =>
   !variacao || variacao === "Única" ? (produto ?? "") : `${produto} · ${variacao}`;
 
-export default async function EstoquePessoas() {
+const UUID = /^[0-9a-f-]{36}$/i;
+
+export default async function EstoquePessoas({ searchParams }: PageProps<"/estoque/pessoas">) {
   const perfil = await exigirParticipante();
   const admin = ehAdmin(perfil);
+  const { aba, pessoa } = await searchParams;
+  const abas = (
+    <Abas
+      atual={aba === "vendas" ? "vendas" : "estoque"}
+      abas={[
+        { valor: "estoque", rotulo: "Estoque", href: "/estoque/pessoas" },
+        { valor: "vendas", rotulo: "Minhas vendas", href: "/estoque/pessoas?aba=vendas" },
+      ]}
+    />
+  );
+  if (aba === "vendas") {
+    const escolhida = admin && typeof pessoa === "string" && UUID.test(pessoa) ? pessoa : perfil.id;
+    return (
+      <>
+        <BotaoVoltar href="/estoque">Estoque</BotaoVoltar>
+        <TituloPagina apoio="As vendas que você registrou, do mais novo para o mais antigo. Toque numa para ver os detalhes.">Minhas vendas</TituloPagina>
+        {abas}
+        <MinhasVendas pessoa={escolhida} eu={perfil.id} admin={admin} />
+      </>
+    );
+  }
   const [produtos, comPessoas, pessoas] = await Promise.all([
     listarEstoqueProdutos(),
     listarEstoquePessoas(),
@@ -26,8 +50,8 @@ export default async function EstoquePessoas() {
   const porPessoa = new Map<string, typeof comPessoas>();
   for (const c of comPessoas) porPessoa.set(c.participante ?? "—", [...(porPessoa.get(c.participante ?? "—") ?? []), c]);
   const ativos = pessoas.filter((p) => p.ativo);
-  // Para pegar, só o que tem no estoque geral; para devolver, só o que está com alguém.
-  const paraPegar = produtos.filter((p) => Number(p.no_estoque) > 0);
+  // Para pegar, todos os sabores (o estoque geral pode ficar negativo); para devolver, só o que está com alguém.
+  const paraPegar = produtos;
   const paraDevolver = produtos.filter((p) => Number(p.com_pessoas) > 0);
 
   return (
@@ -36,6 +60,7 @@ export default async function EstoquePessoas() {
       <TituloPagina apoio="Pegou potinhos para vender? Registre aqui: saem do estoque geral e ficam com você. Quando você vende, sai do que está com você. O que sobrar, devolva.">
         Estoque de cada pessoa
       </TituloPagina>
+      {abas}
 
       {produtos.length === 0 ? (
         <EstadoVazio titulo="Nenhum produto cadastrado" acao={<LinkBotao href="/mais/produtos" variante="secundario">Ir para Produtos</LinkBotao>}>
@@ -59,14 +84,7 @@ export default async function EstoquePessoas() {
             )}
           </Cartao>
 
-          {paraPegar.length ? (
-            <FormularioMover tipo="retirada" produtos={paraPegar} pessoas={admin ? ativos : []} eu={perfil.id} />
-          ) : (
-            <Cartao>
-              <h2 className="mb-1 font-semibold">Peguei para vender</h2>
-              <p className="text-sm text-texto-suave">Não tem potinho no estoque geral. Registre a produção primeiro.</p>
-            </Cartao>
-          )}
+          <FormularioMover tipo="retirada" produtos={paraPegar} pessoas={admin ? ativos : []} eu={perfil.id} />
           {paraDevolver.length ? (
             <FormularioMover tipo="devolucao" produtos={paraDevolver} pessoas={admin ? ativos : []} eu={perfil.id} />
           ) : null}
@@ -121,7 +139,9 @@ function FormularioMover({
     <Cartao>
       <h2 className="mb-1 font-semibold">{pegar ? "Peguei para vender" : "Devolvi ao estoque"}</h2>
       <p className="mb-3 text-sm text-texto-suave">
-        {pegar ? "Quantos potinhos de cada sabor você levou. Deixe em branco o que não pegou." : "Quantos potinhos voltaram para o estoque geral."}
+        {pegar
+          ? "Quantos potinhos de cada sabor você levou. Deixe em branco o que não pegou. Se o estoque geral não tiver, ele fica negativo até a contagem do dia."
+          : "Quantos potinhos voltaram para o estoque geral."}
       </p>
       <Formulario
         acao={moverEstoquePessoa}
@@ -161,5 +181,95 @@ function FormularioMover({
         </div>
       </Formulario>
     </Cartao>
+  );
+}
+
+// Vendas de uma pessoa (sem as canceladas), agrupadas por dia, com os totais de hoje e de todas.
+async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string; admin: boolean }) {
+  const hoje = hojeIso();
+  const [vendas, pessoas] = await Promise.all([
+    listarVendas("todas", { participante: pessoa }, hoje),
+    admin ? listarParticipantes() : Promise.resolve([]),
+  ]);
+  const vendidas = vendas.filter((v) => v.tipo !== "doacao");
+  const soma = (lista: typeof vendas) => lista.reduce((t, v) => t + Number(v.total ?? 0), 0);
+  const deHoje = vendidas.filter((v) => v.dia === hoje);
+  const aReceber = vendas.reduce((t, v) => t + Number(v.a_receber ?? 0), 0);
+  const porDia = new Map<string, typeof vendas>();
+  for (const v of vendas) porDia.set(v.dia ?? "", [...(porDia.get(v.dia ?? "") ?? []), v]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {admin ? (
+        <form method="get" action="/estoque/pessoas" className="flex items-end gap-2">
+          <input type="hidden" name="aba" value="vendas" />
+          <div className="flex-1">
+            <Selecao id="pessoa" name="pessoa" rotulo="De quem" defaultValue={pessoa}>
+              {pessoas.filter((p) => p.ativo).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.id === eu ? `${p.nome ?? "Você"} (você)` : (p.nome ?? "Sem nome")}
+                </option>
+              ))}
+            </Selecao>
+          </div>
+          <button type="submit" className="min-h-toque rounded-xl border border-borda bg-superficie px-4 font-medium">
+            Ver
+          </button>
+        </form>
+      ) : null}
+      <div className="grid grid-cols-2 gap-2">
+        <Cartao>
+          <p className="text-sm text-texto-suave">Hoje</p>
+          <p className="text-xl font-semibold tabular-nums">{formatarReais(soma(deHoje))}</p>
+          <p className="text-xs text-texto-suave">
+            {deHoje.length} {deHoje.length === 1 ? "venda" : "vendas"}
+          </p>
+        </Cartao>
+        <Cartao>
+          <p className="text-sm text-texto-suave">No total</p>
+          <p className="text-xl font-semibold tabular-nums">{formatarReais(soma(vendidas))}</p>
+          <p className="text-xs text-texto-suave">
+            {vendidas.length} {vendidas.length === 1 ? "venda" : "vendas"}
+            {aReceber > 0 ? ` · a receber ${formatarReais(aReceber)}` : ""}
+          </p>
+        </Cartao>
+      </div>
+      {vendas.length === 0 ? (
+        <EstadoVazio titulo="Nenhuma venda ainda" acao={<LinkBotao href="/vendas/nova">Nova venda</LinkBotao>}>
+          As vendas registradas aparecem aqui.
+        </EstadoVazio>
+      ) : (
+        [...porDia.entries()].map(([dia, lista]) => (
+          <section key={dia}>
+            <h2 className="mb-2 flex justify-between text-sm font-medium text-texto-suave">
+              <span>{dia === hoje ? "Hoje" : formatarData(dia)}</span>
+              <span className="tabular-nums">{formatarReais(soma(lista.filter((v) => v.tipo !== "doacao")))}</span>
+            </h2>
+            <Cartao className="divide-y divide-borda p-0">
+              {lista.map((v) => (
+                <ItemLista
+                  key={v.id}
+                  href={`/vendas/${v.id}`}
+                  titulo={`${v.cliente ?? (v.cliente_desconhecido ? "cliente desconhecido" : "sem cliente")} · ${formatarHora(v.data_hora)}`}
+                  apoio={`nº ${v.numero} · ${v.itens_resumo ?? ""}`}
+                  direita={
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="font-semibold tabular-nums">{formatarReais(v.total)}</span>
+                      {v.tipo === "doacao" ? (
+                        <Selo>Doação</Selo>
+                      ) : v.tipo === "encomenda" && v.situacao_entrega !== "entregue" ? (
+                        <Selo tom="alerta">Encomenda</Selo>
+                      ) : Number(v.a_receber) > 0 ? (
+                        <Selo tom="alerta">A receber</Selo>
+                      ) : null}
+                    </span>
+                  }
+                />
+              ))}
+            </Cartao>
+          </section>
+        ))
+      )}
+    </div>
   );
 }

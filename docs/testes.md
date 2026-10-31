@@ -391,3 +391,8 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 ## Fatia 16: venda direta sem estoque e gráficos
 
 - **Telas**: `fatia4.mjs` 29/29 (D8 atualizado: 7 Avelã com 6 no estoque grava direto e o saldo fica −1), `fatia15.mjs` 21/21 (toda barra com número; linha com um número só), `fatia10.mjs` 39/39, `fatia14.mjs` 12/12. Sem mudança no banco.
+
+## Fatia 17: pegar sem estoque e Minhas vendas
+
+- **Banco** (`supabase/testes/fatia15.sql`): pegar 5 a mais do que o estoque geral deixa o geral em −5.
+- **Telas** (`testes-e2e/fatia15.mjs`): **24 de 24**. Pegar 20 com 18 no geral registra (geral −2); aba Minhas vendas com totais de hoje e no total e a venda de 2 potinhos na lista.
