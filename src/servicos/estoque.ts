@@ -71,6 +71,13 @@ export async function listarProducoes() {
   return { planejadas, concluidas };
 }
 
+// Quanto cada receita rende por fornada (para mostrar ao registrar a produção).
+export async function listarRendimentos(): Promise<Map<string, number>> {
+  const s = await criarClienteServidor();
+  const linhas = await lista(s.from("receitas").select("id, rendimento_unidades"));
+  return new Map(linhas.map((r) => [r.id, Number(r.rendimento_unidades)]));
+}
+
 export async function listarCompras() {
   const s = await criarClienteServidor();
   const compras = await lista(s.from("compras").select("*").order("criado_em", { ascending: false }).limit(40));
@@ -151,11 +158,11 @@ export async function concluirProducao(id: string, boas: number, perdidas: numbe
   return { ok: true, mensagem: "Produção registrada.", aviso: avisoDeFaltas(resposta.faltas) };
 }
 
-// Registrar uma produção de uma vez: produto, fornadas e quantos renderam.
+// Registrar uma produção de uma vez: produto e quantos potinhos ficaram prontos. As fornadas o banco
+// calcula pelo rendimento da receita.
 export async function registrarProducao(
   chave: string,
   variacaoId: string,
-  fornadas: number,
   boas: number,
   perdidas: number,
 ): Promise<ResultadoProducao> {
@@ -163,7 +170,8 @@ export async function registrarProducao(
   const { data, error } = await s.rpc("registrar_producao", {
     p_chave: chave,
     p_variacao: variacaoId,
-    p_fornadas: fornadas,
+    // Nulo = o banco calcula as fornadas; o gerador de tipos não marca que aceita nulo.
+    p_fornadas: null as unknown as number,
     p_unidades_boas: boas,
     p_unidades_perdidas: perdidas,
   });
@@ -253,4 +261,38 @@ export async function registrarPerda(
   });
   if (error) return falhou(error);
   return { ok: true, mensagem: "Perda registrada. O custo dela entra no lucro estimado do desafio." };
+}
+
+// ── Estoque de cada pessoa ──────────────────────────────────────────────────
+
+export type EstoquePessoa = Tables<"v_estoque_pessoas">;
+
+export async function listarEstoquePessoas(): Promise<EstoquePessoa[]> {
+  const s = await criarClienteServidor();
+  return lista(s.from("v_estoque_pessoas").select("*").order("participante").order("produto").order("variacao"));
+}
+
+// Pegar para vender (sai do estoque geral) ou devolver (volta). O banco confere saldo e permissão.
+export async function moverEstoquePessoa(
+  chave: string,
+  tipo: "retirada" | "devolucao",
+  itens: { variacao_id: string; quantidade: number }[],
+  participante: string | null,
+): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("mover_estoque_pessoa", {
+    p_chave: chave,
+    p_tipo: tipo,
+    p_itens: itens as unknown as Json,
+    p_participante: participante ?? undefined,
+  });
+  if (error) return falhou(error);
+  const total = itens.reduce((t, i) => t + i.quantidade, 0);
+  return {
+    ok: true,
+    mensagem:
+      tipo === "retirada"
+        ? `Registrado: ${formatarQuantidade(total)} ${total === 1 ? "potinho saiu" : "potinhos saíram"} do estoque geral.`
+        : `Registrado: ${formatarQuantidade(total)} ${total === 1 ? "potinho voltou" : "potinhos voltaram"} para o estoque geral.`,
+  };
 }

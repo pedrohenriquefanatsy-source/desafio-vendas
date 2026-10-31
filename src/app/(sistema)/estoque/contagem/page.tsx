@@ -67,10 +67,13 @@ export default async function Contagem() {
                     <label key={p.variacao_id} className="flex items-center justify-between gap-3 px-4 py-2">
                       <span className="min-w-0">
                         <span className="block break-words font-medium">{nome}</span>
-                        <span className="block text-xs text-texto-suave">no sistema: {formatarQuantidade(p.saldo)} und</span>
+                        <span className="block text-xs text-texto-suave">
+                          no estoque geral: {formatarQuantidade(p.no_estoque)} und
+                          {Number(p.com_pessoas) > 0 ? ` · mais ${formatarQuantidade(p.com_pessoas)} com as pessoas (não conte)` : ""}
+                        </span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2">
-                        <input name={`p_${p.variacao_id}`} inputMode="decimal" defaultValue={num(p.saldo)} placeholder="contar" aria-label={`Contagem de ${nome}`} className={campo} />
+                        <input name={`p_${p.variacao_id}`} inputMode="decimal" defaultValue={num(p.no_estoque)} placeholder="contar" aria-label={`Contagem de ${nome}`} className={campo} />
                         <span className="w-8 text-sm text-texto-suave">und</span>
                       </span>
                     </label>

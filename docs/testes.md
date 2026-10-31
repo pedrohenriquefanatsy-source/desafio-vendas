@@ -381,3 +381,9 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia14.sql`): venda de ontem fica no dia de ontem (lista, resultado diário e meta) e guarda o momento do registro; sem data = hoje; doação com data passada; data futura, antes do desafio e encomenda com data da venda são recusadas. Fatias 3, 4, 6, 10, 12 e 13 seguem passando.
 - **Telas** (`testes-e2e/fatia14.mjs`, 375 px): **12 de 12**. Campo de data (começa hoje, máximo hoje; some na encomenda), venda de ontem aparece no dia certo e não em "Hoje", aviso "lançada em", botão de voltar com seta e ≥ 44 px. `fatia4` 29/29, `fatia10` 39/39, `fatia12` 32/32.
+
+## Fatia 15: produção pelos potinhos, estoque de cada pessoa, gráficos e dia da encomenda
+
+- **Banco** (`supabase/testes/fatia15.sql`): 24 potinhos com receita de ~12 = 2 fornadas (receita × 2 baixada); corrigir para 18 = 1,5 fornada e ingredientes devolvidos; fornadas informadas continuam como antes; pegar 10 (geral 30 → 20); não pega mais do que o geral; admin registra para o membro; venda de 3 sai do que está com quem vendeu; venda de 9 com 7 na mão (7 da pessoa, 2 do geral); cancelar devolve à pessoa; devolver; membro não registra para outra pessoa; encomenda paga há 2 dias e entregue hoje continua no dia do pagamento. Fatias 3, 4, 5, 6, 10, 12, 13 e 14 seguem passando.
+- **Telas** (`testes-e2e/fatia15.mjs`, 375 px): **19 de 19**. `fatia12` 34/34, `fatia3` 34/34, `fatia4` 29/29 (ajustados para registrar produção só com os potinhos).
+- Sistema real: a encomenda paga em 29/10 e entregue em 31/10 voltou para 29/10 (dia 29 = R$ 1.000; total segue R$ 1.360).

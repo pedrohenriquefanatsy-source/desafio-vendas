@@ -120,12 +120,10 @@ export async function concluirProducao(_a: Resultado | null, d: FormData): Promi
 export async function registrarProducao(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const variacao = texto(d, "variacao_id");
-  const fornadas = lerNumero(texto(d, "fornadas"));
   if (!UUID.test(variacao)) return erro("Escolha o produto que foi feito.");
-  if (fornadas == null || fornadas <= 0 || fornadas > 100) return erro("Informe quantas fornadas, como 1 ou 2,5.");
   const q = lerQuantidades(d);
   if ("ok" in q) return q;
-  const r = await estoque.registrarProducao(texto(d, "chave"), variacao, fornadas, q.boas, q.perdidas);
+  const r = await estoque.registrarProducao(texto(d, "chave"), variacao, q.boas, q.perdidas);
   if (!r.ok) return r;
   voltarParaProducao("registrada", r.aviso);
 }
@@ -152,6 +150,11 @@ export async function registrarContagem(_a: Resultado | null, d: FormData): Prom
     itens.push(m[1].toLowerCase() === "i" ? { insumo_id: m[2], contado } : { variacao_id: m[2], contado });
   }
   if (itens.length === 0) return erro("Preencha o que você contou.");
+  // Produto pronto: conta-se só o estoque geral; o que está com as pessoas continua com elas.
+  if (itens.some((i) => i.variacao_id)) {
+    const comPessoas = new Map((await estoque.listarEstoqueProdutos()).map((p) => [p.variacao_id, Number(p.com_pessoas ?? 0)]));
+    for (const i of itens) if (i.variacao_id) i.contado += comPessoas.get(i.variacao_id) ?? 0;
+  }
   const { resultado, alterados } = await estoque.registrarContagem(texto(d, "chave"), itens, `Contagem do dia ${texto(d, "dia") || ""}`.trim());
   if (!resultado.ok) return resultado;
   atualizarEstoque();
@@ -190,6 +193,28 @@ export async function registrarPerda(_a: Resultado | null, d: FormData): Promise
   if (quantidade == null || quantidade <= 0) return erro("Informe quanto se perdeu, como 2.");
   if (motivo.length < 3) return erro("Diga o que aconteceu (ex.: caiu no chão, venceu).");
   const r = await estoque.registrarPerda(texto(d, "chave"), item, quantidade, texto(d, "unidade") || null, motivo);
+  if (r.ok) atualizarEstoque();
+  return r;
+}
+
+// Estoque de cada pessoa: cada campo `q_<id do produto>` traz quantos potinhos a pessoa pegou ou devolveu.
+export async function moverEstoquePessoa(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const tipo = texto(d, "tipo");
+  if (tipo !== "retirada" && tipo !== "devolucao") return erro("Escolha pegar ou devolver.");
+  const participante = texto(d, "participante");
+  if (participante && !UUID.test(participante)) return erro("Escolha a pessoa.");
+  const itens: { variacao_id: string; quantidade: number }[] = [];
+  for (const [campo, valor] of d.entries()) {
+    const m = /^q_([0-9a-f-]{36})$/i.exec(campo);
+    const bruto = String(valor ?? "").trim();
+    if (!m || bruto === "") continue;
+    const quantidade = lerNumero(bruto);
+    if (quantidade == null || quantidade < 0) return erro("Confira as quantidades: use números como 5 ou 10.");
+    if (quantidade > 0) itens.push({ variacao_id: m[1], quantidade });
+  }
+  if (itens.length === 0) return erro("Escreva quantos potinhos de pelo menos um sabor.");
+  const r = await estoque.moverEstoquePessoa(texto(d, "chave"), tipo, itens, participante || null);
   if (r.ok) atualizarEstoque();
   return r;
 }

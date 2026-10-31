@@ -11,6 +11,7 @@ import {
   listarListaCompras,
   listarProducaoPossivel,
   listarProducoes,
+  listarRendimentos,
 } from "@/servicos/estoque";
 import { listarCobertura } from "@/servicos/painel";
 import { cancelarProducao, concluirProducao, corrigirProducao, registrarProducao } from "./acoes";
@@ -43,6 +44,9 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
         </LinkBotao>
         <LinkBotao href="/estoque/simular" variante="secundario">
           Simular produção
+        </LinkBotao>
+        <LinkBotao href="/estoque/pessoas" variante="secundario" className="col-span-2">
+          Estoque de cada pessoa
         </LinkBotao>
       </div>
       {feito === "concluida" || feito === "registrada" || feito === "cancelada" || feito === "contagem" ? (
@@ -86,15 +90,16 @@ async function AbaProdutos() {
               href={`/estoque/item/variacao/${p.variacao_id}`}
               titulo={nomeVariacao(p.produto, p.variacao)}
               apoio={
-                !pode
+                (Number(p.com_pessoas) > 0 ? `${formatarQuantidade(p.com_pessoas)} com as pessoas · ` : "") +
+                (!pode
                   ? "Sem receita: não dá para calcular a produção"
                   : Number(pode.fornadas_possiveis) > 0
                     ? `Insumos para mais ${formatarQuantidade(pode.fornadas_possiveis)} fornada(s) (${formatarQuantidade(pode.unidades_possiveis)} un.) · limita: ${pode.insumo_limitante}`
-                    : `Sem insumo para outra fornada · falta: ${pode.insumo_limitante}`
+                    : `Sem insumo para outra fornada · falta: ${pode.insumo_limitante}`)
               }
               direita={
                 <span className="flex shrink-0 flex-col items-end">
-                  <span className={`font-semibold tabular-nums ${Number(p.saldo) <= 0 ? "text-texto-suave" : ""}`}>{formatarSaldo(p.saldo, "und")}</span>
+                  <span className={`font-semibold tabular-nums ${Number(p.no_estoque) <= 0 ? "text-texto-suave" : ""}`}>{formatarSaldo(p.no_estoque, "und")}</span>
                   {coberturaDe.get(p.variacao_id)?.dias_cobertura != null ? (
                     <span className="text-xs text-texto-suave">
                       ~{formatarQuantidade(coberturaDe.get(p.variacao_id)?.dias_cobertura)} dias
@@ -108,6 +113,7 @@ async function AbaProdutos() {
         })}
       </Cartao>
       <p className="mt-3 text-xs text-texto-suave">
+        O número grande é o que está no estoque geral; o que está com as pessoas aparece embaixo do nome.
         “~N dias” é para quantos dias o estoque dá: pela média de venda por dia (com 2 dias ou mais de venda) ou pela demanda
         estimada no desafio (rotulada “estimativa”). Toque num produto para corrigir a contagem ou registrar uma perda.
       </p>
@@ -185,7 +191,8 @@ async function AbaProducao({
   planejadas,
   concluidas,
 }: Awaited<ReturnType<typeof listarProducoes>>) {
-  const variacoes = (await listarCustosVariacoes()).filter((v) => v.tipo === "simples" && v.ativa);
+  const [todas, rendimentos] = await Promise.all([listarCustosVariacoes(), listarRendimentos()]);
+  const variacoes = todas.filter((v) => v.tipo === "simples" && v.ativa);
   const nomes = new Map(variacoes.map((v) => [v.variacao_id, nomeVariacao(v.produto, v.variacao)]));
   const comReceita = variacoes.filter((v) => v.receita_id);
   const nome = (id: string) => nomes.get(id) ?? "Produto desativado";
@@ -194,7 +201,7 @@ async function AbaProducao({
     <div className="flex flex-col gap-4">
       <Cartao>
         <h2 className="mb-1 font-semibold">Registrar produção</h2>
-        <p className="mb-3 text-sm text-texto-suave">Diga o produto, quantas fornadas fez e quantos potinhos renderam. O estoque e o custo se ajustam sozinhos.</p>
+        <p className="mb-3 text-sm text-texto-suave">Diga o sabor e quantos potinhos ficaram prontos. As fornadas o sistema calcula pela receita, e o estoque e o custo se ajustam sozinhos.</p>
         {comReceita.length === 0 ? (
           <p className="text-sm text-texto-suave">Nenhum produto tem receita ainda. Crie a receita do sabor em Mais → Produtos e sabores.</p>
         ) : (
@@ -208,10 +215,12 @@ async function AbaProducao({
               ))}
             </Selecao>
             <div className="grid grid-cols-2 gap-3">
-              <Campo id="fornadas" name="fornadas" rotulo="Fornadas" inputMode="decimal" defaultValue="1" required />
-              <Campo id="boas" name="boas" rotulo="Quantos renderam" inputMode="decimal" placeholder="Ex.: 24" required />
+              <Campo id="boas" name="boas" rotulo="Potinhos prontos" inputMode="decimal" placeholder="Ex.: 24" required />
+              <Campo id="perdidas" name="perdidas" rotulo="Perdidos (opcional)" inputMode="decimal" placeholder="0" />
             </div>
-            <Campo id="perdidas" name="perdidas" rotulo="Perdidos (opcional)" inputMode="decimal" placeholder="0" />
+            <p className="text-xs text-texto-suave">
+              {comReceita.map((v) => `${nomeVariacao(v.produto, v.variacao)}: ~${formatarQuantidade(rendimentos.get(v.receita_id ?? ""))} por fornada`).join(" · ")}
+            </p>
           </Formulario>
         )}
       </Cartao>
@@ -232,7 +241,7 @@ async function AbaProducao({
                   <input type="hidden" name="id" value={p.id} />
                   <Campo id={`corr-${p.id}`} name="boas" rotulo="Quantos renderam de verdade" inputMode="decimal" defaultValue={String(Number(p.unidades_produzidas)).replace(".", ",")} required />
                   <p className="text-xs text-texto-suave">
-                    Ajusta o estoque do produto e das embalagens. O custo de cada potinho passa a considerar o novo número.
+                    Ajusta o estoque do produto e das embalagens{p.fornadas_pelo_rendimento ? ", as fornadas e os ingredientes" : ""}.
                   </p>
                 </Formulario>
               </ItemEditavel>

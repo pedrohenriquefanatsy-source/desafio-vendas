@@ -336,6 +336,45 @@ export type Database = {
         }
         Relationships: []
       }
+      estoque_pessoas: {
+        Row: {
+          chave_idempotencia: string | null
+          criado_em: string
+          criado_por: string | null
+          desafio_id: string | null
+          id: number
+          participante_id: string
+          quantidade: number
+          tipo: string
+          variacao_id: string
+          venda_id: string | null
+        }
+        Insert: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          id?: never
+          participante_id: string
+          quantidade: number
+          tipo: string
+          variacao_id: string
+          venda_id?: string | null
+        }
+        Update: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          id?: never
+          participante_id?: string
+          quantidade?: number
+          tipo?: string
+          variacao_id?: string
+          venda_id?: string | null
+        }
+        Relationships: []
+      }
       formas_pagamento: {
         Row: {
           alterado_em: string | null
@@ -659,6 +698,7 @@ export type Database = {
           data_planejada: string | null
           desafio_id: string | null
           fornadas: number
+          fornadas_pelo_rendimento: boolean
           id: string
           motivo_cancelamento: string | null
           observacao: string | null
@@ -687,6 +727,7 @@ export type Database = {
           data_planejada?: string | null
           desafio_id?: string | null
           fornadas: number
+          fornadas_pelo_rendimento?: boolean
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
@@ -715,6 +756,7 @@ export type Database = {
           data_planejada?: string | null
           desafio_id?: string | null
           fornadas?: number
+          fornadas_pelo_rendimento?: boolean
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
@@ -1400,10 +1442,24 @@ export type Database = {
         }
         Relationships: []
       }
+      v_estoque_pessoas: {
+        Row: {
+          participante: string | null
+          participante_id: string | null
+          produto: string | null
+          saldo: number | null
+          ultima_movimentacao: string | null
+          variacao: string | null
+          variacao_id: string | null
+        }
+        Relationships: []
+      }
       v_estoque_produtos: {
         Row: {
           ativa: boolean | null
+          com_pessoas: number | null
           custo_unitario: number | null
+          no_estoque: number | null
           produto: string | null
           produto_id: string | null
           saldo: number | null
@@ -1744,6 +1800,15 @@ export type Database = {
       motivo_nao_excluir: {
         Args: { p_id: string; p_tipo: string }
         Returns: string
+      }
+      mover_estoque_pessoa: {
+        Args: {
+          p_chave: string
+          p_itens: Json
+          p_participante?: string
+          p_tipo: string
+        }
+        Returns: undefined
       }
       pagar_reembolso: {
         Args: {

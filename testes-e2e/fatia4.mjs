@@ -47,7 +47,6 @@ async function entrar(p, quem) {
 async function produzir(p, produto) {
   await p.goto(`${BASE}/estoque?aba=producao`);
   await p.selectOption("#variacao_id", { label: produto });
-  await p.fill("#fornadas", "1");
   await p.fill("#boas", "10");
   await p.getByRole("button", { name: "Registrar produção" }).first().click();
   await p.getByText("Produção registrada").first().waitFor();

@@ -78,11 +78,11 @@ confere(new RegExp(`${CHOC}\\s?precisa 1\\.200 g · tem 1\\.000\\s?comprar 200 g
 confere(/3 fornadas de .*≈ 36 potinhos/.test(t), "Simulação: 3 fornadas rendem cerca de 36 potinhos");
 await verificarTela(p, "Simular produção");
 
-// ── Registrar produção: 2 fornadas renderam 23 ───────────────────────────────
+// ── Registrar produção: só os potinhos prontos (24 com receita de ~12 = 2 fornadas) ──
 await p.goto(`${BASE}/estoque?aba=producao`);
 await p.selectOption("#variacao_id", { label: `${BITES} · Tradicional` });
-await p.fill("#fornadas", "2");
-await p.fill("#boas", "23");
+await p.fill("#boas", "24");
+confere((await p.locator("#fornadas").count()) === 0, "Registrar produção: não pede fornadas, só os potinhos prontos");
 await verificarTela(p, "Registrar produção");
 await p.screenshot({ path: `${CAPTURAS}/02-registrar-producao.png`, fullPage: true });
 await p.getByRole("button", { name: "Registrar produção" }).first().click();
@@ -90,14 +90,14 @@ await p.waitForURL((u) => u.searchParams.get("feito") === "registrada", { timeou
 await p.getByText("Produção registrada").first().waitFor();
 t = await texto(p);
 confere(!t.includes("o estoque não tinha tudo"), "Produção com insumos em dia: sem aviso");
-confere(/2 fornada\(s\) · 23 renderam/.test(t), "Produções recentes mostra 2 fornadas e 23 renderam");
+confere(/2 fornada\(s\) · 24 renderam/.test(t), "Produções recentes: o sistema calculou 2 fornadas para 24 potinhos");
 await p.goto(urlProduto);
 await p.getByText(/pela última produção registrada/).waitFor();
 t = await texto(p);
-confere(/Rende cerca de 11,5 unidades por fornada/.test(t), "O produto passa a mostrar o rendimento real: 23 ÷ 2 = 11,5 por fornada");
+confere(/Rende cerca de 12 unidades por fornada/.test(t), "O produto mostra o rendimento: 24 ÷ 2 = 12 por fornada");
 await p.goto(`${BASE}/estoque`);
 await p.getByText(BITES).first().waitFor();
-confere(/23 und/.test(await p.locator("a", { hasText: BITES }).first().textContent()), "23 potinhos prontos no estoque");
+confere(/24 und/.test(await p.locator("a", { hasText: BITES }).first().textContent()), "24 potinhos prontos no estoque");
 await p.goto(`${BASE}/estoque?aba=insumos`);
 await p.getByText(CHOC).waitFor();
 confere(/200 g/.test(await p.locator("a", { hasText: CHOC }).first().textContent()), "Chocolate: 1.000 g − 800 g = 200 g");
@@ -105,23 +105,25 @@ confere(/200 g/.test(await p.locator("a", { hasText: CHOC }).first().textContent
 // ── Corrigir quanto rendeu ───────────────────────────────────────────────────
 await p.goto(`${BASE}/estoque?aba=producao`);
 await p.locator("summary", { hasText: BITES }).first().click();
-await p.locator('input[id^="corr-"]').first().fill("24");
+await p.locator('input[id^="corr-"]').first().fill("18");
 await p.getByRole("button", { name: "Corrigir quanto rendeu" }).first().click();
 await p.getByText(/Corrigido: o estoque/).waitFor();
 await p.goto(`${BASE}/estoque`);
 await p.getByText(BITES).first().waitFor();
-confere(/24 und/.test(await p.locator("a", { hasText: BITES }).first().textContent()), "Corrigido para 24: o estoque do produto passa a 24");
+confere(/18 und/.test(await p.locator("a", { hasText: BITES }).first().textContent()), "Corrigido para 18: o estoque do produto passa a 18");
+await p.goto(`${BASE}/estoque?aba=insumos`);
+await p.getByText(CHOC).waitFor();
+confere(/400 g/.test(await p.locator("a", { hasText: CHOC }).first().textContent()), "Corrigido para 18: fornadas viram 1,5 e o chocolate volta para 400 g");
 
 // ── Faltou chocolate: registra mesmo assim e avisa ───────────────────────────
 await p.goto(`${BASE}/estoque?aba=producao`);
 await p.selectOption("#variacao_id", { label: `${BITES} · Tradicional` });
-await p.fill("#fornadas", "3");
 await p.fill("#boas", "36");
 await p.getByRole("button", { name: "Registrar produção" }).first().click();
 await p.waitForURL((u) => u.searchParams.get("feito") === "registrada", { timeout: 20000, waitUntil: "commit" });
 await p.getByText("o estoque não tinha tudo").waitFor();
 t = await texto(p);
-confere(new RegExp(`${CHOC}: faltavam 1\\.000 g`).test(t), "Faltou chocolate: registra mesmo assim e avisa quanto faltava (1.000 g)");
+confere(new RegExp(`${CHOC}: faltavam 800 g`).test(t), "Faltou chocolate: 36 potinhos = 3 fornadas, registra mesmo assim e avisa quanto faltava (800 g)");
 await p.screenshot({ path: `${CAPTURAS}/03-producao-com-aviso.png`, fullPage: true });
 
 // ── Contagem do dia: acerta o chocolate ─────────────────────────────────────

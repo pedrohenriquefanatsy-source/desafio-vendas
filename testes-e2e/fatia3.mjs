@@ -131,7 +131,6 @@ await esperarPagina(p, /^\/compras(\?|$)/);
 // ── Registrar a produção: 2 fornadas renderam 20 ───────────────────────────
 await p.goto(`${BASE}/estoque?aba=producao`);
 await p.selectOption("#variacao_id", { label: BOLO });
-await p.fill("#fornadas", "2");
 await p.fill("#boas", "20");
 await verificarTela(p, "Estoque · produção");
 await p.screenshot({ path: `${CAPTURAS}/06-producao.png`, fullPage: true });

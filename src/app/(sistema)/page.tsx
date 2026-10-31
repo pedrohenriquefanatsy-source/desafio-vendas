@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Check, Circle } from "lucide-react";
 import { Cartao, EstadoVazio, LinkBotao, Selo, TituloPagina, Valor } from "@/componentes/ui";
-import { GraficoAcumulado, GraficoResultadoDia, TabelaDias } from "@/componentes/graficos-desafio";
+import { GraficosDesafio } from "@/componentes/graficos-desafio";
 import { formatarPercentual, formatarQuantidade, formatarReais } from "@/lib/numeros";
 import { formatarData } from "@/lib/datas";
 import { exigirParticipante, ehAdmin } from "@/servicos/sessao";
@@ -191,9 +191,7 @@ export default async function Inicio() {
         {/* 5. Gráficos */}
         {p.dias.length ? (
           <Cartao className="flex flex-col gap-4">
-            <GraficoResultadoDia dias={p.dias} hoje={m.hoje ?? ""} />
-            <GraficoAcumulado dias={p.dias} meta={meta} hoje={m.hoje ?? ""} />
-            <TabelaDias dias={p.dias} />
+            <GraficosDesafio dias={p.dias} meta={meta} hoje={m.hoje ?? ""} />
           </Cartao>
         ) : null}
 

@@ -526,3 +526,25 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Prazo de 30 minutos para o membro cancelar a própria venda continua contando a partir do registro.
 - Todas as telas internas usam o mesmo **botão de voltar** (pílula com seta, 44 px).
 - Banco: `registrar_venda` ganhou o parâmetro `p_data` (migração `20261030200000_venda_com_data.sql`); teste `supabase/testes/fatia14.sql`.
+
+## 17. Produção pelos potinhos, estoque de cada pessoa e gráficos com toque (fatia 15, 31/10/2026)
+
+### Produção
+- Ao registrar, informa-se só o **sabor e quantos potinhos ficaram prontos** (e perdidos, se houver). As **fornadas** o sistema calcula: potinhos ÷ quanto a receita rende por fornada ("Rende cerca de N", editável na receita), com 2 casas. Os ingredientes saem pela receita × essas fornadas.
+- **Corrigir quanto rendeu** numa produção assim também recalcula as fornadas e devolve/baixa a diferença dos ingredientes.
+
+### Estoque de cada pessoa
+- Em Estoque → **Estoque de cada pessoa**, quem pega potinhos para vender registra **"Peguei para vender"**: eles saem do **estoque geral** e ficam com a pessoa. Não dá para pegar mais do que tem no estoque geral.
+- Quando a pessoa **vende** (ou doa), os potinhos saem **primeiro do que está com ela**; o que passar sai do estoque geral. **Cancelar** a venda devolve para a pessoa.
+- O que sobrar ela registra em **"Devolvi ao estoque"** (não dá para devolver mais do que tem com ela).
+- Cada pessoa registra para si; o **administrador** pode registrar para qualquer participante.
+- Em Estoque → Prontos, o número grande é o **estoque geral**; embaixo aparece quanto está **com as pessoas**. O total (geral + pessoas) é o que vale para custo e cobertura.
+- A **Contagem do dia** conta só o estoque geral; o que está com as pessoas continua com elas.
+
+### Faturamento por dia
+- Encomenda paga por inteiro **antes da entrega** fica no **dia do pagamento**, também depois de entregue (antes, ao entregar, ela ia para o dia da entrega). O lucro dela fica no mesmo dia.
+
+### Gráficos
+- Tocar numa barra ou num ponto da linha escolhe o dia: o quadro acima dos gráficos mostra o faturamento e o acumulado dele, e os dois gráficos destacam o dia com o número.
+
+- Banco: migração `20261031120000_estoque_pessoas_producao_por_potinhos.sql`; teste `supabase/testes/fatia15.sql`.
