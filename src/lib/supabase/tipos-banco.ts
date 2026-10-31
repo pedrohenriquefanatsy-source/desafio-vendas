@@ -1035,6 +1035,45 @@ export type Database = {
         }
         Relationships: []
       }
+      valores_a_mais: {
+        Row: {
+          chave_idempotencia: string
+          criado_em: string
+          criado_por: string | null
+          estornado_em: string | null
+          forma_pagamento_id: string
+          id: string
+          taxa_percentual: number
+          taxa_valor: number
+          valor: number
+          venda_id: string
+        }
+        Insert: {
+          chave_idempotencia: string
+          criado_em?: string
+          criado_por?: string | null
+          estornado_em?: string | null
+          forma_pagamento_id: string
+          id?: string
+          taxa_percentual?: number
+          taxa_valor?: number
+          valor: number
+          venda_id: string
+        }
+        Update: {
+          chave_idempotencia?: string
+          criado_em?: string
+          criado_por?: string | null
+          estornado_em?: string | null
+          forma_pagamento_id?: string
+          id?: string
+          taxa_percentual?: number
+          taxa_valor?: number
+          valor?: number
+          venda_id?: string
+        }
+        Relationships: []
+      }
       variacao_embalagens: {
         Row: {
           alterado_em: string | null
@@ -1663,6 +1702,7 @@ export type Database = {
           taxa_percentual: number | null
           tipo: Database["public"]["Enums"]["tipo_venda"] | null
           total: number | null
+          valor_a_mais: number | null
           variacoes: string[] | null
         }
         Relationships: []
@@ -1888,6 +1928,15 @@ export type Database = {
         Returns: Json
       }
       registrar_recebimento: {
+        Args: {
+          p_chave: string
+          p_forma: string
+          p_valor: number
+          p_venda: string
+        }
+        Returns: undefined
+      }
+      registrar_valor_a_mais: {
         Args: {
           p_chave: string
           p_forma: string

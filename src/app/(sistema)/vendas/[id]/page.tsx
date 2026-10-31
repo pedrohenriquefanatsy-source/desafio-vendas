@@ -6,7 +6,7 @@ import { formatarData, formatarDataHora, hojeIso } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
 import { obterVenda } from "@/servicos/vendas";
-import { cancelarVenda, entregarEncomenda, marcarPronta, registrarRecebimento } from "../acoes";
+import { cancelarVenda, entregarEncomenda, marcarPronta, registrarRecebimento, registrarValorAMais } from "../acoes";
 
 const PRAZO_MINUTOS = 30; // D11
 const MOTIVOS = ["Lancei errado", "Cliente desistiu", "Valor errado", "Venda repetida"];
@@ -15,6 +15,8 @@ const FEITOS: Record<string, string> = {
   recebido: "Recebimento registrado. Entrou no caixa.",
   pronta: "Encomenda marcada como pronta.",
   entregue: "Encomenda entregue: os produtos saíram do estoque e a venda entrou no faturamento.",
+  a_mais: "Valor a mais registrado. Entrou no caixa e no faturamento.",
+  a_mais_falhou: "A venda foi registrada, mas o valor a mais não. Registre o valor a mais aqui embaixo.",
   cancelada: "Cancelada. O estoque e o dinheiro recebido voltaram; o registro fica no histórico.",
 };
 
@@ -90,6 +92,12 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
               <dd className="text-right">{v.forma_pagamento}</dd>
               <dt className="text-texto-suave">Recebido</dt>
               <dd className="text-right tabular-nums">{formatarReais(v.recebido)}</dd>
+              {Number(v.valor_a_mais) > 0 ? (
+                <>
+                  <dt className="text-texto-suave">Valor a mais</dt>
+                  <dd className="text-right tabular-nums">+{formatarReais(v.valor_a_mais)}</dd>
+                </>
+              ) : null}
               {ativa && aReceber > 0 ? (
                 <>
                   <dt className="text-alerta">Falta receber</dt>
@@ -165,6 +173,32 @@ export default async function Venda({ params, searchParams }: PageProps<"/vendas
               <p className="text-xs text-texto-suave">Ao entregar, os produtos saem do estoque. A venda já conta no faturamento se estiver paga por inteiro; senão entra ao entregar.</p>
             </Formulario>
           </Cartao>
+        ) : null}
+
+        {ativa && v.tipo !== "doacao" ? (
+          <details className="rounded-cartao border border-borda bg-superficie">
+            <summary className="flex min-h-toque cursor-pointer list-none items-center px-4 font-medium [&::-webkit-details-marker]:hidden">
+              O cliente pagou a mais?
+            </summary>
+            <div className="border-t border-borda p-4">
+              <p className="mb-3 text-sm text-texto-suave">
+                Gorjeta ou troco que ficou com a gente. Entra no caixa (para bater com o extrato) e no faturamento.
+              </p>
+              <Formulario acao={registrarValorAMais} textoBotao="Registrar valor a mais" variante="secundario">
+                <input type="hidden" name="id" value={v.id ?? ""} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Campo id="valor_a_mais" name="valor" rotulo="Valor a mais (R$)" inputMode="decimal" placeholder="Ex.: 2,00" required />
+                  <Selecao id="forma_a_mais" name="forma" rotulo="Como pagou" defaultValue={v.forma_pagamento_id ?? formas[0]?.id}>
+                    {formas.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.nome}
+                      </option>
+                    ))}
+                  </Selecao>
+                </div>
+              </Formulario>
+            </div>
+          </details>
         ) : null}
 
         {recebimentos.length ? (

@@ -396,3 +396,8 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia15.sql`): pegar 5 a mais do que o estoque geral deixa o geral em −5.
 - **Telas** (`testes-e2e/fatia15.mjs`): **24 de 24**. Pegar 20 com 18 no geral registra (geral −2); aba Minhas vendas com totais de hoje e no total e a venda de 2 potinhos na lista.
+
+## Fatia 18: valor a mais na venda
+
+- **Banco** (`supabase/testes/fatia18.sql`): venda de 10,00 + 2,50 a mais: caixa +12,50 (reenvio não duplica), faturamento 12,50, lucro +2,50, total da venda continua 10,00; valor zero recusado; cancelar devolve caixa e faturamento; venda cancelada não aceita. Fatias 3, 4, 5, 6, 13, 14 e 15 seguem passando.
+- **Telas** (`testes-e2e/fatia18.mjs`, 375 px): **12 de 12**. Nova venda com R$ 3,00 a mais (faturamento e caixa +15,00, lançamento no caixa), registrar mais R$ 1,50 na venda (+4,50), cancelar devolve tudo. `fatia4` 29/29, `fatia5` 29/29, `fatia12` 34/34.

@@ -34,6 +34,7 @@ const BLOCOS: { titulo: string; itens: string[] }[] = [
       "Compras de insumo, aportes, reembolsos e ajustes de caixa não mudam o faturamento.",
       "Saldo de caixa = todo dinheiro que entrou − todo dinheiro que saiu (recebimentos, taxas, compras, despesas, reembolsos, aportes).",
       "Venda pendente conta no faturamento, mas só entra no caixa quando o dinheiro é recebido.",
+      "Valor a mais (o cliente pagou mais do que o produto) entra no caixa, no faturamento e no lucro do dia em que foi registrado. Cancelar a venda devolve.",
     ],
   },
   {

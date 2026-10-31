@@ -177,6 +177,14 @@ export async function registrarVenda(dados: {
   return { ok: true, numero: r.numero, id: r.venda_id };
 }
 
+// Cliente pagou mais do que o produto (gorjeta, troco que ficou): entra no caixa e no faturamento.
+export async function registrarValorAMais(chave: string, venda: string, valor: number, forma: string): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("registrar_valor_a_mais", { p_chave: chave, p_venda: venda, p_valor: valor, p_forma: forma });
+  if (error) return falhou(error);
+  return { ok: true, mensagem: "Valor a mais registrado. Entrou no caixa e no faturamento." };
+}
+
 export async function registrarRecebimento(chave: string, venda: string, valor: number, forma: string): Promise<Resultado> {
   const s = await criarClienteServidor();
   const { error } = await s.rpc("registrar_recebimento", { p_chave: chave, p_venda: venda, p_valor: valor, p_forma: forma });

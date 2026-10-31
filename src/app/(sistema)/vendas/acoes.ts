@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { lerNumero } from "@/lib/numeros";
@@ -78,6 +79,8 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
   if (bairro && (bairro.length < 2 || bairro.length > 60)) return erro("O bairro precisa ter de 2 a 60 letras.");
   const observacao = texto(d, "observacao");
   if (observacao.length > 300) return erro("A observação pode ter até 300 letras.");
+  const aMais = doacao ? 0 : (lerNumero(texto(d, "a_mais") || "0") ?? -1);
+  if (aMais < 0 || aMais > 10000) return erro("Confira o valor a mais, como 2,00.");
   if (!doacao && pagamento !== "paga" && !cliente) return erro("Venda pendente ou parcial: diga o nome do cliente, para saber de quem cobrar.");
 
   const r = await vendas.registrarVenda({
@@ -97,6 +100,16 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     confirmar: true,
   });
   if (!r.ok) return r;
+  if (aMais > 0 && r.id && forma) {
+    // Chave própria, tirada da chave da venda: reenviar a mesma venda não duplica o valor a mais.
+    const h = createHash("sha256").update(`${texto(d, "chave")}:a-mais`).digest("hex");
+    const chave = `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
+    const extra = await vendas.registrarValorAMais(chave, r.id, aMais, forma);
+    if (!extra.ok) {
+      atualizar();
+      redirect(`/vendas/${r.id}?feito=a_mais_falhou`);
+    }
+  }
   atualizar();
   redirect(`/vendas/nova?ok=${r.numero}&id=${r.id}`);
 }
@@ -139,4 +152,16 @@ export async function cancelarVenda(_a: Resultado | null, d: FormData): Promise<
   const r = await vendas.cancelarVenda(texto(d, "id"), motivo);
   if (!r.ok) return r;
   voltarParaVenda(d, "cancelada");
+}
+
+// Registrar depois, na venda, o dinheiro a mais que o cliente deu.
+export async function registrarValorAMais(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const valor = lerNumero(texto(d, "valor"));
+  const forma = texto(d, "forma");
+  if (valor == null || valor <= 0) return erro("Informe o valor a mais, como 2,00.");
+  if (!UUID.test(forma)) return erro("Escolha a forma de pagamento.");
+  const r = await vendas.registrarValorAMais(texto(d, "chave"), texto(d, "id"), valor, forma);
+  if (!r.ok) return r;
+  voltarParaVenda(d, "a_mais");
 }

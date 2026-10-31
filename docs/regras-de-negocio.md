@@ -558,3 +558,10 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - **"Peguei para vender"** aceita qualquer quantidade de qualquer sabor, mesmo que o estoque geral não tenha (ele fica **negativo**, como na venda, e acerta na Contagem do dia ou ao registrar a produção). "Devolvi" continua limitado ao que está com a pessoa.
 - Estoque de cada pessoa ganhou a aba **Minhas vendas**: as vendas da pessoa (sem as canceladas), do mais novo para o mais antigo, agrupadas por dia com o total do dia; quadros com o total de **hoje** e o **total** (com o que falta receber). Toque abre a venda. O administrador escolhe de quem ver.
 - Banco: migração `20261031150000_pegar_sem_estoque.sql`; teste em `supabase/testes/fatia15.sql`.
+
+## 20. Valor a mais na venda (fatia 18, 31/10/2026)
+- Quando o cliente paga **mais do que o produto** (gorjeta, troco que ficou), registra-se o **valor a mais**: na Nova venda (Mais opções → "Recebeu a mais") ou depois, na venda ("O cliente pagou a mais?", com a forma de pagamento).
+- O valor a mais entra no **caixa** (com a taxa da forma, se houver), para bater com o extrato do responsável financeiro; e, por decisão do administrador, também no **faturamento**, na **meta** e no **lucro** do dia em que foi registrado.
+- O total da venda (dos produtos) não muda; a venda mostra "Valor a mais +R$ X" à parte.
+- Cancelar a venda devolve o valor a mais no caixa e tira do faturamento. Venda cancelada ou doação não aceita valor a mais. Reenvio não duplica.
+- Banco: migração `20261031180000_valor_a_mais.sql` (tabela `valores_a_mais`, função `registrar_valor_a_mais`); teste `supabase/testes/fatia18.sql`.

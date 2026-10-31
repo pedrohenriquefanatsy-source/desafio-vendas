@@ -57,6 +57,7 @@ export function NovaVenda({
   const [tipo, setTipo] = useState<Tipo>("venda");
   const [pagamento, setPagamento] = useState<Pagamento>("paga");
   const [valorRecebido, setValorRecebido] = useState("");
+  const [aMais, setAMais] = useState("");
   const [forma, setForma] = useState(inicial?.forma ?? formaPadrao ?? formas[0]?.id ?? "");
   const [desconto, setDesconto] = useState("");
   const [maisOpcoes, setMaisOpcoes] = useState(Boolean(inicial?.observacao));
@@ -77,6 +78,7 @@ export function NovaVenda({
   const precoDe = (id: string) => (precos[id] ? (lerNumero(precos[id]) ?? 0) : (porId.get(id)?.preco ?? 0));
   const subtotal = doacao ? 0 : escolhidos.reduce((t, id) => t + Math.round(precoDe(id) * quantidades[id] * 100) / 100, 0);
   const total = Math.max(0, subtotal - (doacao ? 0 : (lerNumero(desconto) ?? 0)));
+  const valorAMais = doacao ? 0 : Math.max(0, lerNumero(aMais) ?? 0);
 
   function somar(id: string, delta: number) {
     setQuantidades((q) => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) + delta) }));
@@ -335,6 +337,15 @@ export function NovaVenda({
               ) : null}
             </>
           ) : null}
+          {!doacao ? (
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              Recebeu a mais (R$)
+              <input name="a_mais" inputMode="decimal" value={aMais} onChange={(e) => setAMais(e.target.value)} placeholder="0,00" className={campo} />
+              <span className="text-xs font-normal text-texto-suave">
+                O cliente pagou mais do que o produto (gorjeta, troco que ficou)? Entra no caixa e no faturamento.
+              </span>
+            </label>
+          ) : null}
           <label className="flex flex-col gap-1 text-sm font-medium">
             Observação (opcional)
             <input name="observacao" defaultValue={inicial?.observacao} maxLength={300} className={campo} />
@@ -345,7 +356,10 @@ export function NovaVenda({
       {escolhidos.length && !doacao ? (
         <p className="flex items-baseline justify-between">
           <span className="text-texto-suave">Total</span>
-          <span className="text-2xl font-semibold tabular-nums">{formatarReais(total)}</span>
+          <span className="text-right">
+            <span className="block text-2xl font-semibold tabular-nums">{formatarReais(total)}</span>
+            {valorAMais > 0 ? <span className="block text-sm text-texto-suave tabular-nums">+ {formatarReais(valorAMais)} a mais</span> : null}
+          </span>
         </p>
       ) : null}
     </Formulario>
