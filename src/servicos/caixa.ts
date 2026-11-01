@@ -1,7 +1,8 @@
 import "server-only";
 import { criarClienteServidor } from "@/lib/supabase/servidor";
 import type { Enums, Tables } from "@/lib/supabase/tipos-banco";
-import { formatarQuantidade } from "@/lib/numeros";
+import { formatarQuantidade, formatarReais } from "@/lib/numeros";
+import { formatarData } from "@/lib/datas";
 import { mensagemDeErro, type Resultado } from "./erros";
 import { obterDesafioAtual } from "./desafios";
 
@@ -224,4 +225,80 @@ export async function ajustarCaixa(chave: string, saldoContado: number, justific
   const { data, error } = await s.rpc("ajustar_caixa", { p_chave: chave, p_saldo_contado: saldoContado, p_justificativa: justificativa });
   if (error) return falhou(error);
   return { ok: true, diferenca: Number(data) };
+}
+
+// Detalhe de cada lançamento do livro de caixa: de qual venda, compra ou despesa ele veio (para abrir na tela).
+export type DetalheLancamento = { linhas: string[]; link?: { href: string; rotulo: string } };
+
+export async function detalhesDoLivro(livro: LancamentoCaixa[]): Promise<Map<number, DetalheLancamento>> {
+  const s = await criarClienteServidor();
+  const ids = (tipo: string) => [...new Set(livro.filter((l) => l.origem_tipo === tipo && l.origem_id).map((l) => l.origem_id as string))];
+  const [recebimentos, aMais, compras, despesas] = await Promise.all([
+    ids("recebimento").length ? lista(s.from("recebimentos").select("id, venda_id").in("id", ids("recebimento"))) : [],
+    ids("valor_a_mais").length ? lista(s.from("valores_a_mais").select("id, venda_id").in("id", ids("valor_a_mais"))) : [],
+    ids("compra").length ? lista(s.from("compras").select("*").in("id", ids("compra"))) : [],
+    ids("despesa").length ? lista(s.from("despesas").select("*").in("id", ids("despesa"))) : [],
+  ]);
+  const vendaDe = new Map([...recebimentos, ...aMais].map((r) => [r.id, r.venda_id]));
+  const vendaIds = [...new Set(vendaDe.values())];
+  const compraIds = compras.map((c) => c.id);
+  const [vendas, itens, pessoas] = await Promise.all([
+    vendaIds.length ? lista(s.from("v_vendas").select("*").in("id", vendaIds)) : [],
+    compraIds.length ? lista(s.from("compra_itens").select("compra_id, insumo_id, quantidade, unidade, valor").in("compra_id", compraIds)) : [],
+    lista(s.from("perfis").select("id, nome")),
+  ]);
+  const insumoIds = [...new Set(itens.map((i) => i.insumo_id))];
+  const nomeInsumo = new Map(
+    (insumoIds.length ? await lista(s.from("insumos").select("id, nome").in("id", insumoIds)) : []).map((i) => [i.id, i.nome]),
+  );
+  const nomePessoa = new Map(pessoas.map((p) => [p.id, p.nome ?? "Sem nome"]));
+  const venda = new Map(vendas.map((v) => [v.id ?? "", v]));
+  const compra = new Map(compras.map((c) => [c.id, c]));
+  const despesa = new Map(despesas.map((d) => [d.id, d]));
+
+  const detalhes = new Map<number, DetalheLancamento>();
+  for (const l of livro) {
+    const origem = l.origem_id ?? "";
+    if (l.origem_tipo === "recebimento" || l.origem_tipo === "valor_a_mais") {
+      const v = venda.get(vendaDe.get(origem) ?? "");
+      if (!v) continue;
+      detalhes.set(l.id ?? 0, {
+        linhas: [
+          `${v.tipo === "encomenda" ? "Encomenda" : "Venda"} nº ${v.numero} · ${v.participante ?? "—"} - ${v.cliente ?? (v.cliente_desconhecido ? "cliente desconhecido" : "sem cliente")}`,
+          v.itens_resumo ?? "",
+          `Total ${formatarReais(Number(v.total))} · ${v.forma_pagamento ?? ""}${Number(v.valor_a_mais) > 0 ? ` · +${formatarReais(Number(v.valor_a_mais))} a mais` : ""}${v.situacao === "cancelada" ? " · cancelada" : ""}`,
+        ].filter(Boolean),
+        link: { href: `/vendas/${v.id}`, rotulo: `Abrir a venda nº ${v.numero}` },
+      });
+    } else if (l.origem_tipo === "compra") {
+      const c = compra.get(origem);
+      if (!c) continue;
+      detalhes.set(l.id ?? 0, {
+        linhas: [
+          `${formatarData(c.data)}${c.fornecedor ? ` · ${c.fornecedor}` : ""} · ${c.pago_por === "caixa" ? "paga pelo caixa" : `do bolso de ${nomePessoa.get(c.participante_id ?? "") ?? "participante"}`}`,
+          ...itens
+            .filter((i) => i.compra_id === c.id)
+            .map((i) => `${formatarQuantidade(i.quantidade)} ${i.unidade} de ${nomeInsumo.get(i.insumo_id) ?? "insumo"} · ${formatarReais(Number(i.valor))}`),
+          ...(c.observacao ? [`Obs.: ${c.observacao}`] : []),
+          ...(c.situacao === "cancelada" ? [`Cancelada: ${c.motivo_cancelamento ?? ""}`] : []),
+        ],
+        link: { href: "/compras", rotulo: "Ver em Compras" },
+      });
+    } else if (l.origem_tipo === "despesa") {
+      const d = despesa.get(origem);
+      if (!d) continue;
+      detalhes.set(l.id ?? 0, {
+        linhas: [
+          `${d.descricao}${d.categoria ? ` · ${d.categoria}` : ""}`,
+          `${formatarData(d.data)} · ${d.pago_por === "caixa" ? "paga pelo caixa" : `do bolso de ${nomePessoa.get(d.participante_id ?? "") ?? "participante"}`}${d.situacao === "cancelada" ? " · cancelada" : ""}`,
+        ],
+        link: { href: "/caixa/despesa", rotulo: "Ver em Despesas" },
+      });
+    } else if (l.origem_tipo === "reembolso") {
+      detalhes.set(l.id ?? 0, { linhas: [], link: { href: "/caixa/reembolsos", rotulo: "Ver em Reembolsos" } });
+    } else if (l.origem_tipo === "aporte") {
+      detalhes.set(l.id ?? 0, { linhas: [], link: { href: "/caixa/aporte", rotulo: "Ver em Aportes" } });
+    }
+  }
+  return detalhes;
 }

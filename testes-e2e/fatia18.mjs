@@ -81,6 +81,23 @@ const cx1 = await caixa();
 confere(Math.abs(cx1 - cx0 - 15) < 0.2, `Caixa sobe cerca de R$ 15,00 (menos taxa, se houver): ${cx0} → ${cx1}`);
 confere(/Valor a mais · venda nº/.test(await texto(p)), "Caixa: aparece o lançamento “Valor a mais · venda nº …”");
 
+// ── Fatia 19: tocar num lançamento do caixa mostra de onde ele veio ──────────
+const lancVenda = p.locator("details", { hasText: "Valor a mais · venda nº" }).first();
+await lancVenda.locator("summary").click();
+const detVenda = (await lancVenda.textContent()).replace(/\s+/g, " ");
+confere(new RegExp(`1× ${BITES}`).test(detVenda) && /Abrir a venda nº/.test(detVenda), "Caixa: tocar no lançamento mostra a venda (itens e link para abrir)");
+const lancCompra = p.locator("details", { hasText: /Compra/ }).first();
+if (await lancCompra.count()) {
+  await lancCompra.locator("summary").click();
+  const detCompra = (await lancCompra.textContent()).replace(/\s+/g, " ");
+  confere(/ de .*R\$/.test(detCompra) && /Ver em Compras/.test(detCompra), "Caixa: tocar numa compra mostra o que foi comprado");
+}
+await verificarTela(p, "Caixa com detalhe aberto");
+await p.screenshot({ path: `${CAPTURAS}/03-caixa-detalhe.png`, fullPage: false });
+await lancVenda.locator("a", { hasText: "Abrir a venda" }).click();
+await p.waitForURL((u) => u.pathname === `/vendas/${idVenda}`, { timeout: 20000, waitUntil: "commit" });
+confere(true, "Caixa: o link abre a venda");
+
 // ── Registrar depois, na venda ──────────────────────────────────────────────
 await p.goto(`${BASE}/vendas/${idVenda}`);
 await p.locator("summary", { hasText: "O cliente pagou a mais?" }).click();

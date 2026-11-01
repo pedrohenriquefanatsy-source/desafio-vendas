@@ -22,3 +22,4 @@
 - Fatia 16 (31/10/2026, pedido do administrador): venda/doação/entrega sem estoque registrado grava direto (estoque negativo, sem perguntar); gráficos com número em toda barra e um número só na linha. Ver `docs/regras-de-negocio.md`, seção 18.
 - Fatia 17 (31/10/2026, pedido do administrador): "Peguei para vender" aceita mesmo sem estoque geral (fica negativo) e aba Minhas vendas no estoque de cada pessoa. Ver `docs/regras-de-negocio.md`, seção 19.
 - Fatia 18 (31/10/2026, pedido do administrador): valor a mais na venda (cliente pagou mais): entra no caixa, no faturamento, na meta e no lucro; cancelar devolve. Ver `docs/regras-de-negocio.md`, seção 20.
+- Fatia 19 (01/11/2026, pedido do administrador): no livro de caixa, tocar num lançamento mostra a venda, a compra ou a despesa de onde ele veio. Ver `docs/regras-de-negocio.md`, seção 21.

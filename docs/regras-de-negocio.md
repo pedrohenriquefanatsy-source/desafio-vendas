@@ -565,3 +565,11 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - O total da venda (dos produtos) não muda; a venda mostra "Valor a mais +R$ X" à parte.
 - Cancelar a venda devolve o valor a mais no caixa e tira do faturamento. Venda cancelada ou doação não aceita valor a mais. Reenvio não duplica.
 - Banco: migração `20261031180000_valor_a_mais.sql` (tabela `valores_a_mais`, função `registrar_valor_a_mais`); teste `supabase/testes/fatia18.sql`.
+
+## 21. Livro de caixa com o detalhe de cada lançamento (fatia 19, 01/11/2026)
+- No Caixa, cada lançamento do livro que veio de uma **venda** (recebimento, valor a mais, estorno), **compra** ou **despesa** abre ao toque e mostra de onde veio:
+  - venda: número, quem vendeu e o cliente, os itens, o total e a forma (e o valor a mais, se houver), com o link "Abrir a venda";
+  - compra: data, fornecedor, quem pagou e cada item com quantidade e valor, com o link "Ver em Compras";
+  - despesa: descrição, categoria, data e quem pagou;
+  - reembolso e aporte: link para a tela deles.
+- Só leitura; nada no banco mudou.
