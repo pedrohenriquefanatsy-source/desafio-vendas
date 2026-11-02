@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Formulario } from "./formulario";
-import { Selecao } from "./ui";
+import { Selecao, classeBotao } from "./ui";
 import { formatarQuantidade, formatarReais, lerNumero } from "@/lib/numeros";
 import type { Resultado } from "@/servicos/erros";
 
@@ -37,8 +37,8 @@ export function AcertoPessoa({
   return (
     <Formulario
       acao={acao}
-      textoBotao={unidades > 0 ? `Registrar ${formatarQuantidade(unidades)} potinhos vendidos` : "Fazer o acerto"}
-      textoEnviando="Fazendo o acerto…"
+      textoBotao={unidades > 0 ? `Registrar as ${formatarQuantidade(unidades)} vendas, uma a uma` : "Continuar o acerto"}
+      textoEnviando="Guardando a contagem…"
       desabilitado={!algumPreenchido}
     >
       <div className="divide-y divide-borda">
@@ -68,9 +68,10 @@ export function AcertoPessoa({
         <>
           <p className="rounded-xl bg-fundo px-3 py-2 text-sm">
             Sem registro: <span className="font-semibold">{formatarQuantidade(unidades)} potinhos</span>, cerca de{" "}
-            <span className="font-semibold tabular-nums">{formatarReais(valor)}</span> pelo preço de tabela. Vira uma venda “Acerto”.
+            <span className="font-semibold tabular-nums">{formatarReais(valor)}</span> pelo preço de tabela. No botão abaixo, você lança cada venda
+            com o cliente, o preço e a forma de pagamento reais.
           </p>
-          <Selecao id="forma_acerto" name="forma" rotulo="Como foi pago" defaultValue={formaPadrao}>
+          <Selecao id="forma_acerto" name="forma" rotulo="Se fechar de uma vez: como foi pago" defaultValue={formaPadrao}>
             {formas.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.nome}
@@ -83,6 +84,9 @@ export function AcertoPessoa({
         <input type="checkbox" name="devolver" value="1" className="size-5 accent-acao" />
         Devolvi o que sobrou ao estoque geral
       </label>
+      <button type="submit" name="modo" value="de_uma_vez" disabled={!algumPreenchido} className={classeBotao("secundario", "w-full disabled:opacity-60")}>
+        Fechar tudo de uma vez (uma venda única)
+      </button>
     </Formulario>
   );
 }

@@ -37,6 +37,7 @@ export function NovaVenda({
   inicial,
   clientes,
   bairros,
+  limites,
   acao,
 }: {
   produtos: ProdutoGrade[];
@@ -46,6 +47,8 @@ export function NovaVenda({
   inicial?: VendaInicial;
   clientes: ClienteConhecido[];
   bairros: string[];
+  // Acerto: só dá para vender até esta quantidade de cada sabor (o que a pessoa ainda não registrou); sem encomenda.
+  limites?: Record<string, number>;
   acao: (anterior: Resultado | null, dados: FormData) => Promise<Resultado>;
 }) {
   const [quantidades, setQuantidades] = useState<Record<string, number>>(() =>
@@ -81,7 +84,8 @@ export function NovaVenda({
   const valorAMais = doacao ? 0 : Math.max(0, lerNumero(aMais) ?? 0);
 
   function somar(id: string, delta: number) {
-    setQuantidades((q) => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) + delta) }));
+    const maximo = limites ? (limites[id] ?? 0) : Infinity;
+    setQuantidades((q) => ({ ...q, [id]: Math.min(maximo, Math.max(0, (q[id] ?? 0) + delta)) }));
     setOrdem((o) => (o.includes(id) ? o : [...o, id]));
   }
 
@@ -97,6 +101,7 @@ export function NovaVenda({
   return (
     <Formulario acao={acao} textoBotao={textoBotao} textoEnviando="Registrando…" desabilitado={escolhidos.length === 0} botaoFixo>
       <input type="hidden" name="itens" value={itens} />
+      {limites ? <input type="hidden" name="acerto" value="1" /> : null}
       <input type="hidden" name="tipo" value={tipo} />
       <input type="hidden" name="forma" value={doacao ? "" : forma} />
       <input type="hidden" name="pagamento" value={pagamento} />
@@ -119,22 +124,28 @@ export function NovaVenda({
       <ul className="grid grid-cols-2 gap-2" aria-label="Produtos">
         {visiveis.map((p) => {
           const qtd = quantidades[p.id] ?? 0;
+          const esgotado = limites ? qtd >= (limites[p.id] ?? 0) : false;
           return (
             <li key={p.id}>
               <button
                 type="button"
+                disabled={esgotado}
                 onClick={() => somar(p.id, 1)}
                 aria-label={`${p.nome}, ${formatarReais(p.preco)}${qtd ? `, ${qtd} escolhido(s)` : ""}. Tocar adiciona 1.`}
                 className={`relative flex min-h-20 w-full flex-col items-start justify-between gap-1 rounded-cartao border p-3 text-left ${
                   qtd ? "border-acao bg-superficie ring-2 ring-acao" : "border-borda bg-superficie"
-                }`}
+                } ${esgotado ? "opacity-60" : ""}`}
               >
                 <span className="font-medium leading-tight">{p.nome}</span>
                 <span className="flex w-full flex-wrap items-end justify-between gap-x-2">
                   <span className="tabular-nums">{formatarReais(p.preco)}</span>
-                  <span className={`whitespace-nowrap text-xs ${p.estoque <= 0 ? "text-alerta" : "text-texto-suave"}`}>
-                    {p.estoque <= 0 ? "sem estoque" : `${formatarQuantidade(p.estoque)} ${p.kit ? "possíveis" : "prontos"}`}
-                  </span>
+                  {limites ? (
+                    <span className="whitespace-nowrap text-xs text-texto-suave">restam {formatarQuantidade((limites[p.id] ?? 0) - qtd)}</span>
+                  ) : (
+                    <span className={`whitespace-nowrap text-xs ${p.estoque <= 0 ? "text-alerta" : "text-texto-suave"}`}>
+                      {p.estoque <= 0 ? "sem estoque" : `${formatarQuantidade(p.estoque)} ${p.kit ? "possíveis" : "prontos"}`}
+                    </span>
+                  )}
                 </span>
                 {qtd ? (
                   <span className="absolute -right-1 -top-1 flex size-7 items-center justify-center rounded-full bg-acao text-sm font-semibold text-acao-texto">
@@ -165,7 +176,7 @@ export function NovaVenda({
                     <Minus aria-hidden className="size-5" />
                   </button>
                   <span className="w-8 text-center font-semibold tabular-nums" aria-live="polite">{quantidades[id]}</span>
-                  <button type="button" onClick={() => somar(id, 1)} aria-label={`Mais 1 ${p?.nome}`} className="flex size-11 items-center justify-center rounded-xl border border-borda">
+                  <button type="button" disabled={limites ? quantidades[id] >= (limites[id] ?? 0) : false} onClick={() => somar(id, 1)} aria-label={`Mais 1 ${p?.nome}`} className="flex size-11 items-center justify-center rounded-xl border border-borda disabled:opacity-40">
                     <Plus aria-hidden className="size-5" />
                   </button>
                 </li>
@@ -177,8 +188,8 @@ export function NovaVenda({
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">Tipo</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {(["venda", "encomenda", "doacao"] as const).map((t) => (
+        <div className={`grid gap-2 ${limites ? "grid-cols-2" : "grid-cols-3"}`}>
+          {(["venda", "encomenda", "doacao"] as const).filter((t) => !limites || t !== "encomenda").map((t) => (
             <button key={t} type="button" aria-pressed={tipo === t} onClick={() => setTipo(t)} className={chip(tipo === t)}>
               {t === "venda" ? "Venda" : t === "encomenda" ? "Encomenda" : "Doação"}
             </button>

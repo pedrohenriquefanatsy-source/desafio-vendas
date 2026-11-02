@@ -7,6 +7,7 @@ import { lerNumero } from "@/lib/numeros";
 import { exigirParticipante } from "@/servicos/sessao";
 import type { Resultado } from "@/servicos/erros";
 import * as vendas from "@/servicos/vendas";
+import { listarAcertoAberto } from "@/servicos/estoque";
 
 // Ações de vendas. Conferem o preenchimento para dar mensagem clara; preço, desconto,
 // custo, margem, estoque e permissão são decididos pelo banco.
@@ -30,7 +31,8 @@ function voltarParaVenda(d: FormData, feito: string): never {
 }
 
 export async function registrarVenda(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
+  const perfil = await exigirParticipante();
+  const noAcerto = texto(d, "acerto") === "1";
   const tipo = texto(d, "tipo") || "venda";
   if (!TIPOS.includes(tipo)) return erro("Tipo de venda inválido.");
   let brutos: unknown;
@@ -49,6 +51,18 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     const preco = item.preco ? lerNumero(item.preco) : null;
     if (item.preco && (preco == null || preco < 0)) return erro("Confira o preço editado: use um número, como 6,50.");
     itens.push({ variacao_id: item.variacao_id, quantidade, ...(preco != null ? { preco_unitario: preco } : {}) });
+  }
+
+  // Venda do acerto: só até o que a pessoa vendeu e ainda não registrou (a cota de cada sabor); não vale encomenda.
+  if (noAcerto) {
+    if (tipo === "encomenda") return erro("Encomenda não entra no acerto. Registre em Nova venda.");
+    const cotas = new Map((await listarAcertoAberto(perfil.id)).map((c) => [c.variacao_id, Number(c.cota)]));
+    const pedido = new Map<string, number>();
+    for (const i of itens) pedido.set(i.variacao_id, (pedido.get(i.variacao_id) ?? 0) + i.quantidade);
+    for (const [id, qtd] of pedido) {
+      const cota = cotas.get(id) ?? 0;
+      if (qtd > cota) return erro(`No acerto só dá para registrar até ${cota} desse sabor (o que você vendeu e ainda não lançou). Atualize a página.`);
+    }
   }
 
   const doacao = tipo === "doacao";
@@ -111,7 +125,7 @@ export async function registrarVenda(_a: Resultado | null, d: FormData): Promise
     }
   }
   atualizar();
-  redirect(`/vendas/nova?ok=${r.numero}&id=${r.id}`);
+  redirect(`/vendas/nova?${noAcerto ? "acerto=1&" : ""}ok=${r.numero}&id=${r.id}`);
 }
 
 export async function registrarRecebimento(_a: Resultado | null, d: FormData): Promise<Resultado> {

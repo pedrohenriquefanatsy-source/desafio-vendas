@@ -4,11 +4,11 @@ import { formatarData, formatarDataHora, formatarHora, hojeIso } from "@/lib/dat
 import { formatarQuantidade, formatarReais } from "@/lib/numeros";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarParticipantes } from "@/servicos/participantes";
-import { listarEstoquePessoas, listarEstoqueProdutos, type EstoqueProduto } from "@/servicos/estoque";
+import { listarAcertoAberto, listarEstoquePessoas, listarEstoqueProdutos, type EstoqueProduto } from "@/servicos/estoque";
 import { listarProdutosVenda, listarVendas, potinhosPorVenda, ultimaForma } from "@/servicos/vendas";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
 import { AcertoPessoa } from "@/componentes/acerto-pessoa";
-import { acertarEstoquePessoa, moverEstoquePessoa } from "../acoes";
+import { acertarEstoquePessoa, cancelarAcertoPessoa, fecharAcertoPessoa, moverEstoquePessoa } from "../acoes";
 
 // Estoque de cada pessoa: quem pega potinhos para vender registra aqui. Sai do estoque geral e fica com a pessoa;
 // quando ela vende, sai do que está com ela; o que sobrar ela devolve.
@@ -41,6 +41,15 @@ export default async function EstoquePessoas({ searchParams }: PageProps<"/estoq
           Acerto
         </TituloPagina>
         {abas}
+        {feito === "iniciado" ? (
+          <div className="mb-4">
+            <Aviso tipo="sucesso">Contagem guardada. Agora registre as vendas que você fez (cada uma com o cliente e a forma de pagamento) e, no fim, feche o acerto.</Aviso>
+          </div>
+        ) : feito === "cancelado" ? (
+          <div className="mb-4">
+            <Aviso tipo="sucesso">Acerto cancelado. Nada foi vendido nem devolvido.</Aviso>
+          </div>
+        ) : null}
         {feito === "acerto" ? (
           <div className="mb-4">
             <Aviso tipo="sucesso">
@@ -305,13 +314,77 @@ async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string;
 
 // O que está com a pessoa, para ela contar o que sobrou de cada sabor.
 async function Acerto({ eu }: { eu: string }) {
-  const [comPessoa, produtos, formas, padrao] = await Promise.all([
+  const [comPessoa, produtos, formas, padrao, aberto] = await Promise.all([
     listarEstoquePessoas(),
     listarProdutosVenda(),
     listarFormasPagamento(),
     ultimaForma(eu),
+    listarAcertoAberto(eu),
   ]);
   const preco = new Map(produtos.map((p) => [p.variacao_id, Number(p.preco_venda)]));
+  if (aberto.length) {
+    const ativas = formas.filter((f) => f.ativa);
+    const faltam = aberto.reduce((t, a) => t + Number(a.cota), 0);
+    const registrados = aberto.reduce((t, a) => t + (Number(a.vendidos_inicial) - Number(a.cota)), 0);
+    const valorFaltam = aberto.reduce((t, a) => t + Number(a.cota) * Number(a.preco_venda ?? 0), 0);
+    return (
+      <div className="flex flex-col gap-4">
+        <Cartao>
+          <h2 className="mb-1 font-semibold">Acerto em andamento</h2>
+          <p className="mb-2 text-sm text-texto-suave">
+            Você contou o que sobrou. {formatarQuantidade(registrados)} {registrados === 1 ? "venda já foi registrada" : "potinhos já foram registrados"}
+            {faltam > 0 ? `; faltam ${formatarQuantidade(faltam)}.` : ". Falta só fechar o acerto."}
+          </p>
+          <ul className="divide-y divide-borda text-sm">
+            {aberto.map((a) => (
+              <li key={a.variacao_id} className="flex items-center justify-between gap-3 py-2">
+                <span className="min-w-0">
+                  <span className="block break-words font-medium">{nomeSabor(a.produto, a.variacao)}</span>
+                  <span className="block text-xs text-texto-suave">
+                    sobrou {formatarQuantidade(a.sobrou)} · vendeu {formatarQuantidade(a.vendidos_inicial)}
+                  </span>
+                </span>
+                <span className={`shrink-0 text-right tabular-nums ${Number(a.cota) > 0 ? "font-semibold" : "text-texto-suave"}`}>
+                  {Number(a.cota) > 0 ? `faltam ${formatarQuantidade(a.cota)}` : "tudo registrado"}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {faltam > 0 ? (
+            <LinkBotao href="/vendas/nova?acerto=1" className="mt-3 w-full">
+              Registrar as vendas ({formatarQuantidade(faltam)} {faltam === 1 ? "potinho" : "potinhos"})
+            </LinkBotao>
+          ) : null}
+        </Cartao>
+        <Cartao>
+          <h2 className="mb-1 font-semibold">Fechar o acerto</h2>
+          <p className="mb-3 text-sm text-texto-suave">
+            {faltam > 0
+              ? `O que você não registrar (${formatarQuantidade(faltam)} potinhos, cerca de ${formatarReais(valorFaltam)} pelo preço de tabela) vira uma venda única "Acerto".`
+              : "Tudo foi registrado. Fechar encerra o acerto."}
+          </p>
+          <Formulario acao={fecharAcertoPessoa} textoBotao={faltam > 0 ? "Fechar o acerto" : "Encerrar o acerto"} textoEnviando="Fechando…" variante={faltam > 0 ? "secundario" : "primario"}>
+            {faltam > 0 ? (
+              <Selecao id="forma_fechar" name="forma" rotulo="Como foi pago o que ficou sem registro" defaultValue={padrao && ativas.some((f) => f.id === padrao) ? padrao : ativas[0]?.id}>
+                {ativas.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nome}
+                  </option>
+                ))}
+              </Selecao>
+            ) : null}
+            <label className="flex min-h-toque items-center gap-3 text-sm">
+              <input type="checkbox" name="devolver" value="1" className="size-5 accent-acao" />
+              Devolvi o que sobrou ao estoque geral
+            </label>
+          </Formulario>
+        </Cartao>
+        <Formulario acao={cancelarAcertoPessoa} textoBotao="Cancelar o acerto" textoEnviando="Cancelando…" variante="perigo">
+          <p className="text-xs text-texto-suave">Desiste da contagem. Nada é vendido nem devolvido; as vendas já registradas continuam.</p>
+        </Formulario>
+      </div>
+    );
+  }
   const meus = comPessoa
     .filter((c) => c.participante_id === eu && Number(c.saldo) > 0)
     .map((c) => ({ id: c.variacao_id ?? "", nome: nomeSabor(c.produto, c.variacao), saldo: Number(c.saldo), preco: preco.get(c.variacao_id) ?? 0 }));

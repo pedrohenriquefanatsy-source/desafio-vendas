@@ -323,3 +323,37 @@ export async function listarCoberturaInsumos(): Promise<CoberturaInsumo[]> {
   const s = await criarClienteServidor();
   return lista(s.from("v_cobertura_insumos").select("*"));
 }
+
+// ── Acerto em andamento: vendas registradas uma a uma, limitadas ao que a pessoa vendeu ─────────────
+export type AcertoAberto = Tables<"v_acerto_aberto">;
+
+export async function listarAcertoAberto(participante: string): Promise<AcertoAberto[]> {
+  const s = await criarClienteServidor();
+  return lista(s.from("v_acerto_aberto").select("*").eq("participante_id", participante).order("produto").order("variacao"));
+}
+
+export async function iniciarAcertoPessoa(itens: { variacao_id: string; sobrou: number }[]): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("iniciar_acerto_pessoa", { p_itens: itens as unknown as Json });
+  if (error) return falhou(error);
+  return { ok: true };
+}
+
+export async function cancelarAcertoPessoa(): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("cancelar_acerto_pessoa");
+  if (error) return falhou(error);
+  return { ok: true };
+}
+
+export async function fecharAcertoPessoa(
+  chave: string,
+  forma: string | null,
+  devolver: boolean,
+): Promise<Resultado & { unidades?: number; numero?: string; devolvido?: boolean }> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("fechar_acerto_pessoa", { p_chave: chave, p_forma: forma ?? undefined, p_devolver: devolver });
+  if (error) return falhou(error);
+  const r = data as { unidades?: number; numero?: string | null; devolvido?: boolean };
+  return { ok: true, unidades: Number(r.unidades ?? 0), numero: r.numero ?? undefined, devolvido: Boolean(r.devolvido) };
+}

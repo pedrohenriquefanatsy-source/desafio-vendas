@@ -4,6 +4,8 @@ import { NovaVenda, type VendaInicial } from "@/componentes/nova-venda";
 import { hojeIso } from "@/lib/datas";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarFormasPagamento } from "@/servicos/formas-pagamento";
+import { listarAcertoAberto } from "@/servicos/estoque";
+import { formatarQuantidade } from "@/lib/numeros";
 import { listarBairros, listarClientes, listarProdutosVenda, obterVenda, ultimaForma } from "@/servicos/vendas";
 import { registrarVenda } from "../acoes";
 
@@ -14,7 +16,12 @@ const UUID = /^[0-9a-f-]{36}$/i;
 // (corrigir = cancelar e lançar de novo, D11).
 export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">) {
   const perfil = await exigirParticipante();
-  const { ok, id, copiar } = await searchParams;
+  const { ok, id, copiar, acerto } = await searchParams;
+  // ?acerto=1: vendas do acerto em andamento, limitadas ao que a pessoa vendeu e ainda não registrou.
+  const noAcerto = acerto === "1";
+  const acertoAberto = noAcerto ? await listarAcertoAberto(perfil.id) : [];
+  const limites = Object.fromEntries(acertoAberto.filter((a) => Number(a.cota) > 0).map((a) => [a.variacao_id ?? "", Number(a.cota)]));
+  const faltam = Object.values(limites).reduce((t, n) => t + n, 0);
   const [produtos, formas, padrao, clientes, bairros, base] = await Promise.all([
     listarProdutosVenda(),
     listarFormasPagamento(),
@@ -37,7 +44,25 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
 
   return (
     <>
-      <TituloPagina>Nova venda</TituloPagina>
+      <TituloPagina apoio={noAcerto ? "Registre cada venda que você fez na rua, com cliente, preço e forma de pagamento. Só dá para lançar o que você vendeu e ainda não registrou." : undefined}>
+        {noAcerto ? "Vendas do acerto" : "Nova venda"}
+      </TituloPagina>
+      {noAcerto ? (
+        <div className="mb-4 flex flex-col gap-2">
+          <p className="rounded-xl bg-fundo px-3 py-2 text-sm">
+            {faltam > 0 ? (
+              <>
+                Faltam registrar <span className="font-semibold">{formatarQuantidade(faltam)} {faltam === 1 ? "potinho" : "potinhos"}</span>.
+              </>
+            ) : (
+              "Tudo registrado. Feche o acerto para terminar."
+            )}
+          </p>
+          <Link href="/estoque/pessoas?aba=acerto" className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
+            ← Voltar ao acerto{faltam === 0 ? " e fechar" : ""}
+          </Link>
+        </div>
+      ) : null}
       {typeof ok === "string" && typeof id === "string" ? (
         <div className="mb-4 flex flex-col gap-2">
           <Aviso tipo="sucesso">Venda nº {ok} registrada.</Aviso>
@@ -45,7 +70,7 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
             <Link href={`/vendas/${id}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
               Ver a venda nº {ok}
             </Link>
-            <Link href={`/vendas/nova?copiar=${id}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
+            <Link href={`/vendas/nova?copiar=${id}${noAcerto ? "&acerto=1" : ""}`} className="inline-flex min-h-toque items-center text-sm font-medium text-acao">
               Repetir esta venda
             </Link>
           </div>
@@ -56,7 +81,15 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
           <Aviso tipo="sucesso">Preenchida igual à venda nº {base.venda.numero}. Confira e confirme.</Aviso>
         </div>
       ) : null}
-      {produtos.length === 0 ? (
+      {noAcerto && acertoAberto.length === 0 ? (
+        <EstadoVazio titulo="Nenhum acerto em andamento" acao={<LinkBotao href="/estoque/pessoas?aba=acerto" variante="secundario">Ir para o acerto</LinkBotao>}>
+          Conte o que sobrou na aba Acerto para começar.
+        </EstadoVazio>
+      ) : noAcerto && faltam === 0 ? (
+        <EstadoVazio titulo="Nada mais para registrar" acao={<LinkBotao href="/estoque/pessoas?aba=acerto">Fechar o acerto</LinkBotao>}>
+          Você já registrou tudo o que vendeu.
+        </EstadoVazio>
+      ) : produtos.length === 0 ? (
         <EstadoVazio
           titulo="Nenhum produto ativo"
           acao={ehAdmin(perfil) ? <LinkBotao href="/mais/produtos" variante="secundario">Cadastrar produtos</LinkBotao> : undefined}
@@ -72,7 +105,8 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
           hoje={hojeIso()}
           formaPadrao={padrao && ativas.some((f) => f.id === padrao) ? padrao : null}
           formas={ativas.map((f) => ({ id: f.id, nome: f.nome, taxa: Number(f.taxa_percentual) }))}
-          produtos={produtos.map((p) => ({
+          limites={noAcerto ? limites : undefined}
+          produtos={produtos.filter((p) => !noAcerto || (limites[p.variacao_id ?? ""] ?? 0) > 0).map((p) => ({
             id: p.variacao_id ?? "",
             nome: p.nome ?? "",
             preco: Number(p.preco_venda),

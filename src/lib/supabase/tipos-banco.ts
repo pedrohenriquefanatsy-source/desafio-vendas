@@ -15,6 +15,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      acertos_abertos: {
+        Row: {
+          criado_em: string
+          participante_id: string
+          sobrou: number
+          variacao_id: string
+          vendidos_inicial: number
+        }
+        Insert: {
+          criado_em?: string
+          participante_id: string
+          sobrou: number
+          variacao_id: string
+          vendidos_inicial: number
+        }
+        Update: {
+          criado_em?: string
+          participante_id?: string
+          sobrou?: number
+          variacao_id?: string
+          vendidos_inicial?: number
+        }
+        Relationships: []
+      }
       aportes: {
         Row: {
           alterado_em: string | null
@@ -1316,6 +1340,21 @@ export type Database = {
       }
     }
     Views: {
+      v_acerto_aberto: {
+        Row: {
+          cota: number | null
+          criado_em: string | null
+          participante_id: string | null
+          preco_venda: number | null
+          produto: string | null
+          saldo: number | null
+          sobrou: number | null
+          variacao: string | null
+          variacao_id: string | null
+          vendidos_inicial: number | null
+        }
+        Relationships: []
+      }
       v_bairros: {
         Row: {
           bairro: string | null
@@ -1797,6 +1836,7 @@ export type Database = {
         Args: { p_itens: Json; p_rendimento: number; p_variacao: string }
         Returns: string
       }
+      cancelar_acerto_pessoa: { Args: never; Returns: undefined }
       cancelar_aporte: {
         Args: { p_aporte: string; p_motivo: string }
         Returns: undefined
@@ -1870,6 +1910,11 @@ export type Database = {
         Args: { p_id: string; p_tipo: string }
         Returns: undefined
       }
+      fechar_acerto_pessoa: {
+        Args: { p_chave: string; p_devolver?: boolean; p_forma?: string }
+        Returns: Json
+      }
+      iniciar_acerto_pessoa: { Args: { p_itens: Json }; Returns: undefined }
       marcar_encomenda_pronta: { Args: { p_venda: string }; Returns: undefined }
       motivo_nao_excluir: {
         Args: { p_id: string; p_tipo: string }

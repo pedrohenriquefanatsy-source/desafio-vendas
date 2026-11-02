@@ -24,3 +24,4 @@
 - Fatia 18 (31/10/2026, pedido do administrador): valor a mais na venda (cliente pagou mais): entra no caixa, no faturamento, na meta e no lucro; cancelar devolve. Ver `docs/regras-de-negocio.md`, seção 20.
 - Fatia 19 (01/11/2026, pedido do administrador): no livro de caixa, tocar num lançamento mostra a venda, a compra ou a despesa de onde ele veio. Ver `docs/regras-de-negocio.md`, seção 21.
 - Fatia 20 (02/11/2026, pedido do administrador): acerto da pessoa (pegou − sobrou = vendido sem registro), potinhos vendidos no Início e em Minhas vendas, "dura ~N dias" nos insumos. Ver `docs/regras-de-negocio.md`, seção 22.
+- Fatia 21 (02/11/2026, pedido do administrador): no acerto, registrar as vendas uma a uma (todas as funções da venda), limitadas ao que a pessoa vendeu; fechar o restante numa venda única. Ver `docs/regras-de-negocio.md`, seção 23.

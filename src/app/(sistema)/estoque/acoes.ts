@@ -220,6 +220,7 @@ export async function moverEstoquePessoa(_a: Resultado | null, d: FormData): Pro
 }
 
 // Acerto da pessoa: cada campo `s_<id do produto>` traz quanto sobrou daquele sabor.
+// Modo padrão: guarda a contagem e a pessoa registra as vendas uma a uma. Botão "de uma vez": fecha já, numa venda única.
 export async function acertarEstoquePessoa(_a: Resultado | null, d: FormData): Promise<Resultado> {
   await exigirParticipante();
   const forma = texto(d, "forma");
@@ -234,9 +235,35 @@ export async function acertarEstoquePessoa(_a: Resultado | null, d: FormData): P
     itens.push({ variacao_id: m[1], sobrou });
   }
   if (itens.length === 0) return erro("Preencha quanto sobrou de pelo menos um sabor (pode ser zero).");
+  if (texto(d, "modo") !== "de_uma_vez") {
+    const r = await estoque.iniciarAcertoPessoa(itens);
+    if (!r.ok) return r;
+    atualizarEstoque();
+    redirect("/estoque/pessoas?aba=acerto&feito=iniciado");
+  }
   const r = await estoque.acertarEstoquePessoa(texto(d, "chave"), itens, forma || null, texto(d, "devolver") === "1");
   if (!r.ok) return r;
   atualizarEstoque();
   // A tela do acerto muda depois de salvar (o que estava com a pessoa zera): a confirmação vai no endereço.
   redirect(`/estoque/pessoas?aba=acerto&feito=acerto&u=${r.unidades ?? 0}&n=${r.numero ?? ""}&d=${r.devolvido ? 1 : 0}`);
+}
+
+// Fecha o acerto em andamento: o que ainda não foi registrado vira uma venda única.
+export async function fecharAcertoPessoa(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const forma = texto(d, "forma");
+  if (forma && !UUID.test(forma)) return erro("Escolha a forma de pagamento.");
+  const r = await estoque.fecharAcertoPessoa(texto(d, "chave"), forma || null, texto(d, "devolver") === "1");
+  if (!r.ok) return r;
+  atualizarEstoque();
+  redirect(`/estoque/pessoas?aba=acerto&feito=acerto&u=${r.unidades ?? 0}&n=${r.numero ?? ""}&d=${r.devolvido ? 1 : 0}`);
+}
+
+// Desiste do acerto em andamento: nada é vendido nem devolvido.
+export async function cancelarAcertoPessoa(): Promise<Resultado> {
+  await exigirParticipante();
+  const r = await estoque.cancelarAcertoPessoa();
+  if (!r.ok) return r;
+  atualizarEstoque();
+  redirect("/estoque/pessoas?aba=acerto&feito=cancelado");
 }

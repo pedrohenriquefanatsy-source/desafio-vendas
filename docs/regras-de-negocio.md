@@ -591,3 +591,11 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 ### Dias que duram os insumos
 - Estoque → Insumos: "**dura ~N dias** (gasta ~X por dia)" = saldo ÷ consumo médio por dia do desafio (produção e kits vendidos), a partir do 2º dia. Saldo negativo mostra "lance a compra ou faça a contagem".
 - Banco: migração `20261102120000_acerto_unidades_cobertura_insumos.sql` (views `v_unidades_vendidas`, `v_cobertura_insumos` e função `acertar_estoque_pessoa`); teste `supabase/testes/fatia20.sql`.
+
+## 23. Acerto com as vendas registradas uma a uma (fatia 21, 02/11/2026)
+- Na aba **Acerto**, depois de contar quanto sobrou de cada sabor, o botão principal é **"Registrar as N vendas, uma a uma"**. O sistema guarda a contagem (**acerto em andamento**) e mostra, por sabor: quanto sobrou, quanto vendeu e quanto **falta registrar** (a **cota** = o que está com a pessoa − o que sobrou). Nada é vendido nem devolvido ainda.
+- **Registrar as vendas** abre a tela de venda do acerto (`/vendas/nova?acerto=1`) com **todas as funções da venda normal** (cliente, bairro, forma de pagamento, paga/pendente/parcial, desconto, preço editado, valor a mais, observação, data, doação), **limitada à cota**: só aparecem os sabores com cota, cada um mostra "restam N" e o botão trava no limite; o banco da aplicação confere de novo. **Não há encomenda** nessa tela. Depois de cada venda a pessoa continua no acerto, com "Faltam registrar N potinhos".
+- Cada venda consome o estoque da pessoa como qualquer venda e baixa a cota; vendas lançadas pela tela normal no meio do acerto também baixam a cota.
+- **Fechar o acerto**: o que ainda não foi registrado vira a venda única "Acerto: vendas sem registro" (preço de tabela, paga na forma escolhida, cliente desconhecido), e, se marcado, o que sobrou volta ao estoque geral. Se tudo foi registrado, só encerra. **Cancelar o acerto** desiste da contagem sem vender nem devolver.
+- O botão **"Fechar tudo de uma vez (uma venda única)"** continua disponível para quem não vai lançar venda a venda.
+- Banco: migração `20261102180000_acerto_vendas_uma_a_uma.sql` (tabela `acertos_abertos`, view `v_acerto_aberto`, funções `iniciar_acerto_pessoa`, `cancelar_acerto_pessoa`, `fechar_acerto_pessoa`); teste `supabase/testes/fatia21.sql`.

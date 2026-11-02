@@ -410,3 +410,8 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia20.sql`): pegou 10, vendeu 2 registrados, sobraram 3 → o acerto acha 5 vendidos (R$ 25,00 no faturamento, 7 potinhos), ficam 3 com a pessoa; reenvio não duplica; sobrou mais do que tem recusado; sem forma de pagamento recusado; devolver o que sobrou; 1 kit de 2 = 2 potinhos; 1.000 g com consumo de 200 g/dia = 5 dias. Fatias 4, 15 e 18 seguem passando.
 - **Telas** (`testes-e2e/fatia20.mjs`, 375 px): **14 de 14** (aviso de sobrou a mais, prévia de 5 potinhos/R$ 60,00, acerto feito, Minhas vendas, card do Início, legenda dos insumos). `fatia15` 24/24, `fatia18` 17/17, `fatia4` 29/29, `fatia12` 34/34.
+
+## Fatia 21: acerto com as vendas registradas uma a uma
+
+- **Banco** (`supabase/testes/fatia21.sql`): pegou 10, sobraram 3 → cota 7 sem mexer no estoque nem no faturamento; duas vendas reais (uma com cliente e desconto) baixam a cota para 2; fechar cria a venda única dos 2 que faltam e devolve o que sobrou; reenvio não duplica; cancelar não vende nem devolve; cota zerada fecha sem criar venda; sobrou maior do que o que está com a pessoa é recusado.
+- **Telas** (`testes-e2e/fatia21.mjs`, 375 px): **15 de 15**. Acerto em andamento (sobrou 4, vendeu 6, faltam 6), venda do acerto sem encomenda e limitada a 6 (8 toques, 6 entram), venda com cliente e desconto, continua no acerto, fechar com devolução, venda da cliente em Minhas vendas. `fatia20` 15/15, `fatia15` 24/24, `fatia4` 29/29, `fatia14` 12/12.
