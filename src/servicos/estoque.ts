@@ -296,3 +296,30 @@ export async function moverEstoquePessoa(
         : `Registrado: ${formatarQuantidade(total)} ${total === 1 ? "potinho voltou" : "potinhos voltaram"} para o estoque geral.`,
   };
 }
+
+// Acerto da pessoa: ela diz quanto sobrou de cada sabor; o que faltar vira uma venda "sem registro".
+export async function acertarEstoquePessoa(
+  chave: string,
+  itens: { variacao_id: string; sobrou: number }[],
+  forma: string | null,
+  devolver: boolean,
+): Promise<Resultado & { unidades?: number; numero?: string; devolvido?: boolean }> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("acertar_estoque_pessoa", {
+    p_chave: chave,
+    p_itens: itens as unknown as Json,
+    p_forma: forma ?? undefined,
+    p_devolver: devolver,
+  });
+  if (error) return falhou(error);
+  const r = data as { unidades?: number; numero?: string | null; devolvido?: boolean };
+  return { ok: true, unidades: Number(r.unidades ?? 0), numero: r.numero ?? undefined, devolvido: Boolean(r.devolvido) };
+}
+
+// Quantos dias duram os insumos (média de consumo por dia do desafio).
+export type CoberturaInsumo = Tables<"v_cobertura_insumos">;
+
+export async function listarCoberturaInsumos(): Promise<CoberturaInsumo[]> {
+  const s = await criarClienteServidor();
+  return lista(s.from("v_cobertura_insumos").select("*"));
+}

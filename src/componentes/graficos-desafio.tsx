@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatarReais } from "@/lib/numeros";
+import { formatarQuantidade, formatarReais } from "@/lib/numeros";
 import type { DiaDoDesafio } from "@/servicos/painel";
 
 // Gráficos do desafio, pensados para poucos dias (Seção 4.6): um com o resultado de cada
@@ -41,7 +41,8 @@ export function GraficosDesafio({ dias, meta, hoje }: { dias: DiaDoDesafio[]; me
         {dia ? (
           <>
             <span className="font-semibold">{rotuloDia(dia.dia)}</span> · faturamento <span className="font-semibold tabular-nums">{formatarReais(dia.resultado ?? 0)}</span> ·
-            acumulado <span className="font-semibold tabular-nums">{formatarReais(dia.acumulado ?? 0)}</span>
+            acumulado <span className="font-semibold tabular-nums">{formatarReais(dia.acumulado ?? 0)}</span> ·{" "}
+            <span className="font-semibold tabular-nums">{formatarQuantidade(dia.unidades ?? 0)}</span> {Number(dia.unidades) === 1 ? "potinho" : "potinhos"}
           </>
         ) : (
           "Toque num dia do gráfico para ver os números."
@@ -199,6 +200,7 @@ export function TabelaDias({ dias }: { dias: DiaDoDesafio[] }) {
           <tr className="text-left text-texto-suave">
             <th className="py-1 font-normal">Dia</th>
             <th className="py-1 text-right font-normal">Faturamento</th>
+            <th className="py-1 text-right font-normal">Potinhos</th>
             <th className="py-1 text-right font-normal">Acumulado</th>
           </tr>
         </thead>
@@ -207,6 +209,7 @@ export function TabelaDias({ dias }: { dias: DiaDoDesafio[] }) {
             <tr key={d.dia} className="border-t border-borda">
               <td className="py-1">{rotuloDia(d.dia)}</td>
               <td className="py-1 text-right">{d.resultado == null ? "—" : formatarReais(d.resultado)}</td>
+              <td className="py-1 text-right">{d.unidades == null ? "—" : formatarQuantidade(d.unidades)}</td>
               <td className="py-1 text-right">{d.acumulado == null ? "—" : formatarReais(d.acumulado)}</td>
             </tr>
           ))}

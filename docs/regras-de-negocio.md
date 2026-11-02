@@ -573,3 +573,21 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
   - despesa: descrição, categoria, data e quem pagou;
   - reembolso e aporte: link para a tela deles.
 - Só leitura; nada no banco mudou.
+
+## 22. Acerto da pessoa, potinhos vendidos e dias dos insumos (fatia 20, 02/11/2026)
+
+### Acerto da pessoa (Estoque → Estoque de cada pessoa → aba Acerto)
+- Fluxo: a pessoa registra **"Peguei para vender"** quando sai; vende (registrando o que der); na volta, faz o **Acerto** contando **quanto sobrou de cada sabor**.
+- O que o sistema ainda acha que está com ela menos o que sobrou foi **vendido sem registro**. O sistema cria **uma venda** "Acerto: vendas sem registro" (cliente desconhecido, **preço de tabela**, **paga por inteiro** na forma escolhida) no nome da pessoa, e o estoque dela passa a ser o que sobrou. Os potinhos por sabor, o faturamento e o caixa entram certos.
+- A tela mostra a prévia ("vendeu N" por sabor; "Sem registro: N potinhos, cerca de R$ X") antes de confirmar. Não aceita informar que sobrou **mais** do que o sistema acha que está com ela (nesse caso, registrar antes em "Peguei para vender").
+- Opção "Devolvi o que sobrou ao estoque geral". Reenvio não duplica a venda.
+- Se o preço real foi outro (desconto, preço diferente), corrige-se depois na própria venda (cancelar e lançar de novo) ou com o valor a mais.
+
+### Potinhos vendidos
+- Início: card **Potinhos vendidos** (total do desafio, de hoje e por sabor, sem doações; kit conta pelos potinhos que o formam). No quadro dos gráficos, o dia tocado mostra também os potinhos; a tabela ganhou a coluna Potinhos.
+- **Minhas vendas** mostra os potinhos de hoje e no total, e por dia.
+- Conta como o faturamento: encomenda só entra paga por inteiro ou entregue.
+
+### Dias que duram os insumos
+- Estoque → Insumos: "**dura ~N dias** (gasta ~X por dia)" = saldo ÷ consumo médio por dia do desafio (produção e kits vendidos), a partir do 2º dia. Saldo negativo mostra "lance a compra ou faça a contagem".
+- Banco: migração `20261102120000_acerto_unidades_cobertura_insumos.sql` (views `v_unidades_vendidas`, `v_cobertura_insumos` e função `acertar_estoque_pessoa`); teste `supabase/testes/fatia20.sql`.

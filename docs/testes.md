@@ -405,3 +405,8 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 ## Fatia 19: detalhe dos lançamentos do caixa
 
 - **Telas** (`testes-e2e/fatia18.mjs`): **17 de 17**. Tocar no lançamento "Valor a mais · venda nº" mostra os itens e o link; tocar numa compra mostra os itens comprados; o link abre a venda. `fatia5` 29/29.
+
+## Fatia 20: acerto da pessoa, potinhos vendidos, dias dos insumos
+
+- **Banco** (`supabase/testes/fatia20.sql`): pegou 10, vendeu 2 registrados, sobraram 3 → o acerto acha 5 vendidos (R$ 25,00 no faturamento, 7 potinhos), ficam 3 com a pessoa; reenvio não duplica; sobrou mais do que tem recusado; sem forma de pagamento recusado; devolver o que sobrou; 1 kit de 2 = 2 potinhos; 1.000 g com consumo de 200 g/dia = 5 dias. Fatias 4, 15 e 18 seguem passando.
+- **Telas** (`testes-e2e/fatia20.mjs`, 375 px): **14 de 14** (aviso de sobrou a mais, prévia de 5 potinhos/R$ 60,00, acerto feito, Minhas vendas, card do Início, legenda dos insumos). `fatia15` 24/24, `fatia18` 17/17, `fatia4` 29/29, `fatia12` 34/34.

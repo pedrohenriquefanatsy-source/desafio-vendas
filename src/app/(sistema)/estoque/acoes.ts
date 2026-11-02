@@ -218,3 +218,25 @@ export async function moverEstoquePessoa(_a: Resultado | null, d: FormData): Pro
   if (r.ok) atualizarEstoque();
   return r;
 }
+
+// Acerto da pessoa: cada campo `s_<id do produto>` traz quanto sobrou daquele sabor.
+export async function acertarEstoquePessoa(_a: Resultado | null, d: FormData): Promise<Resultado> {
+  await exigirParticipante();
+  const forma = texto(d, "forma");
+  if (forma && !UUID.test(forma)) return erro("Escolha a forma de pagamento.");
+  const itens: { variacao_id: string; sobrou: number }[] = [];
+  for (const [campo, valor] of d.entries()) {
+    const m = /^s_([0-9a-f-]{36})$/i.exec(campo);
+    const bruto = String(valor ?? "").trim();
+    if (!m || bruto === "") continue;
+    const sobrou = lerNumero(bruto);
+    if (sobrou == null || sobrou < 0) return erro("Confira quanto sobrou: use zero ou mais, como 3.");
+    itens.push({ variacao_id: m[1], sobrou });
+  }
+  if (itens.length === 0) return erro("Preencha quanto sobrou de pelo menos um sabor (pode ser zero).");
+  const r = await estoque.acertarEstoquePessoa(texto(d, "chave"), itens, forma || null, texto(d, "devolver") === "1");
+  if (!r.ok) return r;
+  atualizarEstoque();
+  // A tela do acerto muda depois de salvar (o que estava com a pessoa zera): a confirmação vai no endereço.
+  redirect(`/estoque/pessoas?aba=acerto&feito=acerto&u=${r.unidades ?? 0}&n=${r.numero ?? ""}&d=${r.devolvido ? 1 : 0}`);
+}

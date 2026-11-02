@@ -1351,6 +1351,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_cobertura_insumos: {
+        Row: {
+          consumido: number | null
+          consumo_dia: number | null
+          dias_cobertura: number | null
+          dias_do_desafio: number | null
+          insumo_id: string | null
+          nome: string | null
+          saldo: number | null
+          tipo: Database["public"]["Enums"]["tipo_insumo"] | null
+          unidade_base: string | null
+        }
+        Relationships: []
+      }
       v_custeio_peso: {
         Row: {
           cobertura: string | null
@@ -1661,6 +1675,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_unidades_vendidas: {
+        Row: {
+          desafio_id: string | null
+          dia: string | null
+          produto: string | null
+          unidades: number | null
+          variacao: string | null
+          variacao_id: string | null
+        }
+        Relationships: []
+      }
       v_vendas: {
         Row: {
           a_receber: number | null
@@ -1709,6 +1734,15 @@ export type Database = {
       }
     }
     Functions: {
+      acertar_estoque_pessoa: {
+        Args: {
+          p_chave: string
+          p_devolver?: boolean
+          p_forma?: string
+          p_itens: Json
+        }
+        Returns: Json
+      }
       admin_atualizar_participante: {
         Args: {
           p_ativo: boolean

@@ -261,3 +261,22 @@ export async function resumoDeClientes() {
     semInformar: { vendas: semInformar.count ?? 0, total: soma(semInformar.data) },
   };
 }
+
+// Potinhos de cada venda (kit conta pelos potinhos que o formam), para os totais de "Minhas vendas".
+export async function potinhosPorVenda(vendaIds: string[]): Promise<Map<string, number>> {
+  const s = await criarClienteServidor();
+  const resultado = new Map<string, number>();
+  if (vendaIds.length === 0) return resultado;
+  const { data: itens, error } = await s.from("venda_itens").select("venda_id, variacao_id, quantidade").in("venda_id", vendaIds);
+  if (error) throw new Error(mensagemDeErro(error));
+  const variacaoIds = [...new Set(itens.map((i) => i.variacao_id))];
+  const { data: componentes, error: erroKits } = await s.from("kit_componentes").select("kit_variacao_id, quantidade").in("kit_variacao_id", variacaoIds);
+  if (erroKits) throw new Error(mensagemDeErro(erroKits));
+  const porKit = new Map<string, number>();
+  for (const c of componentes) porKit.set(c.kit_variacao_id, (porKit.get(c.kit_variacao_id) ?? 0) + Number(c.quantidade));
+  for (const i of itens) {
+    const n = Number(i.quantidade) * (porKit.get(i.variacao_id) ?? 1);
+    resultado.set(i.venda_id, (resultado.get(i.venda_id) ?? 0) + n);
+  }
+  return resultado;
+}

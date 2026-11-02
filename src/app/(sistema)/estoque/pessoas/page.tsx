@@ -1,12 +1,14 @@
-import { Abas, BotaoVoltar, Cartao, EstadoVazio, ItemLista, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
+import { Abas, Aviso, BotaoVoltar, Cartao, EstadoVazio, ItemLista, LinkBotao, Selecao, Selo, TituloPagina } from "@/componentes/ui";
 import { Formulario } from "@/componentes/formulario";
 import { formatarData, formatarDataHora, formatarHora, hojeIso } from "@/lib/datas";
 import { formatarQuantidade, formatarReais } from "@/lib/numeros";
 import { ehAdmin, exigirParticipante } from "@/servicos/sessao";
 import { listarParticipantes } from "@/servicos/participantes";
 import { listarEstoquePessoas, listarEstoqueProdutos, type EstoqueProduto } from "@/servicos/estoque";
-import { listarVendas } from "@/servicos/vendas";
-import { moverEstoquePessoa } from "../acoes";
+import { listarProdutosVenda, listarVendas, potinhosPorVenda, ultimaForma } from "@/servicos/vendas";
+import { listarFormasPagamento } from "@/servicos/formas-pagamento";
+import { AcertoPessoa } from "@/componentes/acerto-pessoa";
+import { acertarEstoquePessoa, moverEstoquePessoa } from "../acoes";
 
 // Estoque de cada pessoa: quem pega potinhos para vender registra aqui. Sai do estoque geral e fica com a pessoa;
 // quando ela vende, sai do que está com ela; o que sobrar ela devolve.
@@ -20,16 +22,39 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export default async function EstoquePessoas({ searchParams }: PageProps<"/estoque/pessoas">) {
   const perfil = await exigirParticipante();
   const admin = ehAdmin(perfil);
-  const { aba, pessoa } = await searchParams;
+  const { aba, pessoa, feito, u, n, d } = await searchParams;
   const abas = (
     <Abas
-      atual={aba === "vendas" ? "vendas" : "estoque"}
+      atual={aba === "vendas" ? "vendas" : aba === "acerto" ? "acerto" : "estoque"}
       abas={[
         { valor: "estoque", rotulo: "Estoque", href: "/estoque/pessoas" },
+        { valor: "acerto", rotulo: "Acerto", href: "/estoque/pessoas?aba=acerto" },
         { valor: "vendas", rotulo: "Minhas vendas", href: "/estoque/pessoas?aba=vendas" },
       ]}
     />
   );
+  if (aba === "acerto") {
+    return (
+      <>
+        <BotaoVoltar href="/estoque">Estoque</BotaoVoltar>
+        <TituloPagina apoio="Voltou da rua? Conte o que sobrou de cada sabor. O que faltar do que você pegou foi vendido: o sistema registra para você, mesmo sem você ter lançado cada venda.">
+          Acerto
+        </TituloPagina>
+        {abas}
+        {feito === "acerto" ? (
+          <div className="mb-4">
+            <Aviso tipo="sucesso">
+              {Number(u) > 0
+                ? `Acerto feito: ${formatarQuantidade(Number(u))} ${Number(u) === 1 ? "potinho vendido" : "potinhos vendidos"} sem registro entraram na venda nº ${typeof n === "string" ? n.replace(/\D/g, "") : ""}.`
+                : "Acerto feito: tudo bate, nenhuma venda sem registro."}
+              {d === "1" ? " O que sobrou voltou para o estoque geral." : ""}
+            </Aviso>
+          </div>
+        ) : null}
+        <Acerto eu={perfil.id} />
+      </>
+    );
+  }
   if (aba === "vendas") {
     const escolhida = admin && typeof pessoa === "string" && UUID.test(pessoa) ? pessoa : perfil.id;
     return (
@@ -192,6 +217,8 @@ async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string;
     admin ? listarParticipantes() : Promise.resolve([]),
   ]);
   const vendidas = vendas.filter((v) => v.tipo !== "doacao");
+  const potinhos = await potinhosPorVenda(vendidas.map((v) => v.id ?? ""));
+  const somaPotinhos = (lista: typeof vendas) => lista.reduce((t, v) => t + (potinhos.get(v.id ?? "") ?? 0), 0);
   const soma = (lista: typeof vendas) => lista.reduce((t, v) => t + Number(v.total ?? 0), 0);
   const deHoje = vendidas.filter((v) => v.dia === hoje);
   const aReceber = vendas.reduce((t, v) => t + Number(v.a_receber ?? 0), 0);
@@ -222,14 +249,14 @@ async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string;
           <p className="text-sm text-texto-suave">Hoje</p>
           <p className="text-xl font-semibold tabular-nums">{formatarReais(soma(deHoje))}</p>
           <p className="text-xs text-texto-suave">
-            {deHoje.length} {deHoje.length === 1 ? "venda" : "vendas"}
+            {formatarQuantidade(somaPotinhos(deHoje))} potinhos · {deHoje.length} {deHoje.length === 1 ? "venda" : "vendas"}
           </p>
         </Cartao>
         <Cartao>
           <p className="text-sm text-texto-suave">No total</p>
           <p className="text-xl font-semibold tabular-nums">{formatarReais(soma(vendidas))}</p>
           <p className="text-xs text-texto-suave">
-            {vendidas.length} {vendidas.length === 1 ? "venda" : "vendas"}
+            {formatarQuantidade(somaPotinhos(vendidas))} potinhos · {vendidas.length} {vendidas.length === 1 ? "venda" : "vendas"}
             {aReceber > 0 ? ` · a receber ${formatarReais(aReceber)}` : ""}
           </p>
         </Cartao>
@@ -243,7 +270,9 @@ async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string;
           <section key={dia}>
             <h2 className="mb-2 flex justify-between text-sm font-medium text-texto-suave">
               <span>{dia === hoje ? "Hoje" : formatarData(dia)}</span>
-              <span className="tabular-nums">{formatarReais(soma(lista.filter((v) => v.tipo !== "doacao")))}</span>
+              <span className="tabular-nums">
+                {formatarQuantidade(somaPotinhos(lista.filter((v) => v.tipo !== "doacao")))} potinhos · {formatarReais(soma(lista.filter((v) => v.tipo !== "doacao")))}
+              </span>
             </h2>
             <Cartao className="divide-y divide-borda p-0">
               {lista.map((v) => (
@@ -271,5 +300,37 @@ async function MinhasVendas({ pessoa, eu, admin }: { pessoa: string; eu: string;
         ))
       )}
     </div>
+  );
+}
+
+// O que está com a pessoa, para ela contar o que sobrou de cada sabor.
+async function Acerto({ eu }: { eu: string }) {
+  const [comPessoa, produtos, formas, padrao] = await Promise.all([
+    listarEstoquePessoas(),
+    listarProdutosVenda(),
+    listarFormasPagamento(),
+    ultimaForma(eu),
+  ]);
+  const preco = new Map(produtos.map((p) => [p.variacao_id, Number(p.preco_venda)]));
+  const meus = comPessoa
+    .filter((c) => c.participante_id === eu && Number(c.saldo) > 0)
+    .map((c) => ({ id: c.variacao_id ?? "", nome: nomeSabor(c.produto, c.variacao), saldo: Number(c.saldo), preco: preco.get(c.variacao_id) ?? 0 }));
+  const ativas = formas.filter((f) => f.ativa);
+  if (meus.length === 0) {
+    return (
+      <EstadoVazio titulo="Nada com você para acertar" acao={<LinkBotao href="/estoque/pessoas" variante="secundario">Registrar o que peguei</LinkBotao>}>
+        Antes de sair para vender, registre em “Peguei para vender” quantos potinhos de cada sabor você levou. Na volta, o acerto usa esse número.
+      </EstadoVazio>
+    );
+  }
+  return (
+    <Cartao>
+      <AcertoPessoa
+        itens={meus}
+        formas={ativas.map((f) => ({ id: f.id, nome: f.nome }))}
+        formaPadrao={padrao && ativas.some((f) => f.id === padrao) ? padrao : (ativas[0]?.id ?? "")}
+        acao={acertarEstoquePessoa}
+      />
+    </Cartao>
   );
 }

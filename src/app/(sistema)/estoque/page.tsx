@@ -8,6 +8,7 @@ import { listarCustosVariacoes, NOMES_TIPO_INSUMO, type TipoInsumo } from "@/ser
 import {
   listarEstoqueInsumos,
   listarEstoqueProdutos,
+  listarCoberturaInsumos,
   listarListaCompras,
   listarProducaoPossivel,
   listarProducoes,
@@ -121,8 +122,17 @@ async function AbaProdutos() {
   );
 }
 
+// "· dura ~N dias" pelo consumo médio por dia; saldo negativo pede lançar compra ou fazer a contagem.
+function duracao(saldo: number, c: { dias_cobertura: number | null; consumo_dia: number | null; unidade_base: string | null } | undefined) {
+  if (saldo < 0) return " · saldo negativo: lance a compra ou faça a contagem";
+  if (!c || c.dias_cobertura == null) return "";
+  if (c.dias_cobertura < 0.1) return " · acabou";
+  return ` · dura ~${formatarQuantidade(c.dias_cobertura)} ${c.dias_cobertura === 1 ? "dia" : "dias"} (gasta ~${formatarQuantidade(c.consumo_dia)} ${c.unidade_base} por dia)`;
+}
+
 async function AbaInsumos() {
-  const [insumos, compras] = await Promise.all([listarEstoqueInsumos(), listarListaCompras()]);
+  const [insumos, compras, cobertura] = await Promise.all([listarEstoqueInsumos(), listarListaCompras(), listarCoberturaInsumos()]);
+  const coberturaDe = new Map(cobertura.map((c) => [c.insumo_id, c]));
   const grupos = (Object.keys(NOMES_TIPO_INSUMO) as TipoInsumo[])
     .map((tipo) => ({ tipo, itens: insumos.filter((i) => i.tipo === tipo) }))
     .filter((g) => g.itens.length);
@@ -170,7 +180,7 @@ async function AbaInsumos() {
                   key={i.insumo_id}
                   href={`/estoque/item/insumo/${i.insumo_id}`}
                   titulo={i.nome}
-                  apoio={i.valor_estoque == null ? "Sem preço" : `Vale ${formatarReais(i.valor_estoque)}`}
+                  apoio={`${i.valor_estoque == null ? "Sem preço" : `Vale ${formatarReais(i.valor_estoque)}`}${duracao(Number(i.saldo), coberturaDe.get(i.insumo_id ?? ""))}`}
                   direita={
                     <span className="flex flex-col items-end gap-1">
                       <span className="font-semibold tabular-nums">{formatarSaldo(i.saldo, i.unidade_base)}</span>
@@ -183,6 +193,10 @@ async function AbaInsumos() {
           </section>
         ))
       )}
+      <p className="text-xs text-texto-suave">
+        “dura ~N dias” é o saldo dividido pelo que se gasta por dia, em média, desde o início do desafio (produção e kits vendidos).
+        Aparece a partir do segundo dia. Saldo negativo é compra ou contagem que faltou lançar.
+      </p>
     </div>
   );
 }

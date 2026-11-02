@@ -161,6 +161,31 @@ export default async function Inicio() {
           </Cartao>
         ) : null}
 
+        {/* Potinhos vendidos */}
+        {p.potinhos.total > 0 ? (
+          <Cartao>
+            <h2 className="flex items-baseline justify-between text-sm font-medium text-texto-suave">
+              <span>Potinhos vendidos</span>
+              <span className="text-xs font-normal">sem doações</span>
+            </h2>
+            <p className="mt-1 flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tabular-nums">{formatarQuantidade(p.potinhos.total)}</span>
+              <span className="text-sm text-texto-suave">no desafio · {formatarQuantidade(p.potinhos.hoje)} hoje</span>
+            </p>
+            <ul className="mt-2 divide-y divide-borda text-sm">
+              {p.potinhos.porSabor.map((s) => (
+                <li key={s.nome} className="flex items-center justify-between gap-3 py-2">
+                  <span className="min-w-0 break-words">{s.nome}</span>
+                  <span className="shrink-0 tabular-nums">
+                    <span className="font-semibold">{formatarQuantidade(s.total)}</span>
+                    <span className="text-xs text-texto-suave"> · hoje {formatarQuantidade(s.hoje)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Cartao>
+        ) : null}
+
         {/* 2 e 3. Caixa e a receber */}
         <div className="grid grid-cols-2 gap-2">
           <Numero href="/caixa" rotulo="Saldo de caixa" apoio="Dinheiro na conta">

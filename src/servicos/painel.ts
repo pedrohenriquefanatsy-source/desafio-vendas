@@ -10,7 +10,8 @@ import { saldoCaixa } from "./caixa";
 
 export type PainelMeta = Tables<"v_painel_meta">;
 export type Cobertura = Tables<"v_cobertura_estoque">;
-export type DiaDoDesafio = { dia: string; resultado: number | null; acumulado: number | null; futuro: boolean };
+export type DiaDoDesafio = { dia: string; resultado: number | null; acumulado: number | null; unidades: number | null; futuro: boolean };
+export type PotinhosVendidos = { total: number; hoje: number; porSabor: { nome: string; total: number; hoje: number }[] };
 
 function lista<T>(r: { data: T[] | null; error: { code?: string; message?: string } | null }): T[] {
   if (r.error) throw new Error(mensagemDeErro(r.error));
@@ -18,7 +19,7 @@ function lista<T>(r: { data: T[] | null; error: { code?: string; message?: strin
 }
 
 // Todos os dias do desafio, de início a fim; dias futuros ficam sem valor (não é zero).
-function diasDoDesafio(inicio: string, fim: string, hoje: string, porDia: Map<string, number>): DiaDoDesafio[] {
+function diasDoDesafio(inicio: string, fim: string, hoje: string, porDia: Map<string, number>, unidadesDia: Map<string, number>): DiaDoDesafio[] {
   const dias: DiaDoDesafio[] = [];
   let acumulado = 0;
   for (let d = new Date(`${inicio}T12:00:00Z`); d <= new Date(`${fim}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
@@ -26,7 +27,7 @@ function diasDoDesafio(inicio: string, fim: string, hoje: string, porDia: Map<st
     const futuro = iso > hoje;
     const resultado = futuro ? null : (porDia.get(iso) ?? 0);
     if (resultado != null) acumulado += resultado;
-    dias.push({ dia: iso, resultado, acumulado: futuro ? null : Math.round(acumulado * 100) / 100, futuro });
+    dias.push({ dia: iso, resultado, acumulado: futuro ? null : Math.round(acumulado * 100) / 100, unidades: futuro ? null : (unidadesDia.get(iso) ?? 0), futuro });
   }
   return dias;
 }
@@ -34,9 +35,10 @@ function diasDoDesafio(inicio: string, fim: string, hoje: string, porDia: Map<st
 export async function obterPainel() {
   const s = await criarClienteServidor();
   const desafio = await obterDesafioAtual();
-  const [meta, diario, caixa, aReceber, encomendas, devidos, minimos] = await Promise.all([
+  const [meta, diario, unidades, caixa, aReceber, encomendas, devidos, minimos] = await Promise.all([
     desafio ? s.from("v_painel_meta").select("*").eq("desafio_id", desafio.id ?? "").maybeSingle() : Promise.resolve({ data: null, error: null }),
     desafio ? s.from("v_resultado_diario").select("dia, vendido").eq("desafio_id", desafio.id ?? "") : Promise.resolve({ data: [], error: null }),
+    desafio ? s.from("v_unidades_vendidas").select("dia, produto, variacao, unidades").eq("desafio_id", desafio.id ?? "") : Promise.resolve({ data: [], error: null }),
     saldoCaixa(),
     s.from("v_vendas").select("a_receber").gt("a_receber", 0),
     s.from("v_vendas").select("id", { count: "exact", head: true }).eq("situacao", "ativa").eq("tipo", "encomenda").neq("situacao_entrega", "entregue"),
@@ -46,10 +48,30 @@ export async function obterPainel() {
   if (meta.error) throw new Error(mensagemDeErro(meta.error));
   const porDia = new Map(lista(diario).map((d) => [d.dia ?? "", Number(d.vendido ?? 0)]));
   const m = meta.data;
+  const unidadesDia = new Map<string, number>();
+  const sabores = new Map<string, { nome: string; total: number; hoje: number }>();
+  let totalPotinhos = 0;
+  let potinhosHoje = 0;
+  for (const u of lista(unidades)) {
+    const n = Number(u.unidades ?? 0);
+    const dia = u.dia ?? "";
+    const nome = !u.variacao || u.variacao === "Única" ? (u.produto ?? "") : `${u.produto} · ${u.variacao}`;
+    const sabor = sabores.get(nome) ?? { nome, total: 0, hoje: 0 };
+    sabor.total += n;
+    totalPotinhos += n;
+    unidadesDia.set(dia, (unidadesDia.get(dia) ?? 0) + n);
+    if (dia === m?.hoje) {
+      sabor.hoje += n;
+      potinhosHoje += n;
+    }
+    sabores.set(nome, sabor);
+  }
+  const potinhos: PotinhosVendidos = { total: totalPotinhos, hoje: potinhosHoje, porSabor: [...sabores.values()].sort((a, b) => b.total - a.total) };
   return {
     desafio,
     meta: m,
-    dias: m?.inicio && m.fim && m.hoje ? diasDoDesafio(m.inicio, m.fim, m.hoje, porDia) : [],
+    dias: m?.inicio && m.fim && m.hoje ? diasDoDesafio(m.inicio, m.fim, m.hoje, porDia, unidadesDia) : [],
+    potinhos,
     caixa: caixa.saldo,
     aReceber: lista(aReceber).reduce((t, v) => t + Number(v.a_receber ?? 0), 0),
     contasAReceber: lista(aReceber).length,
