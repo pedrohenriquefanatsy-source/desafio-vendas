@@ -415,3 +415,7 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia21.sql`): pegou 10, sobraram 3 → cota 7 sem mexer no estoque nem no faturamento; duas vendas reais (uma com cliente e desconto) baixam a cota para 2; fechar cria a venda única dos 2 que faltam e devolve o que sobrou; reenvio não duplica; cancelar não vende nem devolve; cota zerada fecha sem criar venda; sobrou maior do que o que está com a pessoa é recusado.
 - **Telas** (`testes-e2e/fatia21.mjs`, 375 px): **15 de 15**. Acerto em andamento (sobrou 4, vendeu 6, faltam 6), venda do acerto sem encomenda e limitada a 6 (8 toques, 6 entram), venda com cliente e desconto, continua no acerto, fechar com devolução, venda da cliente em Minhas vendas. `fatia20` 15/15, `fatia15` 24/24, `fatia4` 29/29, `fatia14` 12/12.
+
+## Fatia 22: cancelar compra com estoque negativo
+
+- **Banco** (`supabase/testes/fatia22.sql`): comprou 1.000 g (caixa −10,00), 800 g foram usados; cancelar passa a funcionar (saldo −800), relançar com outra data volta o saldo a 200 e só há uma compra ativa. O teste X4 da fatia 3 foi atualizado (antes esperava a recusa). Fatias 3 e 5 seguem passando; telas `fatia3` 34/34 e `fatia5` 29/29.

@@ -357,12 +357,13 @@ declare
   v_pote uuid := (select id from ids_f3 where chave = 'pote');
   v_compra uuid;
 begin
-  -- Compra já usada na produção não pode ser desfeita.
+  -- Compra já usada na produção pode ser cancelada (fatia 22): o estoque fica negativo até lançar a compra certa. Desfeito no fim do bloco.
   begin
     perform public.cancelar_compra((select id from ids_f3 where chave = 'compra_caixa'), 'Teste');
-    raise exception 'X4 falhou: cancelou compra já usada';
+    assert (select situacao from public.compras where id = (select id from ids_f3 where chave = 'compra_caixa')) = 'cancelada', 'X4: compra já usada foi cancelada';
+    raise exception 'DESFAZER_TESTE';
   exception when raise_exception then
-    assert sqlerrm like 'Parte de % já foi usada%', 'X4: ' || sqlerrm;
+    if sqlerrm <> 'DESFAZER_TESTE' then raise; end if;
   end;
   -- Compra pelo caixa cancelada: o dinheiro volta ao caixa.
   v_compra := public.registrar_compra(gen_random_uuid(), jsonb_build_array(

@@ -83,7 +83,7 @@ export default async function Compras({ searchParams }: PageProps<"/compras">) {
                     <Formulario acao={cancelarCompra} textoBotao="Cancelar compra" textoEnviando="Cancelando…" variante="perigo">
                       <input type="hidden" name="id" value={c.id} />
                       <Campo id={`motivo-${c.id}`} name="motivo" rotulo="Motivo" placeholder="Ex.: lancei em dobro" required maxLength={200} />
-                      <p className="text-xs text-texto-suave">O estoque e o caixa voltam ao que eram. Nada é apagado: fica no histórico.</p>
+                      <p className="text-xs text-texto-suave">O estoque e o caixa voltam ao que eram. Nada é apagado: fica no histórico. Se parte do insumo já foi usada, o estoque pode ficar negativo até você lançar a compra certa (para corrigir a data, cancele e lance de novo).</p>
                     </Formulario>
                   </div>
                 ) : (

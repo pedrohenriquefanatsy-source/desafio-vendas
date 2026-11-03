@@ -114,8 +114,9 @@
 - **Paga pelo caixa**: sai do caixa na hora. **Paga do bolso de um participante**: não mexe
   no caixa; fica "a reembolsar" para aquela pessoa (telas de reembolso na fatia 5).
 - Compra **não entra no resultado**. O custo entra quando o produto é vendido (Seção 4.5).
-- Cancelar: devolve o estoque e, se foi pelo caixa, o dinheiro. Exige motivo. Se parte do
-  insumo já foi usada, o cancelamento é recusado e a orientação é corrigir a contagem.
+- Cancelar: devolve o estoque e, se foi pelo caixa, o dinheiro. Exige motivo. **Vale mesmo que
+  parte do insumo já tenha sido usada** (fatia 22): o estoque fica negativo até a compra certa
+  ser lançada. É assim que se corrige a data (ou outro dado) de uma compra errada: cancela e lança de novo.
   Membro cancela a própria compra em até 30 minutos; depois disso, só o administrador (D11).
 
 ### Produção
@@ -599,3 +600,8 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - **Fechar o acerto**: o que ainda não foi registrado vira a venda única "Acerto: vendas sem registro" (preço de tabela, paga na forma escolhida, cliente desconhecido), e, se marcado, o que sobrou volta ao estoque geral. Se tudo foi registrado, só encerra. **Cancelar o acerto** desiste da contagem sem vender nem devolver.
 - O botão **"Fechar tudo de uma vez (uma venda única)"** continua disponível para quem não vai lançar venda a venda.
 - Banco: migração `20261102180000_acerto_vendas_uma_a_uma.sql` (tabela `acertos_abertos`, view `v_acerto_aberto`, funções `iniciar_acerto_pessoa`, `cancelar_acerto_pessoa`, `fechar_acerto_pessoa`); teste `supabase/testes/fatia21.sql`.
+
+## 24. Cancelar compra com estoque negativo (fatia 22, 03/11/2026)
+- Antes, cancelar uma compra era recusado se parte do insumo já tinha sido usada ("Parte de X já foi usada"). Agora **cancela sempre**: o estoque do insumo desce o que a compra tinha colocado (pode ficar negativo) e, se foi paga pelo caixa, o dinheiro volta. Depois a pessoa lança a compra de novo com a data e os dados certos, e o estoque volta ao que deve ser.
+- Continuam valendo: o motivo é obrigatório; membro cancela a própria compra em até 30 minutos (depois, só o administrador); compra paga do bolso já reembolsada não pode ser cancelada antes de cancelar o reembolso.
+- Banco: migração `20261103120000_cancelar_compra_estoque_negativo.sql`; teste `supabase/testes/fatia22.sql`.
