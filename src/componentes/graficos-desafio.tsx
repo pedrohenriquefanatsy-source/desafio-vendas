@@ -14,9 +14,11 @@ const A = 150;
 const M = { topo: 16, base: 28, esq: 8, dir: 8 };
 const larguraUtil = L - M.esq - M.dir;
 const alturaUtil = A - M.topo - M.base;
-const semana = new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "UTC" });
-
-const rotuloDia = (iso: string) => `${semana.format(new Date(`${iso}T12:00:00Z`)).replace(".", "")} ${iso.slice(8, 10)}`;
+// Dia no formato dia/mês (ex.: 04/11).
+const rotuloDia = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+// Eixo: com muitos dias, mostra um rótulo sim, um não (sempre o último), para as datas não se encostarem.
+// O dia tocado aparece por inteiro no quadro de cima.
+const mostraRotulo = (n: number, total: number) => total <= 9 || n % 2 === (total - 1) % 2;
 const reaisCurtos = (v: number) => formatarReais(v).replace(/,00$/, "");
 // Sem "R$" e sem centavos, para caber em cima de cada barra.
 const numeroCurto = (v: number) => Math.round(v).toLocaleString("pt-BR");
@@ -87,11 +89,11 @@ export function GraficoResultadoDia({ dias, hoje, selecionado, aoEscolher }: { d
           const v = d.resultado;
           const cx = M.esq + n * passo + passo / 2;
           if (v == null) {
-            return (
+            return mostraRotulo(n, dias.length) ? (
               <text key={d.dia} x={cx} y={A - 8} textAnchor="middle" className="fill-texto-suave text-[10px]">
                 {rotuloDia(d.dia)}
               </text>
-            );
+            ) : null;
           }
           const topo = Math.min(y(v), zero);
           const altura = Math.max(Math.abs(y(v) - zero), v === 0 ? 0 : 2);
@@ -116,9 +118,11 @@ export function GraficoResultadoDia({ dias, hoje, selecionado, aoEscolher }: { d
                   {numeroCurto(v)}
                 </text>
               ) : null}
-              <text x={cx} y={A - 8} textAnchor="middle" className={`text-[10px] ${d.dia === hoje || d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave"}`}>
-                {rotuloDia(d.dia)}
-              </text>
+              {mostraRotulo(n, dias.length) ? (
+                <text x={cx} y={A - 8} textAnchor="middle" className={`text-[10px] ${d.dia === hoje || d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave"}`}>
+                  {rotuloDia(d.dia)}
+                </text>
+              ) : null}
             </g>
           );
         })}
@@ -179,11 +183,13 @@ export function GraficoAcumulado({ dias, meta, hoje, selecionado, aoEscolher }: 
             {reaisCurtos(rotulado.d.acumulado ?? 0)}
           </text>
         ) : null}
-        {dias.map((d, n) => (
-          <text key={d.dia} x={x(n)} y={A - 8} textAnchor="middle" className={`text-[10px] ${d.dia === hoje || d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave"}`}>
-            {rotuloDia(d.dia)}
-          </text>
-        ))}
+        {dias.map((d, n) =>
+          mostraRotulo(n, dias.length) ? (
+            <text key={d.dia} x={x(n)} y={A - 8} textAnchor="middle" className={`text-[10px] ${d.dia === hoje || d.dia === selecionado ? "fill-texto font-semibold" : "fill-texto-suave"}`}>
+              {rotuloDia(d.dia)}
+            </text>
+          ) : null,
+        )}
       </svg>
     </figure>
   );

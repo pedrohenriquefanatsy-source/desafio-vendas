@@ -611,3 +611,7 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Na **Nova venda**, os kits aparecem como **um botão por pacote** (ícone de promoção, borda tracejada). Tocar abre a lista de combinações de sabor com − e +, para escolher quantos pacotes de cada combinação foram vendidos. O botão do pacote mostra quantos pacotes foram escolhidos no total. A venda avulsa (1 por R$ 10) continua igual.
 - A venda de pacote sai no relatório com o nome do produto do kit, separada das vendas sem promoção.
 - Nada no banco da aplicação mudou além do cadastro dos dois produtos kit.
+
+## 26. Datas dos gráficos em dia/mês (fatia 24, 04/11/2026)
+- Com o desafio estendido até 08/11, os rótulos "ter 27" se encostavam. Os gráficos e a tabela do Início passam a mostrar o dia como **dia/mês** (ex.: 04/11).
+- Com mais de 9 dias, o eixo mostra um rótulo sim, um não (sempre o último dia); o dia tocado continua aparecendo por inteiro no quadro de cima.

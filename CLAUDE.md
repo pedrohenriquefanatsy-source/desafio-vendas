@@ -27,3 +27,4 @@
 - Fatia 21 (02/11/2026, pedido do administrador): no acerto, registrar as vendas uma a uma (todas as funções da venda), limitadas ao que a pessoa vendeu; fechar o restante numa venda única. Ver `docs/regras-de-negocio.md`, seção 23.
 - Fatia 22 (03/11/2026, pedido do administrador): cancelar compra mesmo com o insumo já usado (estoque fica negativo), para corrigir a data lançando de novo. Ver `docs/regras-de-negocio.md`, seção 24.
 - Fatia 23 (04/11/2026, pedido do administrador): pacotes promocionais (kits Promo 2 por R$ 18 e Promo 3 por R$ 25) com um botão por pacote na Nova venda que abre a escolha dos sabores. Ver `docs/regras-de-negocio.md`, seção 25.
+- Fatia 24 (04/11/2026, pedido do administrador): datas dos gráficos em dia/mês, com rótulo alternado quando há muitos dias. Ver `docs/regras-de-negocio.md`, seção 26.
