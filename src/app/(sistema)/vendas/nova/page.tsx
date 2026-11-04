@@ -112,6 +112,7 @@ export default async function Pagina({ searchParams }: PageProps<"/vendas/nova">
             preco: Number(p.preco_venda),
             estoque: Number(p.estoque),
             kit: p.tipo === "kit",
+            ...(p.tipo === "kit" ? { grupo: p.produto_id ?? undefined, grupoNome: p.produto ?? undefined, opcao: p.variacao ?? undefined } : {}),
             busca: [p.nome, ...(p.apelidos ?? []), p.categoria ?? ""].join(" ").toLocaleLowerCase("pt-BR"),
           }))}
           inicial={inicial}

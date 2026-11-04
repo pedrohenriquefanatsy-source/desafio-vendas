@@ -605,3 +605,9 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Antes, cancelar uma compra era recusado se parte do insumo já tinha sido usada ("Parte de X já foi usada"). Agora **cancela sempre**: o estoque do insumo desce o que a compra tinha colocado (pode ficar negativo) e, se foi paga pelo caixa, o dinheiro volta. Depois a pessoa lança a compra de novo com a data e os dados certos, e o estoque volta ao que deve ser.
 - Continuam valendo: o motivo é obrigatório; membro cancela a própria compra em até 30 minutos (depois, só o administrador); compra paga do bolso já reembolsada não pode ser cancelada antes de cancelar o reembolso.
 - Banco: migração `20261103120000_cancelar_compra_estoque_negativo.sql`; teste `supabase/testes/fatia22.sql`.
+
+## 25. Pacotes promocionais na tela de venda (fatia 23, 04/11/2026)
+- Pacotes promocionais são **kits** (produto tipo kit): **Promo 2 por R$ 18** (variações 2 ao leite, 2 meio amargo, 1 de cada) e **Promo 3 por R$ 25** (3 ao leite, 2 ao leite + 1 meio amargo, 1 ao leite + 2 meio amargo, 3 meio amargo). Cada variação tem os componentes em `kit_componentes`; a venda baixa as caixinhas de cada sabor e o custo vem dos componentes (regras do kit, seção 3).
+- Na **Nova venda**, os kits aparecem como **um botão por pacote** (ícone de promoção, borda tracejada). Tocar abre a lista de combinações de sabor com − e +, para escolher quantos pacotes de cada combinação foram vendidos. O botão do pacote mostra quantos pacotes foram escolhidos no total. A venda avulsa (1 por R$ 10) continua igual.
+- A venda de pacote sai no relatório com o nome do produto do kit, separada das vendas sem promoção.
+- Nada no banco da aplicação mudou além do cadastro dos dois produtos kit.

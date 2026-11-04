@@ -1,12 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CircleHelp, Minus, Plus, Search, UserRound } from "lucide-react";
+import { BadgePercent, ChevronDown, CircleHelp, Minus, Plus, Search, UserRound } from "lucide-react";
 import { Formulario } from "./formulario";
 import { lerNumero, formatarReais, formatarQuantidade } from "@/lib/numeros";
 import type { Resultado } from "@/servicos/erros";
 
-export type ProdutoGrade = { id: string; nome: string; preco: number; estoque: number; kit: boolean; busca: string };
+// grupo/grupoNome/opcao: kits (pacotes promocionais) aparecem como um só botão por produto;
+// ao tocar, abre a escolha de sabores (cada variação do kit é uma opção).
+export type ProdutoGrade = {
+  id: string; nome: string; preco: number; estoque: number; kit: boolean; busca: string;
+  grupo?: string; grupoNome?: string; opcao?: string;
+};
 export type FormaGrade = { id: string; nome: string; taxa: number };
 export type VendaInicial = {
   itens: { id: string; quantidade: number }[];
@@ -69,12 +74,22 @@ export function NovaVenda({
   const [modoCliente, setModoCliente] = useState<"informar" | "desconhecido">(inicial?.cliente || inicial?.desconhecido === false ? "informar" : "desconhecido");
   const [nomeCliente, setNomeCliente] = useState(inicial?.cliente ?? "");
   const [bairro, setBairro] = useState(inicial?.bairro ?? "");
+  const [promoAberta, setPromoAberta] = useState<string | null>(null);
 
   const porId = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos]);
   const visiveis = busca.trim()
     ? produtos.filter((p) => p.busca.includes(busca.trim().toLocaleLowerCase("pt-BR")))
     : produtos;
   const escolhidos = ordem.filter((id) => (quantidades[id] ?? 0) > 0);
+  const avulsos = visiveis.filter((p) => !p.grupo);
+  const pacotes = Array.from(
+    visiveis.filter((p) => p.grupo).reduce((m, p) => {
+      const g = m.get(p.grupo!) ?? { id: p.grupo!, nome: p.grupoNome ?? p.nome, preco: p.preco, opcoes: [] as ProdutoGrade[] };
+      g.opcoes.push(p);
+      return m.set(g.id, g);
+    }, new Map<string, { id: string; nome: string; preco: number; opcoes: ProdutoGrade[] }>()).values(),
+  );
+  const pacoteAberto = pacotes.find((g) => g.id === promoAberta);
   const doacao = tipo === "doacao";
   const precisaNome = !doacao && pagamento !== "paga";
   const desconhecido = modoCliente === "desconhecido" && !precisaNome;
@@ -122,7 +137,7 @@ export function NovaVenda({
       ) : null}
 
       <ul className="grid grid-cols-2 gap-2" aria-label="Produtos">
-        {visiveis.map((p) => {
+        {avulsos.map((p) => {
           const qtd = quantidades[p.id] ?? 0;
           const esgotado = limites ? qtd >= (limites[p.id] ?? 0) : false;
           return (
@@ -156,7 +171,68 @@ export function NovaVenda({
             </li>
           );
         })}
+        {pacotes.map((g) => {
+          const qtd = g.opcoes.reduce((t, o) => t + (quantidades[o.id] ?? 0), 0);
+          const aberto = promoAberta === g.id;
+          return (
+            <li key={g.id}>
+              <button
+                type="button"
+                onClick={() => setPromoAberta(aberto ? null : g.id)}
+                aria-expanded={aberto}
+                aria-label={`${g.nome}${qtd ? `, ${qtd} pacote(s) escolhido(s)` : ""}. Tocar para escolher os sabores.`}
+                className={`relative flex min-h-20 w-full flex-col items-start justify-between gap-1 rounded-cartao border p-3 text-left ${
+                  qtd || aberto ? "border-acao bg-superficie ring-2 ring-acao" : "border-dashed border-acao bg-superficie"
+                }`}
+              >
+                <span className="flex items-center gap-1 font-medium leading-tight">
+                  <BadgePercent aria-hidden className="size-4 shrink-0 text-acao" />
+                  {g.nome}
+                </span>
+                <span className="flex w-full items-end justify-between gap-x-2 text-xs text-texto-suave">
+                  <span>Escolher sabores</span>
+                  <ChevronDown aria-hidden className={`size-4 transition-transform ${aberto ? "rotate-180" : ""}`} />
+                </span>
+                {qtd ? (
+                  <span className="absolute -right-1 -top-1 flex size-7 items-center justify-center rounded-full bg-acao text-sm font-semibold text-acao-texto">
+                    {qtd}
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
       </ul>
+      {pacoteAberto ? (
+        <section aria-label={`Sabores do ${pacoteAberto.nome}`} className="rounded-cartao border border-acao bg-superficie p-3">
+          <p className="mb-1 flex items-center gap-1 font-medium">
+            <BadgePercent aria-hidden className="size-4 text-acao" /> {pacoteAberto.nome}
+          </p>
+          <p className="mb-2 text-xs text-texto-suave">Escolha os sabores e quantos pacotes de cada combinação foram vendidos.</p>
+          <ul className="flex flex-col divide-y divide-borda">
+            {pacoteAberto.opcoes.map((o) => (
+              <li key={o.id} className="flex items-center gap-2 py-2">
+                <span className="flex-1">
+                  <span className="block font-medium leading-tight">{o.opcao ?? o.nome}</span>
+                  <span className={`text-xs ${o.estoque <= 0 ? "text-alerta" : "text-texto-suave"}`}>
+                    {o.estoque <= 0 ? "sem estoque" : `${formatarQuantidade(o.estoque)} possíveis`}
+                  </span>
+                </span>
+                <button type="button" onClick={() => somar(o.id, -1)} disabled={!quantidades[o.id]} aria-label={`Tirar 1 pacote ${o.opcao ?? o.nome}`} className="flex size-11 items-center justify-center rounded-xl border border-borda disabled:opacity-40">
+                  <Minus aria-hidden className="size-5" />
+                </button>
+                <span className="w-8 text-center font-semibold tabular-nums" aria-live="polite">{quantidades[o.id] ?? 0}</span>
+                <button type="button" onClick={() => somar(o.id, 1)} aria-label={`Mais 1 pacote ${o.opcao ?? o.nome}`} className="flex size-11 items-center justify-center rounded-xl border border-borda">
+                  <Plus aria-hidden className="size-5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => setPromoAberta(null)} className="mt-2 inline-flex min-h-toque items-center text-sm font-medium text-acao">
+            Pronto
+          </button>
+        </section>
+      ) : null}
       {visiveis.length === 0 ? <p className="text-sm text-texto-suave">Nenhum produto com “{busca}”.</p> : null}
 
       {escolhidos.length ? (
