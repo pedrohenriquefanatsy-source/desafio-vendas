@@ -1,4 +1,4 @@
-// Teste de ponta a ponta da fatia 23, em 375 px: dinheiro vivo × banco no Início e no Caixa.
+// Teste de ponta a ponta da fatia 25, em 375 px: dinheiro vivo × banco no Início e no Caixa.
 // Roda contra o app ligado ao Supabase de TESTE.
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";

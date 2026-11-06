@@ -125,7 +125,9 @@ confere(Boolean(v1.numero), `Venda de 1 item em 3 toques (nº ${v1.numero})`);
 // ── Teste de aceite 6: vários itens + kit + desconto ────────────────────────
 await tile(p, CLASSICO).click();
 await tile(p, CLASSICO).click();
-await tile(p, CASADINHA).click();
+// Kit (pacote): um botão por pacote; tocar abre a escolha de sabores e o + soma um pacote.
+await p.getByRole("list", { name: "Produtos" }).getByRole("button", { name: new RegExp(`^${CASADINHA}`) }).click();
+await p.getByRole("button", { name: /^Mais 1 pacote/ }).first().click();
 await p.getByText("Mais opções").click();
 await p.fill('input[name="desconto"]', "1,00");
 confere(/Total\s?R\$\s?24,00/.test(await texto(p)), "Aceite 6: total R$ 24,00 (2 × 6,50 + 12,00 − 1,00) antes de confirmar");

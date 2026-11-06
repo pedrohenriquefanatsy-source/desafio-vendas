@@ -606,11 +606,21 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Continuam valendo: o motivo é obrigatório; membro cancela a própria compra em até 30 minutos (depois, só o administrador); compra paga do bolso já reembolsada não pode ser cancelada antes de cancelar o reembolso.
 - Banco: migração `20261103120000_cancelar_compra_estoque_negativo.sql`; teste `supabase/testes/fatia22.sql`.
 
-## 25. Dinheiro vivo × banco (fatia 23, 06/11/2026)
+## 25. Pacotes promocionais na tela de venda (fatia 23, 04/11/2026)
+- Pacotes promocionais são **kits** (produto tipo kit): **Promo 2 por R$ 18** (variações 2 ao leite, 2 meio amargo, 1 de cada) e **Promo 3 por R$ 25** (3 ao leite, 2 ao leite + 1 meio amargo, 1 ao leite + 2 meio amargo, 3 meio amargo). Cada variação tem os componentes em `kit_componentes`; a venda baixa as caixinhas de cada sabor e o custo vem dos componentes (regras do kit, seção 3).
+- Na **Nova venda**, os kits aparecem como **um botão por pacote** (ícone de promoção, borda tracejada). Tocar abre a lista de combinações de sabor com − e +, para escolher quantos pacotes de cada combinação foram vendidos. O botão do pacote mostra quantos pacotes foram escolhidos no total. A venda avulsa (1 por R$ 10) continua igual.
+- A venda de pacote sai no relatório com o nome do produto do kit, separada das vendas sem promoção.
+- Nada no banco da aplicação mudou além do cadastro dos dois produtos kit.
+
+## 26. Datas dos gráficos em dia/mês (fatia 24, 04/11/2026)
+- Com o desafio estendido até 08/11, os rótulos "ter 27" se encostavam. Os gráficos e a tabela do Início passam a mostrar o dia como **dia/mês** (ex.: 04/11).
+- Com mais de 9 dias, o eixo mostra um rótulo sim, um não (sempre o último dia); o dia tocado continua aparecendo por inteiro no quadro de cima.
+
+## 27. Dinheiro vivo × banco (fatia 25, 06/11/2026)
 - O saldo de caixa continua sendo um só (o livro de caixa). Ele agora aparece **dividido em duas linhas**, no Início (card "Saldo de caixa") e na tela Caixa: **Pix / banco** e **Dinheiro vivo**.
 - **Dinheiro vivo** = o que entrou em dinheiro nas vendas (e no valor a mais) − o que saiu em dinheiro nas compras e despesas pagas pelo caixa ± as conferências de dinheiro. **Pix / banco** = saldo total − dinheiro vivo.
 - Qual forma de pagamento conta como dinheiro vem da marca `em_dinheiro` (a forma "Dinheiro").
 - Em **Nova compra** e **Nova despesa** há o campo opcional **"Quanto saiu em dinheiro vivo"** (só vale para o que o caixa pagou; o resto é Pix/cartão). Compra e despesa cancelada deixam de contar.
 - **Caixa → Conferir o saldo** ganhou **"Dinheiro vivo"** (só o administrador): conta-se o dinheiro e informa; o sistema lança a diferença, com motivo, **mudando só a divisão** entre dinheiro vivo e banco (ex.: depositou dinheiro), sem mexer no saldo total.
 - Dados do sistema real: preenchidos os R$ 100 da compra da Elói (31/10) e os R$ 105 dos potes (02/11) como pagos em dinheiro.
-- Banco: migração `20261106120000_dinheiro_vivo.sql` (view `v_dinheiro_vivo`, tabela `ajustes_dinheiro`, funções `definir_dinheiro_pago` e `ajustar_dinheiro`); teste `supabase/testes/fatia23.sql`.
+- Banco: migração `20261106120000_dinheiro_vivo.sql` (view `v_dinheiro_vivo`, tabela `ajustes_dinheiro`, funções `definir_dinheiro_pago` e `ajustar_dinheiro`); teste `supabase/testes/fatia25.sql`.
