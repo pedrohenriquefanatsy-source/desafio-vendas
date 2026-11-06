@@ -616,11 +616,6 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Com o desafio estendido até 08/11, os rótulos "ter 27" se encostavam. Os gráficos e a tabela do Início passam a mostrar o dia como **dia/mês** (ex.: 04/11).
 - Com mais de 9 dias, o eixo mostra um rótulo sim, um não (sempre o último dia); o dia tocado continua aparecendo por inteiro no quadro de cima.
 
-## 27. Dinheiro vivo × banco (fatia 25, 06/11/2026)
-- O saldo de caixa continua sendo um só (o livro de caixa). Ele agora aparece **dividido em duas linhas**, no Início (card "Saldo de caixa") e na tela Caixa: **Pix / banco** e **Dinheiro vivo**.
-- **Dinheiro vivo** = o que entrou em dinheiro nas vendas (e no valor a mais) − o que saiu em dinheiro nas compras e despesas pagas pelo caixa ± as conferências de dinheiro. **Pix / banco** = saldo total − dinheiro vivo.
-- Qual forma de pagamento conta como dinheiro vem da marca `em_dinheiro` (a forma "Dinheiro").
-- Em **Nova compra** e **Nova despesa** há o campo opcional **"Quanto saiu em dinheiro vivo"** (só vale para o que o caixa pagou; o resto é Pix/cartão). Compra e despesa cancelada deixam de contar.
-- **Caixa → Conferir o saldo** ganhou **"Dinheiro vivo"** (só o administrador): conta-se o dinheiro e informa; o sistema lança a diferença, com motivo, **mudando só a divisão** entre dinheiro vivo e banco (ex.: depositou dinheiro), sem mexer no saldo total.
-- Dados do sistema real: preenchidos os R$ 100 da compra da Elói (31/10) e os R$ 105 dos potes (02/11) como pagos em dinheiro.
-- Banco: migração `20261106120000_dinheiro_vivo.sql` (view `v_dinheiro_vivo`, tabela `ajustes_dinheiro`, funções `definir_dinheiro_pago` e `ajustar_dinheiro`); teste `supabase/testes/fatia25.sql`.
+## 27. Dinheiro vivo × banco (fatia 25, 06/11/2026) — RETIRADO DAS TELAS
+- A pedido do administrador, a divisão do saldo em **Pix / banco** e **dinheiro vivo** foi **retirada das telas** (Início, Caixa, Nova compra, Nova despesa e Conferir o saldo voltaram ao que eram).
+- No banco de dados ficou, sem uso e sem efeito nas telas: a marca `em_dinheiro` nas formas de pagamento, as colunas `pago_em_dinheiro` (compras) e `valor_em_dinheiro` (despesas), a tabela `ajustes_dinheiro`, a view `v_dinheiro_vivo` e as funções `definir_dinheiro_pago` e `ajustar_dinheiro` (migração `20261106120000_dinheiro_vivo.sql`; teste `supabase/testes/fatia25.sql`). No sistema real, as compras da Elói (R$ 100) e dos potes (R$ 105) continuam marcadas como pagas em dinheiro. Dá para religar as telas depois sem refazer o banco.

@@ -420,7 +420,6 @@ Corrigido: a unidade "embalagem" só vem marcada quando a pessoa escolhe o insum
 
 - **Banco** (`supabase/testes/fatia22.sql`): comprou 1.000 g (caixa −10,00), 800 g foram usados; cancelar passa a funcionar (saldo −800), relançar com outra data volta o saldo a 200 e só há uma compra ativa. O teste X4 da fatia 3 foi atualizado (antes esperava a recusa). Fatias 3 e 5 seguem passando; telas `fatia3` 34/34 e `fatia5` 29/29.
 
-## Fatia 25: dinheiro vivo × banco
+## Fatia 25: dinheiro vivo × banco (retirado das telas)
 
-- **Banco** (`supabase/testes/fatia25.sql`): venda em dinheiro entra no dinheiro vivo e a do Pix no banco; cancelar devolve; compra de 40 com 25 em dinheiro e despesa de 18 com 8 em dinheiro; dinheiro não passa do total; compra do bolso não tem dinheiro vivo; conferência para 50 (reenvio não duplica) e dinheiro vivo + banco = saldo total.
-- **Telas** (`testes-e2e/fatia25.mjs`, 375 px): **13 de 13**. Vendas em dinheiro e Pix, compra de R$ 30 com R$ 10 em dinheiro, despesa de R$ 9 com R$ 4, tela Caixa e conferência para R$ 75,50. `fatia3` 34/34, `fatia5` 29/29, `fatia12` 34/34, `fatia18` 17/17.
+- As telas foram retiradas a pedido do administrador (e com elas o teste de tela `fatia25.mjs`). Ficou o teste do banco `supabase/testes/fatia25.sql`, que continua passando.

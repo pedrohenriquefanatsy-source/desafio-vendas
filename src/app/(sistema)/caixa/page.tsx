@@ -24,14 +24,7 @@ export default async function Caixa() {
         <Cartao>
           <p className="text-sm text-texto-suave">Saldo de caixa</p>
           <Valor valor={saldo.saldo} className={`text-2xl ${saldo.saldo < 0 ? "text-negativo" : ""}`} />
-          <p className="mt-1 flex justify-between gap-2 text-xs text-texto-suave">
-            <span>Pix / banco</span>
-            <span className="font-medium tabular-nums text-texto">{formatarReais(saldo.banco)}</span>
-          </p>
-          <p className="flex justify-between gap-2 text-xs text-texto-suave">
-            <span>Dinheiro vivo</span>
-            <span className={`font-medium tabular-nums ${saldo.dinheiroVivo < 0 ? "text-negativo" : "text-texto"}`}>{formatarReais(saldo.dinheiroVivo)}</span>
-          </p>
+          <p className="mt-1 text-xs text-texto-suave">Dinheiro que está na conta</p>
         </Cartao>
         <Cartao>
           <p className="text-sm text-texto-suave">Faturamento</p>

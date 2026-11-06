@@ -34,13 +34,9 @@ export async function registrarDespesa(_a: Resultado | null, d: FormData): Promi
   if (descricao.length < 2) return erro("Diga o que foi a despesa (ex.: Uber, adesivos) ou escolha uma categoria.");
   if (descricao.length > 120) return erro("A descrição pode ter até 120 letras.");
   if (!DATA.test(data)) return erro("Data inválida.");
-  const emDinheiro = texto(d, "em_dinheiro") ? lerNumero(texto(d, "em_dinheiro")) : 0;
-  if (emDinheiro == null || emDinheiro < 0) return erro("Confira quanto saiu em dinheiro vivo, como 8,00.");
-  if (emDinheiro > valor) return erro("O dinheiro vivo não pode passar do valor da despesa.");
   const r = await caixa.registrarDespesa({
     chave: texto(d, "chave"),
     valor,
-    emDinheiro,
     descricao,
     categoria,
     pagoPor: d.get("do_bolso") === "on" ? "participante" : "caixa",
@@ -115,22 +111,5 @@ export async function ajustarCaixa(_a: Resultado | null, d: FormData): Promise<R
   return {
     ok: true,
     mensagem: dif === 0 ? "O caixa já estava certo. Nada foi lançado." : `Ajuste de ${dif > 0 ? "+" : "−"}${formatarReais(Math.abs(dif))} lançado no caixa.`,
-  };
-}
-
-// Conferência do dinheiro vivo (só o administrador): muda a divisão entre dinheiro vivo e banco, não o saldo total.
-export async function ajustarDinheiro(_a: Resultado | null, d: FormData): Promise<Resultado> {
-  await exigirParticipante();
-  const contado = lerNumero(texto(d, "contado"));
-  const motivo = texto(d, "motivo");
-  if (contado == null || contado < 0) return erro("Informe quanto tem em dinheiro vivo, como 60,00.");
-  if (motivo.length < 3) return erro("Diga o motivo (ex.: contei o dinheiro, depositei no banco).");
-  const r = await caixa.ajustarDinheiro(texto(d, "chave"), contado, motivo);
-  if (!r.ok) return r;
-  atualizar();
-  const dif = r.diferenca ?? 0;
-  return {
-    ok: true,
-    mensagem: dif === 0 ? "O dinheiro vivo já estava certo. Nada foi lançado." : `Dinheiro vivo ajustado em ${dif > 0 ? "+" : "−"}${formatarReais(Math.abs(dif))}. O banco mudou no mesmo valor, ao contrário.`,
   };
 }

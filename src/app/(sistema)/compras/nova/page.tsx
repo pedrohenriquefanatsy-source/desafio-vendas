@@ -48,14 +48,6 @@ export default async function NovaCompra({ searchParams }: PageProps<"/compras/n
                 </span>
               </label>
             </fieldset>
-            <Campo
-              id="em_dinheiro"
-              name="em_dinheiro"
-              rotulo="Quanto saiu em dinheiro vivo (opcional)"
-              inputMode="decimal"
-              placeholder="0,00"
-            />
-            <p className="-mt-1 text-xs text-texto-suave">Só vale para compra paga pelo caixa. O resto você pagou no Pix ou no cartão.</p>
             <div className="grid grid-cols-2 gap-3">
               <Campo id="data" name="data" rotulo="Data" type="date" defaultValue={hojeIso()} max={hojeIso()} required />
               <Campo id="fornecedor" name="fornecedor" rotulo="Onde (opcional)" placeholder="Ex.: Atacadão" maxLength={80} />
