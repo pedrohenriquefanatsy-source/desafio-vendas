@@ -605,3 +605,12 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Antes, cancelar uma compra era recusado se parte do insumo já tinha sido usada ("Parte de X já foi usada"). Agora **cancela sempre**: o estoque do insumo desce o que a compra tinha colocado (pode ficar negativo) e, se foi paga pelo caixa, o dinheiro volta. Depois a pessoa lança a compra de novo com a data e os dados certos, e o estoque volta ao que deve ser.
 - Continuam valendo: o motivo é obrigatório; membro cancela a própria compra em até 30 minutos (depois, só o administrador); compra paga do bolso já reembolsada não pode ser cancelada antes de cancelar o reembolso.
 - Banco: migração `20261103120000_cancelar_compra_estoque_negativo.sql`; teste `supabase/testes/fatia22.sql`.
+
+## 25. Dinheiro vivo × banco (fatia 23, 06/11/2026)
+- O saldo de caixa continua sendo um só (o livro de caixa). Ele agora aparece **dividido em duas linhas**, no Início (card "Saldo de caixa") e na tela Caixa: **Pix / banco** e **Dinheiro vivo**.
+- **Dinheiro vivo** = o que entrou em dinheiro nas vendas (e no valor a mais) − o que saiu em dinheiro nas compras e despesas pagas pelo caixa ± as conferências de dinheiro. **Pix / banco** = saldo total − dinheiro vivo.
+- Qual forma de pagamento conta como dinheiro vem da marca `em_dinheiro` (a forma "Dinheiro").
+- Em **Nova compra** e **Nova despesa** há o campo opcional **"Quanto saiu em dinheiro vivo"** (só vale para o que o caixa pagou; o resto é Pix/cartão). Compra e despesa cancelada deixam de contar.
+- **Caixa → Conferir o saldo** ganhou **"Dinheiro vivo"** (só o administrador): conta-se o dinheiro e informa; o sistema lança a diferença, com motivo, **mudando só a divisão** entre dinheiro vivo e banco (ex.: depositou dinheiro), sem mexer no saldo total.
+- Dados do sistema real: preenchidos os R$ 100 da compra da Elói (31/10) e os R$ 105 dos potes (02/11) como pagos em dinheiro.
+- Banco: migração `20261106120000_dinheiro_vivo.sql` (view `v_dinheiro_vivo`, tabela `ajustes_dinheiro`, funções `definir_dinheiro_pago` e `ajustar_dinheiro`); teste `supabase/testes/fatia23.sql`.

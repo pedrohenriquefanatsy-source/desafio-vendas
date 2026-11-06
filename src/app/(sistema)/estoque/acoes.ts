@@ -61,7 +61,11 @@ export async function registrarCompra(_a: Resultado | null, d: FormData): Promis
   if (fornecedor.length > 80) return erro("O nome do fornecedor pode ter até 80 letras.");
   const observacao = texto(d, "observacao");
   if (observacao.length > 300) return erro("A observação pode ter até 300 letras.");
-  const r = await estoque.registrarCompra({ chave: texto(d, "chave"), itens, pagoPor, data, fornecedor, observacao });
+  const emDinheiro = texto(d, "em_dinheiro") ? lerNumero(texto(d, "em_dinheiro")) : 0;
+  if (emDinheiro == null || emDinheiro < 0) return erro("Confira quanto saiu em dinheiro vivo, como 25,00.");
+  const total = itens.reduce((t, i) => t + i.valor, 0);
+  if (emDinheiro > total + 0.001) return erro("O dinheiro vivo não pode passar do total da compra.");
+  const r = await estoque.registrarCompra({ chave: texto(d, "chave"), itens, pagoPor, data, fornecedor, observacao, emDinheiro });
   if (!r.ok) return r;
   atualizarEstoque();
   redirect("/compras?salva=1");

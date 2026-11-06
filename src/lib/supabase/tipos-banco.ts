@@ -39,6 +39,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ajustes_dinheiro: {
+        Row: {
+          chave_idempotencia: string | null
+          criado_em: string
+          criado_por: string | null
+          desafio_id: string | null
+          id: number
+          motivo: string
+          valor: number
+        }
+        Insert: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          id?: never
+          motivo: string
+          valor: number
+        }
+        Update: {
+          chave_idempotencia?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          desafio_id?: string | null
+          id?: never
+          motivo?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       aportes: {
         Row: {
           alterado_em: string | null
@@ -177,6 +207,7 @@ export type Database = {
           id: string
           motivo_cancelamento: string | null
           observacao: string | null
+          pago_em_dinheiro: number
           pago_por: Database["public"]["Enums"]["pago_por"]
           participante_id: string | null
           situacao: Database["public"]["Enums"]["situacao_registro"]
@@ -196,6 +227,7 @@ export type Database = {
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
+          pago_em_dinheiro?: number
           pago_por: Database["public"]["Enums"]["pago_por"]
           participante_id?: string | null
           situacao?: Database["public"]["Enums"]["situacao_registro"]
@@ -215,6 +247,7 @@ export type Database = {
           id?: string
           motivo_cancelamento?: string | null
           observacao?: string | null
+          pago_em_dinheiro?: number
           pago_por?: Database["public"]["Enums"]["pago_por"]
           participante_id?: string | null
           situacao?: Database["public"]["Enums"]["situacao_registro"]
@@ -319,6 +352,7 @@ export type Database = {
           participante_id: string | null
           situacao: Database["public"]["Enums"]["situacao_registro"]
           valor: number
+          valor_em_dinheiro: number
         }
         Insert: {
           alterado_em?: string | null
@@ -338,6 +372,7 @@ export type Database = {
           participante_id?: string | null
           situacao?: Database["public"]["Enums"]["situacao_registro"]
           valor: number
+          valor_em_dinheiro?: number
         }
         Update: {
           alterado_em?: string | null
@@ -357,6 +392,7 @@ export type Database = {
           participante_id?: string | null
           situacao?: Database["public"]["Enums"]["situacao_registro"]
           valor?: number
+          valor_em_dinheiro?: number
         }
         Relationships: []
       }
@@ -406,6 +442,7 @@ export type Database = {
           ativa: boolean
           criado_em: string
           criado_por: string | null
+          em_dinheiro: boolean
           id: string
           nome: string
           ordem: number
@@ -417,6 +454,7 @@ export type Database = {
           ativa?: boolean
           criado_em?: string
           criado_por?: string | null
+          em_dinheiro?: boolean
           id?: string
           nome: string
           ordem?: number
@@ -428,6 +466,7 @@ export type Database = {
           ativa?: boolean
           criado_em?: string
           criado_por?: string | null
+          em_dinheiro?: boolean
           id?: string
           nome?: string
           ordem?: number
@@ -1519,6 +1558,14 @@ export type Database = {
         }
         Relationships: []
       }
+      v_dinheiro_vivo: {
+        Row: {
+          banco: number | null
+          dinheiro_vivo: number | null
+          saldo: number | null
+        }
+        Relationships: []
+      }
       v_estoque_insumos: {
         Row: {
           abaixo_minimo: boolean | null
@@ -1799,6 +1846,10 @@ export type Database = {
         }
         Returns: number
       }
+      ajustar_dinheiro: {
+        Args: { p_chave: string; p_contado: number; p_motivo: string }
+        Returns: number
+      }
       ajustar_estoque: {
         Args: {
           p_chave: string
@@ -1895,6 +1946,10 @@ export type Database = {
       }
       definir_custo_insumo: {
         Args: { p_insumo: string; p_preco: number; p_unidade: string }
+        Returns: undefined
+      }
+      definir_dinheiro_pago: {
+        Args: { p_id: string; p_tipo: string; p_valor: number }
         Returns: undefined
       }
       definir_embalagem_insumo: {

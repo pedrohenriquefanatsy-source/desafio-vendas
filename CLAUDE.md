@@ -26,3 +26,4 @@
 - Fatia 20 (02/11/2026, pedido do administrador): acerto da pessoa (pegou − sobrou = vendido sem registro), potinhos vendidos no Início e em Minhas vendas, "dura ~N dias" nos insumos. Ver `docs/regras-de-negocio.md`, seção 22.
 - Fatia 21 (02/11/2026, pedido do administrador): no acerto, registrar as vendas uma a uma (todas as funções da venda), limitadas ao que a pessoa vendeu; fechar o restante numa venda única. Ver `docs/regras-de-negocio.md`, seção 23.
 - Fatia 22 (03/11/2026, pedido do administrador): cancelar compra mesmo com o insumo já usado (estoque fica negativo), para corrigir a data lançando de novo. Ver `docs/regras-de-negocio.md`, seção 24.
+- Fatia 23 (06/11/2026, pedido do administrador): saldo de caixa dividido em Pix / banco e dinheiro vivo (Início e Caixa), com parte em dinheiro nas compras e despesas e conferência do dinheiro. Ver `docs/regras-de-negocio.md`, seção 25.

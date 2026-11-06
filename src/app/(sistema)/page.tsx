@@ -11,7 +11,7 @@ import { obterPainel, obterPassos, type Passo } from "@/servicos/painel";
 
 // Início (Seção 3.2): faturamento e meta, caixa, a receber, pendências e gráficos de 7 dias.
 // Cada número leva aos registros que o formam. Realizado, projeção e estimativa rotulados.
-function Numero({ href, rotulo, children, apoio }: { href: string; rotulo: string; children: React.ReactNode; apoio?: string }) {
+function Numero({ href, rotulo, children, apoio }: { href: string; rotulo: string; children: React.ReactNode; apoio?: React.ReactNode }) {
   return (
     <Link href={href} className="flex min-h-toque flex-col rounded-cartao border border-borda bg-superficie p-4">
       <span className="flex items-center justify-between text-sm text-texto-suave">
@@ -188,7 +188,22 @@ export default async function Inicio() {
 
         {/* 2 e 3. Caixa e a receber */}
         <div className="grid grid-cols-2 gap-2">
-          <Numero href="/caixa" rotulo="Saldo de caixa" apoio="Dinheiro na conta">
+          <Numero
+            href="/caixa"
+            rotulo="Saldo de caixa"
+            apoio={
+              <span className="flex flex-col gap-0.5">
+                <span className="flex justify-between gap-2">
+                  <span>Pix / banco</span>
+                  <span className="font-medium tabular-nums text-texto">{formatarReais(p.banco)}</span>
+                </span>
+                <span className="flex justify-between gap-2">
+                  <span>Dinheiro vivo</span>
+                  <span className={`font-medium tabular-nums ${p.dinheiroVivo < 0 ? "text-negativo" : "text-texto"}`}>{formatarReais(p.dinheiroVivo)}</span>
+                </span>
+              </span>
+            }
+          >
             <Valor valor={p.caixa} className={`text-xl ${p.caixa < 0 ? "text-negativo" : ""}`} />
           </Numero>
           <Numero href="/vendas?ver=a-receber" rotulo="A receber" apoio={`${p.contasAReceber} ${p.contasAReceber === 1 ? "venda" : "vendas"}`}>

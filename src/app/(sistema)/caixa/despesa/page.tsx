@@ -36,6 +36,7 @@ export default async function Despesa() {
             </div>
           </fieldset>
           <Campo id="descricao" name="descricao" rotulo="O que foi (opcional)" placeholder="Ex.: Uber para a feira" maxLength={120} />
+          <Campo id="em_dinheiro" name="em_dinheiro" rotulo="Quanto saiu em dinheiro vivo (opcional)" inputMode="decimal" placeholder="0,00" />
           <Interruptor id="do_bolso" name="do_bolso" rotulo="Paguei do meu bolso (o desafio me reembolsa)" />
           <Campo id="data" name="data" rotulo="Data" type="date" defaultValue={hojeIso()} max={hojeIso()} required />
         </Formulario>

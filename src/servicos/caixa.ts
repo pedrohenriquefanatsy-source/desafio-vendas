@@ -42,9 +42,33 @@ async function lista<T>(promessa: PromiseLike<{ data: T[] | null; error: { code?
 
 export async function saldoCaixa() {
   const s = await criarClienteServidor();
-  const { data, error } = await s.from("v_saldo_caixa").select("*").single();
-  if (error) throw new Error(mensagemDeErro(error));
-  return { saldo: Number(data.saldo ?? 0), entradas: Number(data.entradas ?? 0), saidas: Number(data.saidas ?? 0) };
+  const [saldo, vivo] = await Promise.all([s.from("v_saldo_caixa").select("*").single(), s.from("v_dinheiro_vivo").select("*").single()]);
+  if (saldo.error) throw new Error(mensagemDeErro(saldo.error));
+  if (vivo.error) throw new Error(mensagemDeErro(vivo.error));
+  return {
+    saldo: Number(saldo.data.saldo ?? 0),
+    entradas: Number(saldo.data.entradas ?? 0),
+    saidas: Number(saldo.data.saidas ?? 0),
+    // O saldo se divide em dinheiro vivo e banco/Pix.
+    dinheiroVivo: Number(vivo.data.dinheiro_vivo ?? 0),
+    banco: Number(vivo.data.banco ?? 0),
+  };
+}
+
+// Conferência do dinheiro vivo (só o administrador): lança a diferença, sem mudar o saldo total.
+export async function ajustarDinheiro(chave: string, contado: number, motivo: string): Promise<Resultado & { diferenca?: number }> {
+  const s = await criarClienteServidor();
+  const { data, error } = await s.rpc("ajustar_dinheiro", { p_chave: chave, p_contado: contado, p_motivo: motivo });
+  if (error) return falhou(error);
+  return { ok: true, diferenca: Number(data) };
+}
+
+// Quanto de uma compra ou despesa paga pelo caixa saiu em dinheiro vivo (o resto foi Pix ou cartão).
+export async function definirDinheiroPago(tipo: "compra" | "despesa", id: string, valor: number): Promise<Resultado> {
+  const s = await criarClienteServidor();
+  const { error } = await s.rpc("definir_dinheiro_pago", { p_tipo: tipo, p_id: id, p_valor: valor });
+  if (error) return falhou(error);
+  return { ok: true };
 }
 
 // Resultado do desafio em andamento, dia a dia. Sem desafio em andamento: o que foi
@@ -159,9 +183,10 @@ export async function registrarDespesa(d: {
   categoria: string;
   pagoPor: PagoPor;
   data: string;
+  emDinheiro?: number;
 }): Promise<Resultado> {
   const s = await criarClienteServidor();
-  const { error } = await s.rpc("registrar_despesa", {
+  const { data, error } = await s.rpc("registrar_despesa", {
     p_chave: d.chave,
     p_valor: d.valor,
     p_descricao: d.descricao,
@@ -170,6 +195,11 @@ export async function registrarDespesa(d: {
     p_data: d.data,
   });
   if (error) return falhou(error);
+  if (d.emDinheiro && d.emDinheiro > 0 && d.pagoPor === "caixa") {
+    const id = (data as unknown as string) ?? "";
+    const r = await definirDinheiroPago("despesa", id, d.emDinheiro);
+    if (!r.ok) return r;
+  }
   return {
     ok: true,
     mensagem:

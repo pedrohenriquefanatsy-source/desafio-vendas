@@ -112,9 +112,10 @@ export async function registrarCompra(dados: {
   data: string;
   fornecedor: string;
   observacao: string;
+  emDinheiro?: number;
 }): Promise<Resultado> {
   const s = await criarClienteServidor();
-  const { error } = await s.rpc("registrar_compra", {
+  const { data, error } = await s.rpc("registrar_compra", {
     p_chave: dados.chave,
     p_itens: dados.itens as unknown as Json,
     p_pago_por: dados.pagoPor,
@@ -123,6 +124,10 @@ export async function registrarCompra(dados: {
     p_observacao: dados.observacao,
   });
   if (error) return falhou(error);
+  if (dados.emDinheiro && dados.emDinheiro > 0 && dados.pagoPor === "caixa") {
+    const { error: erroDinheiro } = await s.rpc("definir_dinheiro_pago", { p_tipo: "compra", p_id: data as unknown as string, p_valor: dados.emDinheiro });
+    if (erroDinheiro) return falhou(erroDinheiro);
+  }
   return { ok: true, mensagem: "Compra registrada. O estoque e o custo dos insumos foram atualizados." };
 }
 

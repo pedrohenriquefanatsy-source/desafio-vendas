@@ -73,6 +73,8 @@ export async function obterPainel() {
     dias: m?.inicio && m.fim && m.hoje ? diasDoDesafio(m.inicio, m.fim, m.hoje, porDia, unidadesDia) : [],
     potinhos,
     caixa: caixa.saldo,
+    banco: caixa.banco,
+    dinheiroVivo: caixa.dinheiroVivo,
     aReceber: lista(aReceber).reduce((t, v) => t + Number(v.a_receber ?? 0), 0),
     contasAReceber: lista(aReceber).length,
     encomendas: encomendas.count ?? 0,
