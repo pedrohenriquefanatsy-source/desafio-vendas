@@ -636,3 +636,8 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - **Dinheiro vivo**: reembolso do Arthur — R$ 70 dos R$ 74,28 pagos em dinheiro; Arthur depositou R$ 20 de vendas em dinheiro no banco em 02/11; R$ 9 de dinheiro foram para o banco por Pix sem identificação.
 - Pix enviados ao Arthur (R$ 150 em 01/11 e R$ 120 em 07/11) e a Heitor (R$ 10 em 05/11) foram tratados como devolução de Pix recebidos na mesma hora: entrada e saída se anulam, não entram no sistema.
 - `exportar_planilha` passou a mandar também os ajustes da contagem do dia (antes só os ajustes avulsos), para a aba Produção da planilha bater com o estoque.
+
+## 29. Painel público para o Google Sites (08/11/2026, pedido do administrador)
+- Página estática em `painel/` (sem build), publicada como projeto separado na Vercel (`chocobites-painel`, raiz `painel/`), com as cores e fontes da planilha.
+- Lê os dados ao vivo pela função `dados_dashboard()` (migrações `dados_dashboard_publico` e `dados_dashboard_caixa_por_data_real`), que devolve só totais por dia, sabor e tipo de venda, produção por dia, caixa por dia e categoria, saldo (banco e dinheiro vivo), investimento e custo atual por sabor. Não devolve nomes de clientes nem de vendedores. Pode ser chamada com a chave pública (anon).
+- Filtros: dia, sabor e tipo de venda (com/sem promoção). A meta do dia é a meta do desafio dividida pelos dias de venda.
