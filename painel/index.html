@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da Choco Bites</title>
+<link rel="icon" href="logo-escuro.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--amargo:#4F1407;--leite:#6F2615;--rosa:#D5667C;--brilho:#EBC3B8;--creme:#F9F2E0;--cartao:#FFFBF4;--linha:#F3E6DA;--branco:#fff;--verde:#2E7D4F;--vermelho:#B3261E;--suave:#8A6F66}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--creme)}
+body{font-family:Montserrat,system-ui,sans-serif;color:var(--amargo);font-size:14px;line-height:1.4}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 40px}
+header{background:var(--amargo);color:var(--creme)}
+header .wrap{display:flex;align-items:center;gap:22px;padding-top:18px;padding-bottom:18px}
+header img{height:64px;width:auto}
+header h1{font-family:Fredoka,sans-serif;font-weight:700;font-size:30px;line-height:1.05;color:var(--creme)}
+header p{color:var(--brilho);font-size:13px;margin-top:4px}
+header .upd{margin-left:auto;text-align:right;font-size:11px;color:var(--brilho)}
+header button{margin-top:6px;background:var(--rosa);color:#fff;border:0;border-radius:999px;padding:7px 14px;font:700 12px Montserrat;cursor:pointer}
+.filtros{position:sticky;top:0;z-index:5;background:var(--creme);border-bottom:1px solid var(--linha)}
+.filtros .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding-top:12px;padding-bottom:12px}
+.f label{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--leite);margin-bottom:4px}
+.f select{appearance:none;background:var(--brilho) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234F1407' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;border:2px solid var(--rosa);border-radius:10px;padding:8px 34px 8px 12px;font:700 14px Montserrat;color:var(--amargo);min-width:150px;cursor:pointer}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:2px solid var(--rosa);background:transparent;color:var(--amargo);border-radius:999px;padding:7px 12px;font:700 12px Montserrat;cursor:pointer}
+.chip.on{background:var(--rosa);color:#fff}
+.nota-f{font-size:11px;color:var(--suave);margin-left:auto;max-width:330px}
+h2{font-family:Fredoka,sans-serif;font-weight:700;font-size:22px;margin:28px 0 12px}
+h2 small{font-family:Montserrat;font-weight:500;font-size:12px;color:var(--suave);margin-left:8px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{border-radius:14px;padding:14px 16px 16px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi .l{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.kpi .v{font-family:Fredoka,sans-serif;font-weight:700;font-size:30px;line-height:1.05;margin-top:8px}
+.kpi .d{font-size:11px;margin-top:4px;opacity:.85}
+.k1{background:var(--amargo);color:var(--creme)} .k1 .l{color:var(--rosa)}
+.k2{background:var(--rosa);color:#fff}
+.k3{background:var(--cartao);border:1.5px solid var(--linha)}
+.k4{background:var(--brilho)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--cartao);border:1.5px solid var(--linha);border-radius:16px;padding:16px 18px}
+.card h3{font-family:Fredoka,sans-serif;font-weight:600;font-size:17px;margin-bottom:2px}
+.card .s{font-size:11.5px;color:var(--suave);margin-bottom:10px}
+.cv{position:relative;height:280px}
+.cv.small{height:240px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--amargo);color:#fff;font-weight:700;font-size:11px;padding:8px 8px;text-align:center;white-space:nowrap}
+th:first-child{text-align:left;border-top-left-radius:8px} th:last-child{border-top-right-radius:8px}
+td{padding:8px;border-bottom:1px solid var(--linha);text-align:center;white-space:nowrap}
+td:first-child{text-align:left;font-weight:700}
+tbody tr:nth-child(odd) td{background:#FBF3E8}
+tr.sel td{background:var(--brilho)!important}
+tr.tot td{background:var(--amargo)!important;color:#fff;font-weight:700}
+.ok{color:var(--verde);font-weight:800}.no{color:var(--vermelho);font-weight:800}
+.scroll{overflow-x:auto}
+.fin{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fin .card .v{font-family:Fredoka,sans-serif;font-weight:700;font-size:24px;margin-top:4px}
+.fin .card .l{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--leite)}
+.fin .card .d{font-size:11px;color:var(--suave);margin-top:4px}
+footer{font-size:11px;color:var(--suave);margin-top:28px;line-height:1.6}
+#erro{display:none;background:var(--rosa);color:#fff;border-radius:12px;padding:14px 16px;margin-top:16px;font-weight:600}
+.loading{opacity:.45;transition:opacity .2s}
+@media (max-width:900px){.kpis,.fin{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}header h1{font-size:24px}header img{height:48px}.nota-f{margin-left:0}}
+@media (max-width:480px){.wrap{padding:0 16px 32px}.kpi .v{font-size:24px}header .upd{display:none}.f select{min-width:130px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <img src="logo-claro.png" alt="Choco Bites">
+  <div><h1>Painel da Choco Bites</h1><p>Vendas, produção, custos e caixa do Desafio do Produto, direto do nosso sistema.</p></div>
+  <div class="upd"><div id="upd">Carregando…</div><button id="rec" type="button">Atualizar</button></div>
+</div></header>
+
+<div class="filtros"><div class="wrap">
+  <div class="f"><label for="fDia">Dia</label><select id="fDia"></select></div>
+  <div class="f"><label for="fSabor">Sabor</label><select id="fSabor"><option>Todos</option><option>Ao leite</option><option>Meio amargo</option><option>Branco</option></select></div>
+  <div class="f"><label>Tipo de venda</label><div class="chips" id="fPromo"><button class="chip on" data-v="todas">Todas</button><button class="chip" data-v="promo">Com promoção</button><button class="chip" data-v="avulsa">Sem promoção</button></div></div>
+  <div class="nota-f" id="notaF">Os filtros mudam os cartões, os gráficos de vendas e a tabela dia a dia.</div>
+</div></div>
+
+<main class="wrap" id="app">
+  <div id="erro"></div>
+  <h2>Vendas <small id="recorte"></small></h2>
+  <div class="kpis">
+    <div class="kpi k1"><div class="l">Faturamento</div><div class="v" id="kFat">–</div><div class="d" id="kFatD"></div></div>
+    <div class="kpi k2"><div class="l">Caixinhas vendidas</div><div class="v" id="kCx">–</div><div class="d" id="kCxD"></div></div>
+    <div class="kpi k3"><div class="l">Número de vendas</div><div class="v" id="kN">–</div><div class="d">pedidos diferentes</div></div>
+    <div class="kpi k4"><div class="l">Ticket médio</div><div class="v" id="kTk">–</div><div class="d">faturamento ÷ vendas</div></div>
+    <div class="kpi k3"><div class="l">Custo dos produtos</div><div class="v" id="kCusto">–</div><div class="d">custo gravado em cada venda</div></div>
+    <div class="kpi k1"><div class="l">Margem de contribuição</div><div class="v" id="kMc">–</div><div class="d" id="kMcD"></div></div>
+    <div class="kpi k4"><div class="l">Preço médio da caixinha</div><div class="v" id="kPm">–</div><div class="d" id="kPmD"></div></div>
+    <div class="kpi k2"><div class="l">% da meta de faturamento</div><div class="v" id="kMeta">–</div><div class="d" id="kMetaD"></div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>Faturamento por dia × meta do dia</h3><div class="s" id="sMeta"></div><div class="cv"><canvas id="cFat"></canvas></div></div>
+    <div class="card"><h3>Faturamento acumulado × meta</h3><div class="s">A meta do desafio dividida igualmente pelos dias de venda</div><div class="cv"><canvas id="cAcum"></canvas></div></div>
+    <div class="card"><h3>Caixinhas vendidas por dia e sabor</h3><div class="s">Pacotes promocionais entram pelos sabores que os formam</div><div class="cv"><canvas id="cSab"></canvas></div></div>
+    <div class="card"><h3>Mix de sabores</h3><div class="s" id="sMix">Participação de cada sabor nas caixinhas vendidas</div><div class="cv"><canvas id="cMix"></canvas></div></div>
+  </div>
+
+  <h2>Pacotes promocionais <small>2 por R$ 18 e 3 por R$ 25, desde 04/11</small></h2>
+  <div class="card scroll"><table id="tPromo"></table></div>
+
+  <h2>Produção × vendas <small>potinhos produzidos e vendidos por dia</small></h2>
+  <div class="card"><div class="cv"><canvas id="cProd"></canvas></div></div>
+
+  <h2>Resultado e caixa <small>todo o desafio; o filtro de dia vale para o fluxo de caixa</small></h2>
+  <div class="fin">
+    <div class="card"><div class="l">Saldo de caixa</div><div class="v" id="fSaldo">–</div><div class="d" id="fSaldoD"></div></div>
+    <div class="card"><div class="l">Lucro estimado</div><div class="v" id="fRes">–</div><div class="d">margem das vendas − despesas</div></div>
+    <div class="card"><div class="l">Lucro pelo caixa</div><div class="v" id="fLucro">–</div><div class="d" id="fLucroD"></div></div>
+    <div class="card"><div class="l">Markup médio</div><div class="v" id="fMk">–</div><div class="d">faturamento ÷ custo dos produtos e entrega</div></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>Entradas e saídas por dia</h3><div class="s">Saldo acumulado na linha</div><div class="cv"><canvas id="cCaixa"></canvas></div></div>
+    <div class="card scroll"><h3>Para onde foi o dinheiro</h3><div class="s" id="sCat"></div><table id="tCat"></table></div>
+  </div>
+
+  <h2>Dia a dia</h2>
+  <div class="card scroll"><table id="tDia"></table></div>
+
+  <footer>
+    Fonte: sistema de gestão da Choco Bites (dados ao vivo). Faturamento = vendas sem as canceladas, mais os valores pagos a mais; a encomenda paga conta no dia do pagamento.
+    Margem de contribuição = faturamento − custo dos produtos − entrega (gasolina e frete divididos pelas caixinhas). Lucro pelo caixa = saldo de caixa − investimento recebido.
+  </footer>
+</main>
+
+<script>
+const SB = 'https://iebzbiccuwrchgdsojgn.supabase.co', KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllYnpiaWNjdXdyY2hnZHNvamduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwODU2NjksImV4cCI6MjA4MTY2MTY2OX0.gy3BOcoCgYNQwCAdgKPKrskYHJyHrIib9Cprp0xa7xE';
+const COR = {amargo:'#4F1407', leite:'#6F2615', rosa:'#D5667C', brilho:'#EBC3B8', creme:'#F9F2E0', suave:'#8A6F66', linha:'#F3E6DA'};
+const SAB = {'Ao leite':'#B4735A','Meio amargo':'#4F1407','Branco':'#EBC3B8'};
+const SABORES = ['Ao leite','Meio amargo','Branco'];
+const brl = v => 'R$ ' + (Math.round(v*100)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const brl0 = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const int = v => Math.round(v).toLocaleString('pt-BR');
+const pct = v => (v*100).toLocaleString('pt-BR',{maximumFractionDigits:1}) + '%';
+const dm = d => d.slice(8,10) + '/' + d.slice(5,7);
+const sem = d => ['dom','seg','ter','qua','qui','sex','sáb'][new Date(d+'T12:00').getDay()];
+Chart.defaults.font.family = 'Montserrat'; Chart.defaults.color = COR.leite; Chart.defaults.font.size = 11;
+Chart.defaults.plugins.tooltip.backgroundColor = COR.amargo; Chart.defaults.plugins.legend.labels.boxWidth = 12;
+let D = null, charts = {}, F = {dia:'Todos', sabor:'Todos', promo:'todas'};
+
+async function carregar(){
+  document.getElementById('app').classList.add('loading');
+  try{
+    const r = await fetch(SB + '/rest/v1/rpc/dados_dashboard', {method:'POST', headers:{apikey:KEY, Authorization:'Bearer '+KEY, 'Content-Type':'application/json'}, body:'{}'});
+    if(!r.ok) throw new Error('erro ' + r.status);
+    D = await r.json();
+    document.getElementById('erro').style.display='none';
+    montarDias(); desenhar();
+    const t = new Date(D.atualizado);
+    document.getElementById('upd').textContent = 'Atualizado em ' + t.toLocaleDateString('pt-BR') + ' às ' + t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    const el = document.getElementById('erro'); el.style.display='block';
+    el.textContent = 'Não consegui buscar os dados do sistema agora (' + e.message + '). Tente "Atualizar" em alguns segundos.';
+  }finally{ document.getElementById('app').classList.remove('loading'); }
+}
+
+function diasVenda(){
+  const s = new Set(D.vendas.map(v=>v.dia)); D.producao.forEach(p=>s.add(p.dia));
+  return [...s].filter(d => d >= '2026-10-29').sort();
+}
+function montarDias(){
+  const sel = document.getElementById('fDia'), atual = sel.value || 'Todos';
+  sel.innerHTML = '<option value="Todos">Todos os dias</option>' + diasVenda().map(d=>`<option value="${d}">${sem(d)} ${dm(d)}</option>`).join('');
+  sel.value = [...sel.options].some(o=>o.value===atual) ? atual : 'Todos';
+}
+
+function filtra(v, comDia=true){
+  return (!comDia || F.dia==='Todos' || v.dia===F.dia) && (F.sabor==='Todos' || v.sabor===F.sabor) && (F.promo==='todas' || v.promo===F.promo);
+}
+function entregaCx(){
+  const desp = D.despesas.filter(x=>/transporte/i.test(x.cat)).reduce((s,x)=>s+ +x.v,0);
+  const cx = D.vendas.reduce((s,v)=>s+ +v.q,0);
+  return cx ? desp/cx : 0;
+}
+function resumo(dia){
+  const vs = D.vendas.filter(v => (dia===undefined ? true : v.dia===dia) && filtra(v,false));
+  let q=0,fat=0,custo=0,n=0;
+  vs.forEach(v=>{q+= +v.q; fat+= +v.fat; custo+= +v.custo;});
+  if(F.sabor==='Todos'){
+    if(F.promo==='todas') n = D.pedidos_dia.filter(p=>dia===undefined||p.dia===dia).reduce((s,p)=>s+p.n,0);
+    else n = D.pedidos.filter(p=>(dia===undefined||p.dia===dia)&&p.promo===F.promo).reduce((s,p)=>s+p.n,0);
+    if(F.promo==='todas') fat += D.valor_a_mais.filter(x=>dia===undefined||x.dia===dia).reduce((s,x)=>s+ +x.v,0);
+  } else n = vs.reduce((s,v)=>s+v.n,0);
+  const ent = q*entregaCx();
+  return {q,fat,custo,n,mc:fat-custo-ent,ent};
+}
+function metaDia(){ const dias = diasVenda().filter(d=>d<=D.desafio.fim); return D.desafio.meta / (dias.length||1); }
+
+function graf(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); }
+const eixoR = {ticks:{callback:v=>'R$ '+v.toLocaleString('pt-BR')}, grid:{color:COR.linha}};
+
+function desenhar(){
+  const dias = diasVenda(), md = metaDia(), filtroSabor = F.sabor!=='Todos' || F.promo!=='todas';
+  const R = F.dia==='Todos' ? resumo() : resumo(F.dia);
+  const partes = [F.dia==='Todos'?'todo o desafio':(sem(F.dia)+' '+dm(F.dia)), F.sabor==='Todos'?'todos os sabores':F.sabor, F.promo==='todas'?'':(F.promo==='promo'?'com promoção':'sem promoção')].filter(Boolean);
+  document.getElementById('recorte').textContent = partes.join(' · ');
+  set('kFat', brl0(R.fat)); set('kCx', int(R.q)); set('kN', int(R.n)); set('kTk', R.n?brl(R.fat/R.n):'–');
+  set('kCusto', brl0(R.custo)); set('kMc', brl0(R.mc)); set('kMcD', R.fat? pct(R.mc/R.fat)+' do faturamento':'');
+  set('kPm', R.q?brl(R.fat/R.q):'–'); set('kPmD', 'preço cheio: R$ 10,00');
+  const totCx = resumoTodos().q; set('kCxD', F.sabor==='Todos'&&F.promo==='todas'?'':pct(R.q/(F.dia==='Todos'?totCx:resumoTodos(F.dia).q||1))+(F.dia==='Todos'?' das caixinhas do desafio':' das caixinhas do dia'));
+  set('kFatD', F.dia==='Todos' ? 'meta do desafio: '+brl0(D.desafio.meta) : 'meta do dia: '+brl0(md));
+  if(filtroSabor){ set('kMeta','—'); set('kMetaD','a meta vale só para o total (todos os sabores)'); }
+  else { const m = F.dia==='Todos'?D.desafio.meta:md; set('kMeta', pct(R.fat/m)); set('kMetaD', (R.fat>=m?'acima':'abaixo')+' da meta de '+brl0(m)); }
+  set('sMeta', 'Meta do dia: '+brl0(md)+' (meta de '+brl0(D.desafio.meta)+' ÷ '+dias.filter(d=>d<=D.desafio.fim).length+' dias)');
+
+  const porDia = dias.map(d=>resumo(d));
+  const destaque = dias.map(d=> F.dia==='Todos'||d===F.dia ? COR.rosa : COR.brilho);
+  graf('cFat',{type:'bar',data:{labels:dias.map(dm),datasets:[
+    {label:'Faturamento',data:porDia.map(r=>Math.round(r.fat)),backgroundColor:destaque,borderRadius:6,order:2},
+    {label:'Meta do dia',data:filtroSabor?[]:dias.map(()=>Math.round(md)),type:'line',borderColor:COR.amargo,borderWidth:3,pointRadius:0,order:1}]},
+    options:{maintainAspectRatio:false,scales:{y:eixoR,x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl0(c.raw)}}}}});
+  let a=0,m=0; const acum=porDia.map(r=>a+=r.fat), macum=dias.map(()=>m+=md);
+  graf('cAcum',{type:'line',data:{labels:dias.map(dm),datasets:[
+    {label:'Faturamento acumulado',data:acum.map(Math.round),borderColor:COR.rosa,backgroundColor:'rgba(213,102,124,.15)',fill:true,borderWidth:3,pointRadius:3,tension:.25},
+    {label:'Meta acumulada',data:filtroSabor?[]:macum.map(Math.round),borderColor:COR.amargo,borderDash:[6,4],borderWidth:2,pointRadius:0}]},
+    options:{maintainAspectRatio:false,scales:{y:eixoR,x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl0(c.raw)}}}}});
+  const sabs = F.sabor==='Todos'?SABORES:[F.sabor];
+  graf('cSab',{type:'bar',data:{labels:dias.map(dm),datasets:sabs.map(s=>({label:s,backgroundColor:SAB[s],borderRadius:4,
+    data:dias.map(d=>D.vendas.filter(v=>v.dia===d&&v.sabor===s&&(F.promo==='todas'||v.promo===F.promo)).reduce((t,v)=>t+ +v.q,0))}))},
+    options:{maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:COR.linha}}},plugins:{legend:{position:'bottom'}}}});
+  const mix = SABORES.map(s=>D.vendas.filter(v=>v.sabor===s&&(F.dia==='Todos'||v.dia===F.dia)&&(F.promo==='todas'||v.promo===F.promo)).reduce((t,v)=>t+ +v.q,0));
+  const tm = mix.reduce((a,b)=>a+b,0);
+  graf('cMix',{type:'doughnut',data:{labels:SABORES,datasets:[{data:mix,backgroundColor:SABORES.map(s=>SAB[s]),borderColor:'#FFFBF4',borderWidth:3,
+    offset:SABORES.map(s=>F.sabor===s?14:0)}]},
+    options:{maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>c.label+': '+int(c.raw)+' caixinhas ('+(tm?pct(c.raw/tm):'0%')+')'}}}}});
+
+  // pacotes
+  const linhaP = tipo => { const vs = D.vendas.filter(v=>v.promo===tipo&&(F.dia==='Todos'||v.dia===F.dia)&&(F.sabor==='Todos'||v.sabor===F.sabor));
+    const q=vs.reduce((t,v)=>t+ +v.q,0), f=vs.reduce((t,v)=>t+ +v.fat,0);
+    const n = F.sabor==='Todos' ? D.pedidos.filter(p=>p.promo===tipo&&(F.dia==='Todos'||p.dia===F.dia)).reduce((t,p)=>t+p.n,0) : vs.reduce((t,v)=>t+v.n,0);
+    return {q,f,n}; };
+  const P=linhaP('promo'), A=linhaP('avulsa'), TQ=P.q+A.q;
+  document.getElementById('tPromo').innerHTML = '<thead><tr><th>Tipo de venda</th><th>Vendas</th><th>Caixinhas</th><th>Faturamento</th><th>Preço médio da caixinha</th><th>Desconto em relação a R$ 10</th><th>% das caixinhas</th></tr></thead><tbody>'
+    + [['Com promoção',P],['Sem promoção',A]].map(([n,x])=>`<tr><td>${n}</td><td>${int(x.n)}</td><td>${int(x.q)}</td><td>${brl(x.f)}</td><td>${x.q?brl(x.f/x.q):'–'}</td><td>${brl(Math.max(0,x.q*10-x.f))}</td><td>${TQ?pct(x.q/TQ):'–'}</td></tr>`).join('') + '</tbody>';
+
+  // produção x vendas
+  const prodS = d => D.producao.filter(p=>p.dia===d&&(F.sabor==='Todos'||p.sabor===F.sabor)).reduce((t,p)=>t+ +p.q,0);
+  const vendS = d => D.vendas.filter(v=>v.dia===d&&(F.sabor==='Todos'||v.sabor===F.sabor)).reduce((t,v)=>t+ +v.q,0);
+  let ep=0; const estoque = dias.map(d=> ep += prodS(d)-vendS(d));
+  graf('cProd',{type:'bar',data:{labels:dias.map(dm),datasets:[
+    {label:'Produzidos',data:dias.map(prodS),backgroundColor:COR.amargo,borderRadius:6,order:2},
+    {label:'Vendidos',data:dias.map(vendS),backgroundColor:COR.rosa,borderRadius:6,order:3},
+    {label:'Sobra acumulada',data:estoque,type:'line',borderColor:COR.leite,borderDash:[5,4],borderWidth:2,pointRadius:2,order:1}]},
+    options:{maintainAspectRatio:false,scales:{y:{grid:{color:COR.linha}},x:{grid:{display:false}}},plugins:{legend:{position:'bottom'}}}});
+
+  // financeiro (todo o desafio)
+  const T = resumoTodos();
+  const desp = D.despesas.reduce((t,x)=>t+ +x.v,0);
+  const res = T.fat - T.custo - desp;
+  set('fSaldo', brl(D.saldo.saldo)); set('fSaldoD', 'banco '+brl(D.saldo.banco)+' + dinheiro vivo '+brl(D.saldo.dinheiro));
+  set('fRes', brl0(res)); set('fLucro', brl0(D.saldo.saldo - D.investimento)); set('fLucroD', 'saldo − investimento de '+brl0(D.investimento));
+  set('fMk', (T.fat/(T.custo+T.ent||1)).toLocaleString('pt-BR',{maximumFractionDigits:2})+'x');
+
+  const cxd = [...new Set(D.caixa.map(c=>c.dia))].sort();
+  let sa=0; const saldoAc = cxd.map(d=> sa += D.caixa.filter(c=>c.dia===d).reduce((t,c)=>t+ +c.v,0));
+  graf('cCaixa',{type:'bar',data:{labels:cxd.map(dm),datasets:[
+    {label:'Entradas',data:cxd.map(d=>D.caixa.filter(c=>c.dia===d&&c.v>0).reduce((t,c)=>t+ +c.v,0)),backgroundColor:cxd.map(d=>F.dia==='Todos'||d===F.dia?COR.rosa:COR.brilho),borderRadius:5,order:2},
+    {label:'Saídas',data:cxd.map(d=>D.caixa.filter(c=>c.dia===d&&c.v<0).reduce((t,c)=>t- +c.v,0)),backgroundColor:cxd.map(d=>F.dia==='Todos'||d===F.dia?COR.amargo:'#C9B1A8'),borderRadius:5,order:3},
+    {label:'Saldo acumulado',data:saldoAc.map(Math.round),type:'line',borderColor:COR.leite,borderWidth:2.5,pointRadius:2,order:1}]},
+    options:{maintainAspectRatio:false,scales:{y:eixoR,x:{grid:{display:false}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl(c.raw)}}}}});
+  const cats = {}; D.caixa.filter(c=>F.dia==='Todos'||c.dia===F.dia).forEach(c=>{cats[c.cat]=(cats[c.cat]||0)+ +c.v;});
+  const ordem = Object.entries(cats).filter(([,v])=>Math.abs(v)>0.004).sort((x,y)=>y[1]-x[1]);
+  const tot = ordem.reduce((t,[,v])=>t+v,0);
+  set('sCat', F.dia==='Todos'?'Todo o desafio':('Só em '+sem(F.dia)+' '+dm(F.dia)));
+  document.getElementById('tCat').innerHTML = '<thead><tr><th>Categoria</th><th>Valor</th></tr></thead><tbody>'
+    + ordem.map(([k,v])=>`<tr><td>${k}</td><td class="${v<0?'no':'ok'}">${v<0?'−':'+'} ${brl(Math.abs(v))}</td></tr>`).join('')
+    + `<tr class="tot"><td>${F.dia==='Todos'?'Saldo final':'Resultado do dia'}</td><td>${brl(tot)}</td></tr></tbody>`;
+
+  // dia a dia
+  let linhas = dias.map((d,i)=>{ const r=porDia[i]; const ok=r.fat>=md;
+    return `<tr class="${d===F.dia?'sel':''}"><td>${sem(d)} ${dm(d)}</td><td>${int(r.q)}</td><td>${int(r.n)}</td><td>${brl(r.fat)}</td><td>${r.n?brl(r.fat/r.n):'–'}</td><td>${brl(r.custo)}</td><td>${brl(r.mc)}</td><td>${r.fat?pct(r.mc/r.fat):'–'}</td><td>${prodS(d)}</td>`
+      + (filtroSabor?'<td>—</td>':`<td class="${ok?'ok':'no'}">${pct(r.fat/md)}</td>`)+'</tr>'; }).join('');
+  const t = porDia.reduce((s,r)=>({q:s.q+r.q,n:s.n+r.n,fat:s.fat+r.fat,custo:s.custo+r.custo,mc:s.mc+r.mc}),{q:0,n:0,fat:0,custo:0,mc:0});
+  linhas += `<tr class="tot"><td>Total</td><td>${int(t.q)}</td><td>${int(t.n)}</td><td>${brl(t.fat)}</td><td>${t.n?brl(t.fat/t.n):'–'}</td><td>${brl(t.custo)}</td><td>${brl(t.mc)}</td><td>${t.fat?pct(t.mc/t.fat):'–'}</td><td>${dias.reduce((s,d)=>s+prodS(d),0)}</td><td>${filtroSabor?'—':pct(t.fat/D.desafio.meta)}</td></tr>`;
+  document.getElementById('tDia').innerHTML = '<thead><tr><th>Dia</th><th>Caixinhas</th><th>Vendas</th><th>Faturamento</th><th>Ticket médio</th><th>Custo dos produtos</th><th>Margem de contribuição</th><th>MC %</th><th>Produzidos</th><th>% da meta do dia</th></tr></thead><tbody>'+linhas+'</tbody>';
+}
+function resumoTodos(dia){ const s=F.sabor,p=F.promo; F.sabor='Todos';F.promo='todas'; const r = dia===undefined?resumo():resumo(dia); F.sabor=s;F.promo=p; return r; }
+function set(id,t){ document.getElementById(id).textContent = t; }
+
+document.getElementById('fDia').addEventListener('change',e=>{F.dia=e.target.value; desenhar();});
+document.getElementById('fSabor').addEventListener('change',e=>{F.sabor=e.target.value; desenhar();});
+document.querySelectorAll('#fPromo .chip').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#fPromo .chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); F.promo=b.dataset.v; desenhar();}));
+document.getElementById('rec').addEventListener('click',carregar);
+carregar();
+</script>
+</body>
+</html>
