@@ -624,9 +624,15 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 - Feita pelas funções do banco, como administrador (nada gravado direto nas tabelas).
 - **Compras que faltavam** (notas fiscais de 06/11, pagas pelo caixa): Elói Chaves R$ 57,96 (1 cobertura ao leite + 1 meio amargo, 1,01 kg cada) e Atacadão R$ 44,72 (4 misturas D. Benta, margarina 500 g, 20 ovos, 1 sacola).
 - **Encomendas**: as 31 que estavam "aguardando" foram marcadas como entregues (o faturamento continua no dia do pagamento).
-- **Produção = vendido**: lançadas as produções que não tinham sido registradas (ao leite 124, meio amargo 116, branco 6), com a observação "Produção feita e não registrada durante o desafio". Total produzido = 1.070 potinhos = total vendido.
+- **Produção = vendido**: lançadas as produções que não tinham sido registradas (ao leite 124, meio amargo 116, branco 6), com a observação "Produção feita e não registrada durante o desafio". Total produzido = total vendido (1.076 potinhos depois das vendas da Flávia e do Glenderson).
   - Espalhadas pelos dias em que o estoque ficaria negativo sem elas (nada em 07 e 08/11, quando não houve produção): ao leite 37 em 29/10, 78 em 30/10 e 9 em 01/11; meio amargo 21 em 29/10, 66 em 30/10, 18 em 31/10 e 11 em 01/11; branco 6 em 06/11. As datas foram acertadas direto no banco (produção e movimentos de estoque), porque a tela só registra produção no dia de hoje.
 - **Estoque zerado**: contagem final de potinhos e insumos em zero (ajuste, fora do resultado). Acerto aberto de 02/11 cancelado.
-- **Caixa**: ajuste para o saldo real de R$ 8.584,36 = extrato R$ 8.372,36 + dinheiro vivo R$ 212,00 (Lucas 106, Arthur 46, Marcela 60). Diferença lançada: +R$ 112,07 (Pix recebidos sem venda registrada). Dinheiro vivo ajustado para R$ 212,00 (parte do dinheiro foi depositada e alguns Pix completaram pagamentos em dinheiro).
+- **Caixa** (o ajuste único de +R$ 112,07 foi desfeito e trocado por lançamentos com origem):
+  - Vendas sem registro achadas pelo extrato: nº 477 Flávia Drummond (Marcela, 04/11 19:19, 2 ao leite + 2 meio amargo, R$ 40, Pix) e nº 478 Glenderson Maciel (Arthur, 05/11 21:41, 1 + 1, R$ 20, Pix), com a produção correspondente nos mesmos dias.
+  - Vendas lançadas como dinheiro que foram pagas por Pix: nº 282 (Wagner) e nº 284 (Ana Gabriela) passaram para Pix; nº 289 (Maiara) ficou metade Pix, metade dinheiro.
+  - Ajuste "Maquininha": +R$ 27,98 (depósitos da InfinitePay sem venda no cartão e centavos de taxa).
+  - Ajuste "Pix recebidos sem venda identificada": +R$ 24,09.
+  - Saldo final R$ 8.584,36 = banco R$ 8.372,36 + dinheiro vivo R$ 212,00.
+- **Dinheiro vivo**: reembolso do Arthur — R$ 70 dos R$ 74,28 pagos em dinheiro; Arthur depositou R$ 20 de vendas em dinheiro no banco em 02/11; R$ 9 de dinheiro foram para o banco por Pix sem identificação.
 - Pix enviados ao Arthur (R$ 150 em 01/11 e R$ 120 em 07/11) e a Heitor (R$ 10 em 05/11) foram tratados como devolução de Pix recebidos na mesma hora: entrada e saída se anulam, não entram no sistema.
 - `exportar_planilha` passou a mandar também os ajustes da contagem do dia (antes só os ajustes avulsos), para a aba Produção da planilha bater com o estoque.
