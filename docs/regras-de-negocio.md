@@ -619,3 +619,13 @@ Pedido do administrador depois de usar o sistema: "está muito complexo".
 ## 27. Dinheiro vivo × banco (fatia 25, 06/11/2026) — RETIRADO DAS TELAS
 - A pedido do administrador, a divisão do saldo em **Pix / banco** e **dinheiro vivo** foi **retirada das telas** (Início, Caixa, Nova compra, Nova despesa e Conferir o saldo voltaram ao que eram).
 - No banco de dados ficou, sem uso e sem efeito nas telas: a marca `em_dinheiro` nas formas de pagamento, as colunas `pago_em_dinheiro` (compras) e `valor_em_dinheiro` (despesas), a tabela `ajustes_dinheiro`, a view `v_dinheiro_vivo` e as funções `definir_dinheiro_pago` e `ajustar_dinheiro` (migração `20261106120000_dinheiro_vivo.sql`; teste `supabase/testes/fatia25.sql`). No sistema real, as compras da Elói (R$ 100) e dos potes (R$ 105) continuam marcadas como pagas em dinheiro. Dá para religar as telas depois sem refazer o banco.
+
+## 28. Conferência final do desafio (08/11/2026, pedido do administrador)
+- Feita pelas funções do banco, como administrador (nada gravado direto nas tabelas).
+- **Compras que faltavam** (notas fiscais de 06/11, pagas pelo caixa): Elói Chaves R$ 57,96 (1 cobertura ao leite + 1 meio amargo, 1,01 kg cada) e Atacadão R$ 44,72 (4 misturas D. Benta, margarina 500 g, 20 ovos, 1 sacola).
+- **Encomendas**: as 31 que estavam "aguardando" foram marcadas como entregues (o faturamento continua no dia do pagamento).
+- **Produção = vendido**: lançadas as produções que não tinham sido registradas (ao leite 124, meio amargo 116, branco 6), com a observação "Produção feita e não registrada durante o desafio". Total produzido = 1.070 potinhos = total vendido.
+- **Estoque zerado**: contagem final de potinhos e insumos em zero (ajuste, fora do resultado). Acerto aberto de 02/11 cancelado.
+- **Caixa**: ajuste para o saldo real de R$ 8.584,36 = extrato R$ 8.372,36 + dinheiro vivo R$ 212,00 (Lucas 106, Arthur 46, Marcela 60). Diferença lançada: +R$ 112,07 (Pix recebidos sem venda registrada). Dinheiro vivo ajustado para R$ 212,00 (parte do dinheiro foi depositada e alguns Pix completaram pagamentos em dinheiro).
+- Pix enviados ao Arthur (R$ 150 em 01/11 e R$ 120 em 07/11) e a Heitor (R$ 10 em 05/11) foram tratados como devolução de Pix recebidos na mesma hora: entrada e saída se anulam, não entram no sistema.
+- `exportar_planilha` passou a mandar também os ajustes da contagem do dia (antes só os ajustes avulsos), para a aba Produção da planilha bater com o estoque.

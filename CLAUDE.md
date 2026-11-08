@@ -29,3 +29,4 @@
 - Fatia 23 (04/11/2026, pedido do administrador): pacotes promocionais (kits Promo 2 por R$ 18 e Promo 3 por R$ 25) com um botão por pacote na Nova venda que abre a escolha dos sabores. Ver `docs/regras-de-negocio.md`, seção 25.
 - Fatia 24 (04/11/2026, pedido do administrador): datas dos gráficos em dia/mês, com rótulo alternado quando há muitos dias. Ver `docs/regras-de-negocio.md`, seção 26.
 - Fatia 25 (06/11/2026, pedido do administrador): saldo de caixa dividido em Pix / banco e dinheiro vivo — **retirado das telas a pedido do administrador** (o banco de dados ficou, sem uso). Ver `docs/regras-de-negocio.md`, seção 27.
+- Conferência final (08/11/2026): compras de 06/11, encomendas entregues, produção = vendido, estoque zerado e caixa batendo com extrato + dinheiro vivo. Ver `docs/regras-de-negocio.md`, seção 28.
