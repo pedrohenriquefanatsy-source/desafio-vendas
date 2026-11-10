@@ -110,7 +110,7 @@ function atualizarDados() {
 
     escreverBanco(ss.getSheetByName(ABA.banco), d);
     escreverFluxo(ss.getSheetByName(ABA.fluxo), d.fluxo);
-    escreverVendas(ss.getSheetByName(ABA.vendas), d.pedidos);
+    escreverVendas(ss.getSheetByName(ABA.vendas), d);
     escreverReceitas(ss.getSheetByName(ABA.custos), d);
     SpreadsheetApp.flush();
     avisar('Dados atualizados: ' + d.atualizado);
@@ -122,6 +122,22 @@ function atualizarDados() {
 function limpar(sh, linha, coluna, nCols) {
   var ult = Math.max(sh.getMaxRows() - linha + 1, 1);
   sh.getRange(linha, coluna, ult, nCols).clearContent();
+}
+
+// Escreve uma tabela: valores com setValues e fórmulas com setFormula
+// (setFormula sempre entende a fórmula em inglês com vírgula, qualquer que seja o idioma da planilha)
+function escrever(range, matriz) {
+  var semFormula = matriz.map(function (l) {
+    return l.map(function (v) { return (typeof v === 'string' && v.charAt(0) === '=') ? '' : v; });
+  });
+  range.setValues(semFormula);
+  var r0 = range.getRow(), c0 = range.getColumn();
+  var sh = range.getSheet();
+  matriz.forEach(function (l, i) {
+    l.forEach(function (v, j) {
+      if (typeof v === 'string' && v.charAt(0) === '=') sh.getRange(r0 + i, c0 + j).setFormula(v);
+    });
+  });
 }
 
 function escreverBanco(sh, d) {
@@ -147,101 +163,102 @@ function escreverBanco(sh, d) {
   limpar(sh, 3, 7, 3);
   if (ins.length) sh.getRange(3, 7, ins.length, 3).setValues(ins);
 
-  // Vendas por dia e sabor (kits já abertos em caixinhas)
-  var mapa = {};
+  // Vendas: uma linha por dia (Data | Pedidos | Ao leite | Meio amargo | Branco | Faturamento)
+  var dias = {};
+  function dia(t) { return dias[t] || (dias[t] = [paraData(t), 0, 0, 0, 0, 0]); }
+  d.pedidos.forEach(function (p) { dia(p.dia)[1] += Number(p.n); });
   d.vendas.forEach(function (v) {
-    var k = v.dia + '|' + v.sabor;
-    var m = mapa[k] || (mapa[k] = [paraData(v.dia), v.sabor, 0, 0]);
-    m[2] += Number(v.q); m[3] += Number(v.fat);
+    var l = dia(v.dia), i = SABORES.indexOf(v.sabor);
+    if (i >= 0) l[2 + i] += Number(v.q);
+    l[5] += Number(v.fat);
   });
-  // Valor a mais pago pelo cliente entra no faturamento do dia
-  d.fluxo.forEach(function (f) {
-    if (f.item !== 'Valor a mais') return;
-    var k = f.dia + '|Valor a mais';
-    var m = mapa[k] || (mapa[k] = [paraData(f.dia), 'Valor a mais', 0, 0]);
-    m[3] += Number(f.valor);
-  });
-  var vendas = Object.keys(mapa).sort().map(function (k) { return mapa[k]; });
-  limpar(sh, 3, 11, 4);
-  if (vendas.length) sh.getRange(3, 11, vendas.length, 4).setValues(vendas);
-
-  // Pedidos por dia
-  var ped = d.pedidos.map(function (p) { return [paraData(p.dia), Number(p.n)]; });
-  limpar(sh, 3, 16, 2);
-  if (ped.length) sh.getRange(3, 16, ped.length, 2).setValues(ped);
+  d.fluxo.forEach(function (f) { if (f.item === 'Valor a mais') dia(f.dia)[5] += Number(f.valor); });
+  var vendas = Object.keys(dias).sort().map(function (k) { return dias[k]; });
+  limpar(sh, 3, 11, 6);
+  if (vendas.length) sh.getRange(3, 11, vendas.length, 6).setValues(vendas);
 
   // Parâmetros vindos do sistema
+  var entregas = 0;
+  d.fluxo.forEach(function (f) {
+    if (f.item === 'Gasolina' || f.item === 'Entrega 99 (encomendas)') entregas += Math.abs(Number(f.valor));
+  });
   sh.getRange('T5').setValue(Number(d.investimento));
   sh.getRange('T7').setValue(d.atualizado);
+  sh.getRange('T8').setValue(entregas);
 }
 
 function escreverFluxo(sh, fluxo) {
   var ini = 4, n = fluxo.length;
   var resto = sh.getMaxRows() - ini + 1;
   if (resto > 0) {
-    sh.getRange(ini, 2, resto, 6).clearContent().setBackground(null).setBorder(false, false, false, false, false, false);
+    sh.getRange(ini, 2, resto, 8).clearContent().setBackground(null).setBorder(false, false, false, false, false, false);
   }
   if (!n) return;
   if (sh.getMaxRows() < ini + n) sh.insertRowsAfter(sh.getMaxRows(), ini + n - sh.getMaxRows());
 
-  var valores = [], formB = [], formG = [];
+  var valores = [], fB = [], fGHI = [];
   fluxo.forEach(function (f, i) {
     var r = ini + i;
     valores.push([paraData(f.dia), f.item, Math.abs(Number(f.valor)), f.forma]);
-    formB.push(["=VLOOKUP(D" + r + ",'Banco de dados'!$B$3:$C$300,2,0)"]);
-    formG.push([i === 0 ? '=IF(B' + r + '="ENTRADA",E' + r + ',-E' + r + ')'
-                        : '=G' + (r - 1) + '+IF(B' + r + '="ENTRADA",E' + r + ',-E' + r + ')']);
+    fB.push(["=VLOOKUP(D" + r + ",'Banco de dados'!$B$3:$C$300,2,0)"]);
+    fGHI.push([
+      '=IF(B' + r + '="ENTRADA",E' + r + ',0)',
+      '=IF(B' + r + '="SAÍDA",E' + r + ',0)',
+      i === 0 ? '=G' + r + '-H' + r : '=I' + (r - 1) + '+G' + r + '-H' + r
+    ]);
   });
   sh.getRange(ini, 3, n, 4).setValues(valores);
-  sh.getRange(ini, 2, n, 1).setFormulas(formB);
-  sh.getRange(ini, 7, n, 1).setFormulas(formG);
+  sh.getRange(ini, 2, n, 1).setFormulas(fB);
+  sh.getRange(ini, 7, n, 3).setFormulas(fGHI);
 
-  var tab = sh.getRange(ini, 2, n, 6);
+  var tab = sh.getRange(ini, 2, n, 8);
   estiloCorpo(tab);
   listrar(tab);
   sh.getRange(ini, 3, n, 1).setNumberFormat('dd/mm/yyyy');
   sh.getRange(ini, 5, n, 1).setNumberFormat('R$ #,##0.00');
-  sh.getRange(ini, 7, n, 1).setNumberFormat('R$ #,##0.00');
+  sh.getRange(ini, 7, n, 3).setNumberFormat('R$ #,##0.00');
   sh.getRange(ini, 2, n, 1).setFontWeight('bold');
 }
 
-function escreverVendas(sh, pedidos) {
+function escreverVendas(sh, d) {
   var ini = 4;
   var resto = sh.getMaxRows() - ini + 1;
   sh.getRange(ini, 2, resto, 10).breakApart().clearContent().setBackground(null)
     .setBorder(false, false, false, false, false, false).setFontWeight('normal').setFontColor(COR.amargo);
-  var dias = pedidos.map(function (p) { return paraData(p.dia); });
+  var vistos = {}, dias = [];
+  d.pedidos.concat(d.vendas).forEach(function (p) { if (!vistos[p.dia]) { vistos[p.dia] = true; dias.push(p.dia); } });
+  dias.sort();
   var n = dias.length;
   if (!n) return;
 
-  var linhas = [];
-  dias.forEach(function (dia, i) {
+  var BD = "'Banco de dados'!$K:$P";
+  var linhas = dias.map(function (t, i) {
     var r = ini + i;
-    linhas.push([
-      dia,
-      "=VLOOKUP(B" + r + ",'Banco de dados'!$P:$Q,2,0)",
-      "=SUMIFS('Banco de dados'!$M:$M,'Banco de dados'!$K:$K,$B" + r + ",'Banco de dados'!$L:$L,D$3)",
-      "=SUMIFS('Banco de dados'!$M:$M,'Banco de dados'!$K:$K,$B" + r + ",'Banco de dados'!$L:$L,E$3)",
-      "=SUMIFS('Banco de dados'!$M:$M,'Banco de dados'!$K:$K,$B" + r + ",'Banco de dados'!$L:$L,F$3)",
-      '=SUM(D' + r + ':F' + r + ')',
-      "=SUMIF('Banco de dados'!$K:$K,B" + r + ",'Banco de dados'!$N:$N)",
+    return [
+      paraData(t),
+      '=VLOOKUP(B' + r + ',' + BD + ',2,0)',
+      '=VLOOKUP(B' + r + ',' + BD + ',3,0)',
+      '=VLOOKUP(B' + r + ',' + BD + ',4,0)',
+      '=VLOOKUP(B' + r + ',' + BD + ',5,0)',
+      '=D' + r + '+E' + r + '+F' + r,
+      '=VLOOKUP(B' + r + ',' + BD + ',6,0)',
       '=H' + r + '/C' + r,
       "=G" + r + "/'Banco de dados'!$T$6",
       i === 0 ? '=H' + r : '=K' + (r - 1) + '+H' + r
-    ]);
+    ];
   });
   var tab = sh.getRange(ini, 2, n, 10);
-  tab.setValues(linhas);
+  escrever(tab, linhas);
   estiloCorpo(tab);
   listrar(tab);
 
   var t = ini + n, f = ini + n - 1;
-  sh.getRange(t, 2, 1, 10).setValues([[
+  var tot = sh.getRange(t, 2, 1, 10);
+  escrever(tot, [[
     'TOTAL', '=SUM(C' + ini + ':C' + f + ')', '=SUM(D' + ini + ':D' + f + ')', '=SUM(E' + ini + ':E' + f + ')',
     '=SUM(F' + ini + ':F' + f + ')', '=SUM(G' + ini + ':G' + f + ')', '=SUM(H' + ini + ':H' + f + ')',
-    '=H' + t + '/C' + t, "=G" + t + "/('Banco de dados'!$T$6*COUNT(B" + ini + ':B' + f + '))', '=K' + f
+    '=H' + t + '/C' + t, '=AVERAGE(J' + ini + ':J' + f + ')', '=K' + f
   ]]);
-  var tot = sh.getRange(t, 2, 1, 10);
   estiloCorpo(tot);
   tot.setBackground(COR.leite).setFontColor(COR.creme).setFontWeight('bold');
 
@@ -406,54 +423,55 @@ function larguras(sh, mapa) {
 function montarBanco(sh) {
   faixaTitulo(sh, 'B1:T1', 'BANCO DE DADOS', false);
   var blocos = [['B2:C2', ['Item', 'Classificação']], ['E2', ['Forma de pagamento']],
-                ['G2:I2', ['Insumo', 'Custo por unidade', 'Unidade']], ['K2:N2', ['Data', 'Sabor', 'Caixinhas', 'Faturamento']],
-                ['P2:Q2', ['Data', 'Pedidos']], ['S2:T2', ['Parâmetro', 'Valor']]];
+                ['G2:I2', ['Insumo', 'Custo por unidade', 'Unidade']],
+                ['K2:P2', ['Data', 'Pedidos', 'Ao leite', 'Meio amargo', 'Branco', 'Faturamento']], ['S2:T2', ['Parâmetro', 'Valor']]];
   blocos.forEach(function (b) { sh.getRange(b[0]).setValues([b[1]]); cabecalho(sh.getRange(b[0])); });
-  sh.getRange('S3:T7').setValues([
+  sh.getRange('S3:T8').setValues([
     ['Meta de lucro do grupo', 5000],
     ['Piso coletivo do PTPJ', 13500],
     ['Investimento recebido', 0],
     ['Meta de caixinhas por dia', 78],
-    ['Atualizado em', '']
+    ['Atualizado em', ''],
+    ['Gasto com entregas', 0]
   ]);
-  corpo(sh.getRange('S3:T7'));
+  corpo(sh.getRange('S3:T8'));
   sh.getRange('T3:T5').setNumberFormat('R$ #,##0.00');
+  sh.getRange('T8').setNumberFormat('R$ #,##0.00');
   sh.getRange('H3:H200').setNumberFormat('R$ #,##0.00000');
   sh.getRange('K3:K400').setNumberFormat('dd/mm/yyyy');
-  sh.getRange('N3:N400').setNumberFormat('R$ #,##0.00');
-  sh.getRange('P3:P400').setNumberFormat('dd/mm/yyyy');
-  larguras(sh, { B: 230, C: 110, D: 20, E: 150, F: 20, G: 170, H: 130, I: 80, J: 20, K: 100, L: 110, M: 90, N: 110, O: 20, P: 100, Q: 80, R: 20, S: 200, T: 130 });
+  sh.getRange('P3:P400').setNumberFormat('R$ #,##0.00');
+  larguras(sh, { B: 230, C: 110, D: 20, E: 150, F: 20, G: 170, H: 130, I: 80, J: 20, K: 100, L: 80, M: 90, N: 100, O: 80, P: 110, Q: 20, R: 20, S: 200, T: 130 });
 }
 
 /* ---------------- Fluxo de caixa ---------------- */
 
 function montarFluxo(sh) {
-  faixaTitulo(sh, 'B1:K1', 'FLUXO DE CAIXA', true);
-  sh.getRange('B3:G3').setValues([['Movimentação', 'Data', 'Produto', 'Valor', 'Forma de pagamento', 'Saldo']]);
-  cabecalho(sh.getRange('B3:G3'));
+  faixaTitulo(sh, 'B1:M1', 'FLUXO DE CAIXA', true);
+  sh.getRange('B3:I3').setValues([['Movimentação', 'Data', 'Produto', 'Valor', 'Forma de pagamento', 'Entrada', 'Saída', 'Saldo']]);
+  cabecalho(sh.getRange('B3:I3'));
   sh.setRowHeight(3, 30);
   sh.setFrozenRows(3);
 
-  sh.getRange('I3:K3').setValues([['ENTRADAS', 'SAÍDAS', 'SALDO']]);
-  cabecalho(sh.getRange('I3:K3'));
-  sh.getRange('I4:K4').setFormulas([['=SUMIF(B:B,"ENTRADA",E:E)', '=SUMIF(B:B,"SAÍDA",E:E)', '=I4-J4']]);
-  corpo(sh.getRange('I4:K4'));
-  sh.getRange('I4:K4').setNumberFormat('R$ #,##0.00').setFontSize(13).setFontWeight('bold');
+  sh.getRange('K3:M3').setValues([['ENTRADAS', 'SAÍDAS', 'SALDO']]);
+  cabecalho(sh.getRange('K3:M3'));
+  sh.getRange('K4:M4').setFormulas([['=SUM(G4:G3000)', '=SUM(H4:H3000)', '=K4-L4']]);
+  corpo(sh.getRange('K4:M4'));
+  sh.getRange('K4:M4').setNumberFormat('R$ #,##0.00').setFontSize(13).setFontWeight('bold');
   sh.setRowHeight(4, 34);
-  sh.getRange('I4').setFontColor(COR.verde);
-  sh.getRange('J4').setFontColor(COR.vermelho);
+  sh.getRange('K4').setFontColor(COR.verde);
+  sh.getRange('L4').setFontColor(COR.vermelho);
 
-  sh.getRange('I6:K6').merge().setValue('ATUALIZADO EM');
-  cabecalho(sh.getRange('I6:K6'));
-  sh.getRange('I7:K7').merge().setFormula("='Banco de dados'!T7");
-  corpo(sh.getRange('I7:K7'));
+  sh.getRange('K6:M6').merge().setValue('ATUALIZADO EM');
+  cabecalho(sh.getRange('K6:M6'));
+  sh.getRange('K7:M7').merge().setFormula("='Banco de dados'!T7");
+  corpo(sh.getRange('K7:M7'));
 
   var regras = [
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('ENTRADA').setFontColor(COR.verde).setRanges([sh.getRange('B4:B2000')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('SAÍDA').setFontColor(COR.vermelho).setRanges([sh.getRange('B4:B2000')]).build()
   ];
   sh.setConditionalFormatRules(regras);
-  larguras(sh, { B: 130, C: 100, D: 240, E: 110, F: 160, G: 120, H: 30, I: 140, J: 140, K: 170 });
+  larguras(sh, { B: 130, C: 100, D: 240, E: 110, F: 160, G: 110, H: 110, I: 120, J: 30, K: 140, L: 140, M: 170 });
 }
 
 /* ---------------- Vendas por dia ---------------- */
@@ -486,7 +504,7 @@ function montarCustos(sh) {
   var insumos = ['Massa de brownie', 'Ovos', 'Margarina', 'Chocolate ao leite', 'Chocolate Meio Amargo', 'Chocolate Branco', 'Gás'];
   insumos.forEach(function (n, i) {
     var r = 6 + i;
-    sh.getRange(r, 2, 1, 9).setValues([[n,
+    escrever(sh.getRange(r, 2, 1, 9), [[n,
       "=VLOOKUP(B" + r + ",'Banco de dados'!$G:$I,2,0)", "=VLOOKUP(B" + r + ",'Banco de dados'!$G:$I,3,0)",
       0, '=E' + r + '*$C' + r, 0, '=G' + r + '*$C' + r, 0, '=I' + r + '*$C' + r]]);
   });
@@ -504,9 +522,12 @@ function montarCustos(sh) {
   linhas.forEach(function (l, i) {
     var r = 13 + i;
     sh.getRange(r, 2, 1, 3).merge().setValue(l[0]);
-    sh.getRange(r, 5, 1, 2).merge().setValue(l[1]);
-    sh.getRange(r, 7, 1, 2).merge().setValue(l[2]);
-    sh.getRange(r, 9, 1, 2).merge().setValue(l[3]);
+    escrever(sh.getRange(r, 5), [[l[1]]]);
+    escrever(sh.getRange(r, 7), [[l[2]]]);
+    escrever(sh.getRange(r, 9), [[l[3]]]);
+    sh.getRange(r, 5, 1, 2).merge();
+    sh.getRange(r, 7, 1, 2).merge();
+    sh.getRange(r, 9, 1, 2).merge();
     corpo(sh.getRange(r, 2, 1, 9));
     sh.getRange(r, 2, 1, 3).setBackground(COR.brilho).setFontWeight('bold');
     sh.getRange(r, 5, 1, 6).setNumberFormat(l[4]).setFontWeight('bold');
@@ -517,7 +538,7 @@ function montarCustos(sh) {
   cabecalho(sh.getRange('B19:F19'));
   ['Embalagem pote', 'Adesivos - 5cm'].forEach(function (n, i) {
     var r = 20 + i;
-    sh.getRange(r, 2, 1, 5).setValues([[n, "=VLOOKUP(B" + r + ",'Banco de dados'!$G:$I,2,0)",
+    escrever(sh.getRange(r, 2, 1, 5), [[n, "=VLOOKUP(B" + r + ",'Banco de dados'!$G:$I,2,0)",
       "=VLOOKUP(B" + r + ",'Banco de dados'!$G:$I,3,0)", 1, '=C' + r + '*E' + r]]);
   });
   sh.getRange('B22:E22').merge().setValue('Total de embalagem');
@@ -535,8 +556,8 @@ function montarCustos(sh) {
   sh.getRange('D25:E25').merge().setValue('Caixinhas vendidas');
   sh.getRange('F25:G25').merge().setValue('Entrega por caixinha');
   cabecalho(sh.getRange('B25:G25'));
-  sh.getRange('B26:C26').merge().setFormula("=SUMIF('Fluxo de Caixa'!D:D,\"Gasolina\",'Fluxo de Caixa'!E:E)+SUMIF('Fluxo de Caixa'!D:D,\"Entrega 99 (encomendas)\",'Fluxo de Caixa'!E:E)");
-  sh.getRange('D26:E26').merge().setFormula("=SUM('Banco de dados'!M:M)");
+  sh.getRange('B26:C26').merge().setFormula("='Banco de dados'!T8");
+  sh.getRange('D26:E26').merge().setFormula("=SUM('Banco de dados'!M3:O400)");
   sh.getRange('F26:G26').merge().setFormula('=B26/D26');
   corpo(sh.getRange('B26:G26'));
   sh.getRange('B26').setNumberFormat('R$ #,##0.00');
@@ -583,7 +604,7 @@ function montarMarkup(sh) {
   ];
   itens.forEach(function (it, i) {
     var r = 5 + i;
-    sh.getRange(r, 2, 1, 6).setValues([[it[0], it[1], it[2], '=C' + r + '/D' + r, '=C' + r + '-D' + r, '=F' + r + '/C' + r]]);
+    escrever(sh.getRange(r, 2, 1, 6), [[it[0], it[1], it[2], '=C' + r + '/D' + r, '=C' + r + '-D' + r, '=F' + r + '/C' + r]]);
   });
   corpo(sh.getRange('B5:G9'));
   listrar(sh.getRange('B5:G9'));
@@ -603,9 +624,9 @@ function montarIndicadores(sh) {
   var R$ = 'R$ #,##0.00', P = '0.0%', N = '#,##0';
 
   secao(sh, 'B3:G3', 'RESULTADO');
-  cartao(sh, 'B4:C4', 'FATURAMENTO', { a1: 'B5:C5', f: "=SUM('Banco de dados'!N:N)" }, R$);
-  cartao(sh, 'D4:E4', 'SAÍDAS DO CAIXA', { a1: 'D5:E5', f: "='Fluxo de Caixa'!J4" }, R$);
-  cartao(sh, 'F4:G4', 'SALDO DE CAIXA', { a1: 'F5:G5', f: "='Fluxo de Caixa'!K4" }, R$);
+  cartao(sh, 'B4:C4', 'FATURAMENTO', { a1: 'B5:C5', f: "=SUM('Banco de dados'!P3:P400)" }, R$);
+  cartao(sh, 'D4:E4', 'SAÍDAS DO CAIXA', { a1: 'D5:E5', f: "='Fluxo de Caixa'!L4" }, R$);
+  cartao(sh, 'F4:G4', 'SALDO DE CAIXA', { a1: 'F5:G5', f: "='Fluxo de Caixa'!M4" }, R$);
   cartao(sh, 'B7:C7', 'INVESTIMENTO RECEBIDO', { a1: 'B8:C8', f: "='Banco de dados'!T5" }, R$);
   cartao(sh, 'D7:E7', 'LUCRO', { a1: 'D8:E8', f: '=F5-B8' }, R$);
   cartao(sh, 'F7:G7', 'ROI', { a1: 'F8:G8', f: '=D8/D5' }, P);
@@ -616,8 +637,8 @@ function montarIndicadores(sh) {
   cartao(sh, 'F11:G11', '% DO PISO DE R$ 13.500', { a1: 'F12:G12', f: "=D8/'Banco de dados'!T4" }, P);
 
   secao(sh, 'B14:G14', 'VENDAS');
-  cartao(sh, 'B15:C15', 'CAIXINHAS VENDIDAS', { a1: 'B16:C16', f: "=SUM('Banco de dados'!M:M)" }, N);
-  cartao(sh, 'D15:E15', 'PEDIDOS', { a1: 'D16:E16', f: "=SUM('Banco de dados'!Q:Q)" }, N);
+  cartao(sh, 'B15:C15', 'CAIXINHAS VENDIDAS', { a1: 'B16:C16', f: "=SUM('Banco de dados'!M3:O400)" }, N);
+  cartao(sh, 'D15:E15', 'PEDIDOS', { a1: 'D16:E16', f: "=SUM('Banco de dados'!L3:L400)" }, N);
   cartao(sh, 'F15:G15', 'TICKET MÉDIO', { a1: 'F16:G16', f: '=B5/D16' }, R$);
 
   secao(sh, 'B18:G18', 'MARGENS');
@@ -681,9 +702,6 @@ function montarSwot(sh) {
     sh.getRange(ini, 12, 4, 1).setBorder(false, false, false, false, false, false).setBackground(COR.creme);
     corpo(sh.getRange(s, 2, 1, 10));
     sh.getRange(s, 2, 1, 10).setBackground(COR.brilho).setFontWeight('bold');
-    var lista = SpreadsheetApp.newDataValidation().requireValueInList(['0', '1', '2'], true).setAllowInvalid(false).build();
-    sh.getRange(ini, 4, 3, 3).setDataValidation(lista);
-    sh.getRange(ini, 8, 3, 3).setDataValidation(lista);
   }
   bloco(6, 'FORÇAS', forcas);
   bloco(11, 'FRAQUEZAS', fraq);
@@ -710,7 +728,7 @@ function montarSwot(sh) {
   ];
   cen.forEach(function (c, i) {
     var r = 20 + i;
-    sh.getRange(r, 2, 1, 6).setValues([[c[0], c[1], c[2], 18, '=D' + r + '/E' + r, '=RANK(F' + r + ',$F$20:$F$23,0)']]);
+    escrever(sh.getRange(r, 2, 1, 6), [[c[0], c[1], c[2], 18, '=D' + r + '/E' + r, '=RANK(F' + r + ',$F$20:$F$23,0)']]);
     sh.setRowHeight(r, 40);
   });
   corpo(sh.getRange('B20:G23'));
