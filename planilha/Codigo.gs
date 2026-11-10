@@ -1026,10 +1026,10 @@ function montarSwot(sh) {
   faixaTitulo(sh, 'B1:N1', 'SWOT');
   secao(sh, 'B3:N3', 'SWOT QUANTITATIVA (CRUZADA)');
 
-  var oport = ['Doce depois da refeição é hábito do público', 'Datas de fim de ano e encomendas', 'Revenda em estabelecimentos de conhecidos'];
-  var ameac = ['Alta no preço do chocolate e da cobertura', 'Doces de aplicativo e de supermercado', 'Calor de Natal derretendo a cobertura'];
-  var forcas = ['Margem de contribuição alta por caixinha', 'Aceitação comprovada na pesquisa', 'Rede de contatos que vende por indicação'];
-  var fraq = ['Banho manual limita a produção', 'Entrega própria custa gasolina e tempo', 'Marca nova, pouco conhecida'];
+  var oport = ['Influenciadores e Instagram', 'Revenda em pontos parceiros', 'Datas festivas e confraternizações'];
+  var ameac = ['Fim do apelo do projeto', 'Docerias do iFood e vendedores informais', 'Alta do chocolate e El Niño'];
+  var forcas = ['Qualidade que sustenta o preço', 'Rede de contatos e Instagram engajado', 'Sistema próprio com histórico'];
+  var fraq = ['Banho manual limita a produção', 'Produção na casa dos integrantes', 'Funções indefinidas'];
 
   sh.getRange('D4:F4').merge().setValue('OPORTUNIDADES');
   sh.getRange('H4:J4').merge().setValue('AMEAÇAS');
