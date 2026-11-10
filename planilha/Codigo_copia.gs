@@ -116,10 +116,23 @@ function atualizarDados() {
     escreverVendas(ss.getSheetByName(ABA.vendas), d);
     escreverReceitas(ss.getSheetByName(ABA.custos), d);
     SpreadsheetApp.flush();
-    avisar('Dados atualizados: ' + d.atualizado);
+    var erros = contarErros(ss);
+    avisar('Dados atualizados: ' + d.atualizado + (erros ? ' · ' + erros + ' célula(s) com erro' : ''));
   } finally {
     trava.releaseLock();
   }
+}
+
+function contarErros(ss) {
+  var n = 0;
+  [ABA.fluxo, ABA.vendas, ABA.custos, ABA.markup, ABA.indicadores].forEach(function (a) {
+    var sh = ss.getSheetByName(a);
+    if (!sh) return;
+    sh.getDataRange().getDisplayValues().forEach(function (l) {
+      l.forEach(function (v) { if (/^#(ERROR|N\/A|REF|VALUE|NAME|DIV)/.test(v)) n++; });
+    });
+  });
+  return n;
 }
 
 function limpar(sh, linha, coluna, nCols) {
@@ -128,7 +141,7 @@ function limpar(sh, linha, coluna, nCols) {
 }
 
 // Escreve uma tabela: valores com setValues e fórmulas com setFormula
-// (setFormula sempre entende a fórmula em inglês com vírgula, qualquer que seja o idioma da planilha)
+// (as fórmulas passam por fx(), que ajusta ao idioma da planilha)
 function escrever(range, matriz) {
   var semFormula = matriz.map(function (l) {
     return l.map(function (v) { return (typeof v === 'string' && v.charAt(0) === '=') ? '' : v; });
@@ -138,7 +151,7 @@ function escrever(range, matriz) {
   var sh = range.getSheet();
   matriz.forEach(function (l, i) {
     l.forEach(function (v, j) {
-      if (typeof v === 'string' && v.charAt(0) === '=') sh.getRange(r0 + i, c0 + j).setFormula(v);
+      if (typeof v === 'string' && v.charAt(0) === '=') sh.getRange(r0 + i, c0 + j).setFormula(fx(v));
     });
   });
 }
@@ -176,7 +189,8 @@ function escreverBanco(sh, d) {
     l[5] += Number(v.fat);
   });
   d.fluxo.forEach(function (f) { if (f.item === 'Valor a mais') dia(f.dia)[5] += Number(f.valor); });
-  var vendas = Object.keys(dias).sort().map(function (k) { return dias[k]; });
+  d.diasVendas = Object.keys(dias).sort();
+  var vendas = d.diasVendas.map(function (k) { return dias[k]; });
   limpar(sh, 3, 11, 6);
   if (vendas.length) sh.getRange(3, 11, vendas.length, 6).setValues(vendas);
 
@@ -211,8 +225,8 @@ function escreverFluxo(sh, fluxo) {
     ]);
   });
   sh.getRange(ini, 3, n, 4).setValues(valores);
-  sh.getRange(ini, 2, n, 1).setFormulas(fB);
-  sh.getRange(ini, 7, n, 3).setFormulas(fGHI);
+  sh.getRange(ini, 2, n, 1).setFormulas(fxM(fB));
+  sh.getRange(ini, 7, n, 3).setFormulas(fxM(fGHI));
 
   var tab = sh.getRange(ini, 2, n, 8);
   estiloCorpo(tab);
@@ -228,23 +242,21 @@ function escreverVendas(sh, d) {
   var resto = sh.getMaxRows() - ini + 1;
   sh.getRange(ini, 2, resto, 10).breakApart().clearContent().setBackground(null)
     .setBorder(false, false, false, false, false, false).setFontWeight('normal').setFontColor(COR.amargo);
-  var vistos = {}, dias = [];
-  d.pedidos.concat(d.vendas).forEach(function (p) { if (!vistos[p.dia]) { vistos[p.dia] = true; dias.push(p.dia); } });
-  dias.sort();
+  var dias = d.diasVendas || [];
   var n = dias.length;
   if (!n) return;
 
-  var BD = "'Banco de dados'!$K:$P";
+  var B = "'Banco de dados'!";
   var linhas = dias.map(function (t, i) {
-    var r = ini + i;
+    var r = ini + i, rb = 3 + i;
     return [
       paraData(t),
-      '=VLOOKUP(B' + r + ',' + BD + ',2,0)',
-      '=VLOOKUP(B' + r + ',' + BD + ',3,0)',
-      '=VLOOKUP(B' + r + ',' + BD + ',4,0)',
-      '=VLOOKUP(B' + r + ',' + BD + ',5,0)',
+      '=' + B + 'L' + rb,
+      '=' + B + 'M' + rb,
+      '=' + B + 'N' + rb,
+      '=' + B + 'O' + rb,
       '=D' + r + '+E' + r + '+F' + r,
-      '=VLOOKUP(B' + r + ',' + BD + ',6,0)',
+      '=' + B + 'P' + rb,
       '=H' + r + '/C' + r,
       "=G" + r + "/'Banco de dados'!$T$6",
       i === 0 ? '=H' + r : '=K' + (r - 1) + '+H' + r
@@ -303,6 +315,44 @@ function escreverReceitas(sh, d) {
     if (COL_SABOR_CUSTOS[r.sabor]) sh.getRange(14, COL_SABOR_CUSTOS[r.sabor]).setValue(Number(r.rend));
   });
 }
+
+
+/* ---------------- Fórmulas no idioma da planilha ---------------- */
+// O Google Sheets em português pode exigir PROCV/SOMA/SE com ponto e vírgula.
+// A planilha testa uma vez qual forma ela aceita e escreve todas as fórmulas assim.
+var DIALETO = null;
+var FUNCOES_PT = { VLOOKUP: 'PROCV', SUM: 'SOMA', IF: 'SE', AVERAGE: 'MÉDIA', RANK: 'ORDEM' };
+
+function dialeto() {
+  if (DIALETO) return DIALETO;
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(ABA.banco) || ss.getSheets()[0];
+  var c = sh.getRange(1, sh.getMaxColumns());
+  c.setFormula('=SUM(1,2)');
+  SpreadsheetApp.flush();
+  if (c.getValue() === 3) DIALETO = 'en';
+  else {
+    c.setFormula('=SOMA(1;2)');
+    SpreadsheetApp.flush();
+    DIALETO = c.getValue() === 3 ? 'pt' : 'en';
+  }
+  c.clearContent();
+  return DIALETO;
+}
+
+function fx(f) {
+  if (typeof f !== 'string' || f.charAt(0) !== '=' || dialeto() === 'en') return f;
+  var out = '', aspa = null;
+  for (var i = 0; i < f.length; i++) {
+    var ch = f.charAt(i);
+    if (aspa) { out += ch; if (ch === aspa) aspa = null; continue; }
+    if (ch === '"' || ch === "'") { aspa = ch; out += ch; continue; }
+    out += ch === ',' ? ';' : ch;
+  }
+  return out.replace(/\b(VLOOKUP|SUM|IF|AVERAGE|RANK)\(/g, function (m, n) { return FUNCOES_PT[n] + '('; });
+}
+
+function fxM(m) { return m.map(function (l) { return l.map(fx); }); }
 
 /* ---------------- Estilo ---------------- */
 
