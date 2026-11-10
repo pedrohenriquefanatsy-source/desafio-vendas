@@ -37,7 +37,11 @@ var NOMES = { 'Gas': 'Gás' };
 /* ---------------- Menu ---------------- */
 
 function onOpen() {
-  var menu = SpreadsheetApp.getUi().createMenu('Choc Bites')
+  // O menu só existe quando a planilha é aberta no navegador.
+  // Se esta função for executada pelo editor do Apps Script, não há tela para criar o menu: sai sem erro.
+  var ui;
+  try { ui = SpreadsheetApp.getUi(); } catch (e) { return; }
+  var menu = ui.createMenu('Choc Bites')
     .addItem('Novo lançamento', 'abrirLancamento')
     .addItem('Atualizar dados agora', 'atualizarDados')
     .addSeparator()
@@ -64,6 +68,7 @@ function desligarAtualizacaoAutomatica(silencioso) {
 
 function avisar(texto) {
   try { SpreadsheetApp.getActive().toast(texto, 'Choc Bites', 6); } catch (e) {}
+  console.log(texto);
 }
 
 /* ---------------- Leitura do sistema ---------------- */
