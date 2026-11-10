@@ -115,6 +115,7 @@ function atualizarDados() {
     escreverFluxo(ss.getSheetByName(ABA.fluxo), d.fluxo);
     escreverVendas(ss.getSheetByName(ABA.vendas), d);
     escreverReceitas(ss.getSheetByName(ABA.custos), d);
+    escreverLancamentos(ss.getSheetByName(ABA.manuais), d);
     SpreadsheetApp.flush();
     var erros = contarErros(ss);
     avisar('Dados atualizados: ' + d.atualizado + (erros ? ' · ' + erros + ' célula(s) com erro' : ''));
@@ -205,6 +206,8 @@ function escreverBanco(sh, d) {
 }
 
 function escreverFluxo(sh, fluxo) {
+  // Mais recentes em cima: o saldo de cada linha soma a partir da linha de baixo (mais antiga)
+  fluxo = fluxo.slice().reverse();
   var ini = 4, n = fluxo.length;
   var resto = sh.getMaxRows() - ini + 1;
   if (resto > 0) {
@@ -220,7 +223,7 @@ function escreverFluxo(sh, fluxo) {
     fGHI.push([
       '=E' + r + '*(B' + r + '="ENTRADA")',
       '=E' + r + '*(B' + r + '="SAÍDA")',
-      i === 0 ? '=G' + r + '-H' + r : '=I' + (r - 1) + '+G' + r + '-H' + r
+      i === n - 1 ? '=G' + r + '-H' + r : '=I' + (r + 1) + '+G' + r + '-H' + r
     ]);
   });
   sh.getRange(ini, 2, n, 5).setValues(valores);
@@ -387,7 +390,41 @@ function lerManuais() {
   if (!sh) return [];
   var ult = sh.getLastRow();
   if (ult < MAN_INI) return [];
-  return sh.getRange(MAN_INI, 2, ult - MAN_INI + 1, MAN_COLS).getValues().filter(function (r) { return r[0] !== ''; });
+  // Só as linhas lançadas pelo painel (ID começa com PL-); as do sistema são reescritas a cada atualização
+  return sh.getRange(MAN_INI, 2, ult - MAN_INI + 1, MAN_COLS).getValues()
+    .filter(function (r) { return String(r[0]).indexOf('PL-') === 0; });
+}
+
+// Aba "Lançamentos da planilha": tudo o que está no sistema + o que foi lançado pelo painel, mais recente em cima
+function escreverLancamentos(sh, d) {
+  if (!sh) return;
+  var manuais = lerManuais();
+  var linhas = (d.lancamentos || []).map(function (x) {
+    var hm = String(x.em || '').slice(11, 16).split(':');
+    var em = paraData(x.em || x.dia) + ((Number(hm[0]) || 0) * 60 + (Number(hm[1]) || 0)) / 1440;
+    return [x.id, paraData(x.dia), x.tipo, x.item, x.cat || '', Number(x.valor), x.mov, x.forma || '', x.resp || '',
+            Number(x.q[0]) || 0, Number(x.q[1]) || 0, Number(x.q[2]) || 0, '', x.bairro || '', x.sit || '', em, ''];
+  });
+  manuais.forEach(function (r) {
+    var m = r.slice();
+    m[1] = paraData(isoDe(r[1]));
+    if (r[15] instanceof Date) m[15] = r[15].getTime() / 86400000 + 25569 - 3 / 24;
+    linhas.push(m);
+  });
+  linhas.sort(function (a, b) { return (b[1] - a[1]) || (Number(b[15]) - Number(a[15])); });
+
+  var resto = sh.getMaxRows() - MAN_INI + 1;
+  if (resto > 0) sh.getRange(MAN_INI, 2, resto, MAN_COLS).clearContent().setBackground(null).setBorder(false, false, false, false, false, false);
+  if (!linhas.length) return;
+  if (sh.getMaxRows() < MAN_INI + linhas.length) sh.insertRowsAfter(sh.getMaxRows(), MAN_INI + linhas.length - sh.getMaxRows());
+  var rg = sh.getRange(MAN_INI, 2, linhas.length, MAN_COLS);
+  rg.setValues(linhas);
+  estiloCorpo(rg);
+  listrar(rg);
+  sh.getRange(MAN_INI, 3, linhas.length, 1).setNumberFormat('dd/mm/yyyy');
+  sh.getRange(MAN_INI, 7, linhas.length, 1).setNumberFormat('R$ #,##0.00');
+  sh.getRange(MAN_INI, 17, linhas.length, 1).setNumberFormat('dd/mm/yyyy hh:mm');
+  sh.getRange(MAN_INI, 5, linhas.length, 1).setHorizontalAlignment('left');
 }
 
 function isoDe(v) {
@@ -509,11 +546,11 @@ function salvarLancamento(d) {
         throw new Error('Tipo de lançamento desconhecido.');
     }
 
-    var r = MAN_INI + existentes.length;
+    var r = Math.max(sh.getLastRow() + 1, MAN_INI);
     var rg = sh.getRange(r, 2, 1, MAN_COLS);
     rg.setValues([nova]);
     estiloCorpo(rg);
-    rg.setBackground(existentes.length % 2 ? COR.claro : COR.branco);
+
     sh.getRange(r, 3).setNumberFormat('dd/mm/yyyy');
     sh.getRange(r, 7).setNumberFormat('R$ #,##0.00');
     sh.getRange(r, 17).setNumberFormat('dd/mm/yyyy hh:mm');
