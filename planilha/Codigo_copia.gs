@@ -15,7 +15,8 @@ var COR = {
   claro: '#FDF9F1',
   branco: '#FFFFFF',
   verde: '#2E7D4F',
-  vermelho: '#B3261E'
+  vermelho: '#B3261E',
+  borda: '#000000'
 };
 var FONTE = 'Montserrat';
 
@@ -354,7 +355,7 @@ function fxM(m) { return m.map(function (l) { return l.map(fx); }); }
 function estiloCorpo(r) {
   r.setFontFamily(FONTE).setFontSize(10).setFontColor(COR.amargo)
     .setHorizontalAlignment('center').setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, true, true, COR.brilho, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, true, true, COR.borda, SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function listrar(r) {

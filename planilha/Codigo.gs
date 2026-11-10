@@ -15,7 +15,8 @@ var COR = {
   claro: '#FDF9F1',
   branco: '#FFFFFF',
   verde: '#2E7D4F',
-  vermelho: '#B3261E'
+  vermelho: '#B3261E',
+  borda: '#000000'
 };
 var FONTE = 'Montserrat';
 
@@ -354,7 +355,7 @@ function fxM(m) { return m.map(function (l) { return l.map(fx); }); }
 function estiloCorpo(r) {
   r.setFontFamily(FONTE).setFontSize(10).setFontColor(COR.amargo)
     .setHorizontalAlignment('center').setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, true, true, COR.brilho, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, true, true, COR.borda, SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function listrar(r) {
@@ -672,7 +673,7 @@ function secao(sh, a1, texto) {
 function cabecalho(r) {
   r.setBackground(COR.leite).setFontColor(COR.creme).setFontWeight('bold').setFontSize(10)
     .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true)
-    .setBorder(true, true, true, true, true, true, COR.amargo, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, true, true, COR.borda, SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function corpo(r) {
@@ -686,7 +687,7 @@ function cartao(sh, rotulo, valor, formula, formato) {
   var v = sh.getRange(formula.a1).merge();
   v.setFormula(fx(formula.f)).setBackground(COR.branco).setFontSize(16).setFontWeight('bold')
     .setFontColor(COR.amargo).setHorizontalAlignment('center').setNumberFormat(formato)
-    .setBorder(true, true, true, true, false, false, COR.brilho, SpreadsheetApp.BorderStyle.SOLID);
+    .setBorder(true, true, true, true, false, false, COR.borda, SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function larguras(sh, mapa) {
@@ -902,20 +903,24 @@ function montarMarkup(sh) {
   cabecalho(sh.getRange('B4:J4'));
   sh.setRowHeight(4, 32);
 
-  var custo = function (r) {
-    return "=D" + r + "*'Custos Gerais'!$I$30+E" + r + "*'Custos Gerais'!$I$31+F" + r + "*'Custos Gerais'!$I$32";
+  // Sabor: o custo vem pronto do Custeio. Promoção: quantidade do combo × custo de cada sabor (linhas 5 a 7)
+  var custoPromo = function (r, q) {
+    var partes = [];
+    ['D', 'E', 'F'].forEach(function (col, i) { if (q[i]) partes.push(col + r + '*$G$' + (5 + i)); });
+    return '=' + partes.join('+');
   };
-  var linha = function (r, nome, preco, q) {
-    escrever(sh.getRange(r, 2, 1, 9), [[nome, preco, q[0], q[1], q[2], custo(r), '=C' + r + '/G' + r, '=C' + r + '-G' + r, '=I' + r + '/C' + r]]);
+  var linha = function (r, nome, preco, q, custo) {
+    escrever(sh.getRange(r, 2, 1, 9), [[nome, preco, q[0], q[1], q[2], custo, '=C' + r + '/G' + r, '=C' + r + '-G' + r, '=I' + r + '/C' + r]]);
     corpo(sh.getRange(r, 2, 1, 9));
   };
   var r = 5;
-  [['Chocobite ao leite', [1, 0, 0]], ['Chocobite meio amargo', [0, 1, 0]], ['Chocobite branco', [0, 0, 1]]]
-    .forEach(function (s) { linha(r++, s[0], PRECO, s[1]); });
+  [['Chocobite ao leite', [1, 0, 0], "='Custos Gerais'!I30"], ['Chocobite meio amargo', [0, 1, 0], "='Custos Gerais'!I31"],
+   ['Chocobite branco', [0, 0, 1], "='Custos Gerais'!I32"]]
+    .forEach(function (s) { linha(r, s[0], PRECO, s[1], s[2]); r++; });
   PROMOS.forEach(function (p) {
     secao(sh, 'B' + r + ':J' + r, p.nome.toUpperCase());
     r++;
-    p.combos.forEach(function (c) { linha(r++, c.nome, p.preco, c.q); });
+    p.combos.forEach(function (c) { linha(r, c.nome, p.preco, c.q, custoPromo(r, c.q)); r++; });
   });
   var fim = r - 1;
   listrar(sh.getRange('B5:J7'));
@@ -1135,6 +1140,8 @@ function montarPorter(sh) {
     sh.getRange(r0 + 2, c0, 5, 4).setValues(corpoQ);
     corpo(sh.getRange(r0 + 2, c0, 5, 4));
     sh.getRange(r0 + 2, c0, 5, 1).setHorizontalAlignment('left').setWrap(true);
+    sh.getRange(r0 + 2, c0 + 2, 5, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(['S', 'N'], true).setAllowInvalid(false).build());
     sh.getRange(r0 + 2, c0 + 1, 5, 1).setBackground(COR.claro);
     sh.getRange(r0 + 2, c0 + 3, 5, 1).setBackground(COR.claro).setFontWeight('bold');
     var nota = letra(c0 + 3);
