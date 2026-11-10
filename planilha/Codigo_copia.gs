@@ -27,7 +27,8 @@ var ABA = {
   indicadores: 'Indicadores Financeiros',
   swot: 'SWOT',
   banco: 'Banco de dados',
-  manuais: 'Lançamentos da planilha'
+  manuais: 'Lançamentos da planilha',
+  porter: '5 Forças de Porter'
 };
 
 var SABORES = ['Ao leite', 'Meio amargo', 'Branco'];
@@ -244,7 +245,7 @@ function escreverFluxo(sh, fluxo) {
 }
 
 function escreverVendas(sh, d) {
-  var ini = 4;
+  var ini = 8;
   var resto = sh.getMaxRows() - ini + 1;
   sh.getRange(ini, 2, resto, 10).breakApart().clearContent().setBackground(null)
     .setBorder(false, false, false, false, false, false).setFontWeight('normal').setFontColor(COR.amargo);
@@ -264,7 +265,7 @@ function escreverVendas(sh, d) {
       '=D' + r + '+E' + r + '+F' + r,
       '=' + B + 'P' + rb,
       '=H' + r + '/C' + r,
-      "=G" + r + "/'Banco de dados'!$T$6",
+      '=G' + r + '/$J$5',
       i === 0 ? '=H' + r : '=K' + (r - 1) + '+H' + r
     ];
   });
@@ -291,8 +292,8 @@ function escreverVendas(sh, d) {
   // Gráfico de faturamento por dia
   sh.getCharts().forEach(function (c) { sh.removeChart(c); });
   var grafico = sh.newChart().asColumnChart()
-    .addRange(sh.getRange(3, 2, n + 1, 1))
-    .addRange(sh.getRange(3, 8, n + 1, 1))
+    .addRange(sh.getRange(7, 2, n + 1, 1))
+    .addRange(sh.getRange(7, 8, n + 1, 1))
     .setNumHeaders(1)
     .setPosition(3, 13, 10, 0)
     .setOption('title', 'Faturamento por dia')
@@ -327,8 +328,14 @@ function escreverReceitas(sh, d) {
   d.receitas.forEach(function (r) { qtd[r.sabor + '|' + nome(r.insumo)] = Number(r.qtd); });
   SABORES.forEach(function (s) {
     var col = COL_SABOR_CUSTOS[s];
-    sh.getRange(6, col, 7, 1).setValues(nomes.map(function (n) { return [qtd[s + '|' + n] || 0]; }));
+    nomes.forEach(function (n, k) {
+      var cel = sh.getRange(6 + k, col);
+      if (n === 'Gás') cel.setFormula(fx('=$M$6'));
+      else cel.setValue(qtd[s + '|' + n] || 0);
+    });
   });
+  sh.getRange('M4').setValue(Number(d.botijoes) || 0);
+  sh.getRange('M5').setValue(Number(d.fornadas) || 0);
   d.rendimento.forEach(function (r) {
     if (COL_SABOR_CUSTOS[r.sabor]) sh.getRange(14, COL_SABOR_CUSTOS[r.sabor]).setValue(Number(r.rend));
   });

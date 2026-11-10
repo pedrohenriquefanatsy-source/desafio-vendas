@@ -27,7 +27,8 @@ var ABA = {
   indicadores: 'Indicadores Financeiros',
   swot: 'SWOT',
   banco: 'Banco de dados',
-  manuais: 'Lançamentos da planilha'
+  manuais: 'Lançamentos da planilha',
+  porter: '5 Forças de Porter'
 };
 
 var SABORES = ['Ao leite', 'Meio amargo', 'Branco'];
@@ -244,7 +245,7 @@ function escreverFluxo(sh, fluxo) {
 }
 
 function escreverVendas(sh, d) {
-  var ini = 4;
+  var ini = 8;
   var resto = sh.getMaxRows() - ini + 1;
   sh.getRange(ini, 2, resto, 10).breakApart().clearContent().setBackground(null)
     .setBorder(false, false, false, false, false, false).setFontWeight('normal').setFontColor(COR.amargo);
@@ -264,7 +265,7 @@ function escreverVendas(sh, d) {
       '=D' + r + '+E' + r + '+F' + r,
       '=' + B + 'P' + rb,
       '=H' + r + '/C' + r,
-      "=G" + r + "/'Banco de dados'!$T$6",
+      '=G' + r + '/$J$5',
       i === 0 ? '=H' + r : '=K' + (r - 1) + '+H' + r
     ];
   });
@@ -291,8 +292,8 @@ function escreverVendas(sh, d) {
   // Gráfico de faturamento por dia
   sh.getCharts().forEach(function (c) { sh.removeChart(c); });
   var grafico = sh.newChart().asColumnChart()
-    .addRange(sh.getRange(3, 2, n + 1, 1))
-    .addRange(sh.getRange(3, 8, n + 1, 1))
+    .addRange(sh.getRange(7, 2, n + 1, 1))
+    .addRange(sh.getRange(7, 8, n + 1, 1))
     .setNumHeaders(1)
     .setPosition(3, 13, 10, 0)
     .setOption('title', 'Faturamento por dia')
@@ -327,8 +328,14 @@ function escreverReceitas(sh, d) {
   d.receitas.forEach(function (r) { qtd[r.sabor + '|' + nome(r.insumo)] = Number(r.qtd); });
   SABORES.forEach(function (s) {
     var col = COL_SABOR_CUSTOS[s];
-    sh.getRange(6, col, 7, 1).setValues(nomes.map(function (n) { return [qtd[s + '|' + n] || 0]; }));
+    nomes.forEach(function (n, k) {
+      var cel = sh.getRange(6 + k, col);
+      if (n === 'Gás') cel.setFormula(fx('=$M$6'));
+      else cel.setValue(qtd[s + '|' + n] || 0);
+    });
   });
+  sh.getRange('M4').setValue(Number(d.botijoes) || 0);
+  sh.getRange('M5').setValue(Number(d.fornadas) || 0);
   d.rendimento.forEach(function (r) {
     if (COL_SABOR_CUSTOS[r.sabor]) sh.getRange(14, COL_SABOR_CUSTOS[r.sabor]).setValue(Number(r.rend));
   });
@@ -582,7 +589,7 @@ function montarPlanilha() {
   ss.setSpreadsheetTimeZone('America/Fortaleza');
 
   var guardados = (ss.getSheetByName(ABA.manuais) ? lerManuais() : []);
-  var ordem = [ABA.fluxo, ABA.vendas, ABA.custos, ABA.markup, ABA.indicadores, ABA.swot, ABA.manuais, ABA.banco];
+  var ordem = [ABA.fluxo, ABA.vendas, ABA.custos, ABA.indicadores, ABA.markup, ABA.porter, ABA.swot, ABA.manuais, ABA.banco];
   ordem.forEach(function (n, i) {
     var sh = ss.getSheetByName(n) || ss.insertSheet(n);
     prepararAba(sh);
@@ -599,6 +606,7 @@ function montarPlanilha() {
   montarCustos(ss.getSheetByName(ABA.custos));
   montarMarkup(ss.getSheetByName(ABA.markup));
   montarIndicadores(ss.getSheetByName(ABA.indicadores));
+  montarPorter(ss.getSheetByName(ABA.porter));
   montarSwot(ss.getSheetByName(ABA.swot));
   montarManuais(ss.getSheetByName(ABA.manuais), guardados);
 
@@ -694,10 +702,10 @@ function montarBanco(sh) {
                 ['K2:P2', ['Data', 'Pedidos', 'Ao leite', 'Meio amargo', 'Branco', 'Faturamento']], ['S2:T2', ['Parâmetro', 'Valor']]];
   blocos.forEach(function (b) { sh.getRange(b[0]).setValues([b[1]]); cabecalho(sh.getRange(b[0])); });
   escrever(sh.getRange('S3:T8'), [
-    ['Meta de lucro do grupo', '=T4/3'],
-    ['Meta geral do PTPJ (3 grupos)', 20000],
+    ['Meta de lucro do grupo', "='Vendas por Dia'!F5"],
+    ['Meta geral do PTPJ (3 grupos)', "='Vendas por Dia'!B5"],
     ['Investimento recebido', 0],
-    ['Meta de caixinhas por dia', '=T3/AVERAGE(Markup!F5:F6)/8'],
+    ['Meta de caixinhas por dia', "='Vendas por Dia'!J5"],
     ['Atualizado em', ''],
     ['Gasto com entregas', 0]
   ]);
@@ -747,11 +755,28 @@ function montarFluxo(sh) {
 
 function montarVendas(sh) {
   faixaTitulo(sh, 'B1:K1', 'VENDAS POR DIA');
-  sh.getRange('B3:K3').setValues([['Data', 'Pedidos', 'Ao leite', 'Meio amargo', 'Branco', 'Caixinhas',
+  secao(sh, 'B3:K3', 'PARÂMETROS DA META');
+  var rot = [['B4:C4', 'Meta geral (3 grupos)'], ['D4:E4', 'Grupos'], ['F4:G4', 'Meta de lucro do grupo'],
+             ['H4', 'MC média por caixinha'], ['I4', 'Dias de venda'], ['J4:K4', 'Meta de caixinhas por dia']];
+  rot.forEach(function (x) { sh.getRange(x[0]).merge().setValue(x[1]); cabecalho(sh.getRange(x[0])); });
+  sh.setRowHeight(4, 34);
+  ['B5:C5', 'D5:E5', 'F5:G5', 'J5:K5'].forEach(function (a) { sh.getRange(a).merge(); });
+  escrever(sh.getRange('B5:K5'), [[20000, '', 3, '', '=B5/D5', '', '=AVERAGE(Markup!I5:I7)', 8, '=F5/H5/I5', '']]);
+  corpo(sh.getRange('B5:K5'));
+  sh.getRange('B5:K5').setFontWeight('bold').setFontSize(11);
+  sh.getRange('B5').setNumberFormat('R$ #,##0.00').setBackground(COR.brilho);
+  sh.getRange('D5').setBackground(COR.brilho);
+  sh.getRange('I5').setBackground(COR.brilho);
+  sh.getRange('F5').setNumberFormat('R$ #,##0.00');
+  sh.getRange('H5').setNumberFormat('R$ #,##0.00');
+  sh.getRange('J5').setNumberFormat('0');
+  sh.setRowHeight(5, 30);
+
+  sh.getRange('B7:K7').setValues([['Data', 'Pedidos', 'Ao leite', 'Meio amargo', 'Branco', 'Caixinhas',
                                    'Faturamento', 'Ticket médio', '% da meta de caixinhas', 'Faturamento acumulado']]);
-  cabecalho(sh.getRange('B3:K3'));
-  sh.setRowHeight(3, 36);
-  sh.setFrozenRows(3);
+  cabecalho(sh.getRange('B7:K7'));
+  sh.setRowHeight(7, 36);
+  sh.setFrozenRows(7);
   larguras(sh, { B: 80, C: 80, D: 85, E: 95, F: 80, G: 90, H: 115, I: 105, J: 110, K: 130, L: 24 });
   botoes(sh, 'B1:K1', ['atualizar', 'lancar']);
 }
@@ -853,37 +878,60 @@ function montarCustos(sh) {
   sh.getRange('B30:C32').setFontWeight('bold');
   sh.getRange('I30:J32').setFontWeight('bold').setBackground(COR.brilho);
 
-  larguras(sh, { B: 200, C: 120, D: 80, E: 95, F: 95, G: 95, H: 95, I: 95, J: 95 });
+  secao(sh, 'L3:M3', 'GÁS POR FORNADA');
+  escrever(sh.getRange('L4:M7'), [
+    ['Botijões comprados', 0],
+    ['Fornadas produzidas', 0],
+    ['Botijão por fornada', '=M4/M5'],
+    ['Custo do gás por fornada', '=M6*C12']
+  ]);
+  corpo(sh.getRange('L4:M7'));
+  sh.getRange('L4:L7').setHorizontalAlignment('left').setFontWeight('bold').setBackground(COR.brilho);
+  sh.getRange('M5').setNumberFormat('0.00');
+  sh.getRange('M6').setNumberFormat('0.0000');
+  sh.getRange('M7').setNumberFormat('R$ #,##0.00');
+  larguras(sh, { B: 200, C: 120, D: 80, E: 95, F: 95, G: 95, H: 95, I: 95, J: 95, K: 24, L: 190, M: 110 });
 }
 
 /* ---------------- Markup ---------------- */
 
 function montarMarkup(sh) {
-  faixaTitulo(sh, 'B1:G1', 'MARKUP');
-  secao(sh, 'B3:G3', 'MARKUP E MARGEM DE CONTRIBUIÇÃO POR PRODUTO');
-  sh.getRange('B4:G4').setValues([['Produto', 'Preço de venda', 'Custo', 'Markup', 'Margem de contribuição', 'MC (%)']]);
-  cabecalho(sh.getRange('B4:G4'));
+  faixaTitulo(sh, 'B1:J1', 'MARKUP');
+  secao(sh, 'B3:J3', 'MARKUP E MARGEM DE CONTRIBUIÇÃO POR PRODUTO');
+  sh.getRange('B4:J4').setValues([['Produto', 'Preço de venda', 'Ao leite', 'Meio amargo', 'Branco', 'Custo', 'Markup', 'Margem de contribuição', 'MC (%)']]);
+  cabecalho(sh.getRange('B4:J4'));
   sh.setRowHeight(4, 32);
-  var itens = [
-    ['Chocobite ao leite', 10, "='Custos Gerais'!I30"],
-    ['Chocobite meio amargo', 10, "='Custos Gerais'!I31"],
-    ['Chocobite branco', 10, "='Custos Gerais'!I32"],
-    ['Promo 2 por R$ 18 (2 ao leite)', 18, "=2*'Custos Gerais'!I30"],
-    ['Promo 3 por R$ 25 (3 ao leite)', 25, "=3*'Custos Gerais'!I30"]
-  ];
-  itens.forEach(function (it, i) {
-    var r = 5 + i;
-    escrever(sh.getRange(r, 2, 1, 6), [[it[0], it[1], it[2], '=C' + r + '/D' + r, '=C' + r + '-D' + r, '=F' + r + '/C' + r]]);
+
+  var custo = function (r) {
+    return "=D" + r + "*'Custos Gerais'!$I$30+E" + r + "*'Custos Gerais'!$I$31+F" + r + "*'Custos Gerais'!$I$32";
+  };
+  var linha = function (r, nome, preco, q) {
+    escrever(sh.getRange(r, 2, 1, 9), [[nome, preco, q[0], q[1], q[2], custo(r), '=C' + r + '/G' + r, '=C' + r + '-G' + r, '=I' + r + '/C' + r]]);
+    corpo(sh.getRange(r, 2, 1, 9));
+  };
+  var r = 5;
+  [['Chocobite ao leite', [1, 0, 0]], ['Chocobite meio amargo', [0, 1, 0]], ['Chocobite branco', [0, 0, 1]]]
+    .forEach(function (s) { linha(r++, s[0], PRECO, s[1]); });
+  PROMOS.forEach(function (p) {
+    secao(sh, 'B' + r + ':J' + r, p.nome.toUpperCase());
+    r++;
+    p.combos.forEach(function (c) { linha(r++, c.nome, p.preco, c.q); });
   });
-  corpo(sh.getRange('B5:G9'));
-  listrar(sh.getRange('B5:G9'));
-  sh.getRange('B5:B9').setHorizontalAlignment('left').setFontWeight('bold');
-  sh.getRange('C5:C9').setBackground(COR.brilho);
-  sh.getRange('C5:D9').setNumberFormat('R$ #,##0.00');
-  sh.getRange('E5:E9').setNumberFormat('0.00');
-  sh.getRange('F5:F9').setNumberFormat('R$ #,##0.00');
-  sh.getRange('G5:G9').setNumberFormat('0.0%');
-  larguras(sh, { B: 240, C: 120, D: 110, E: 100, F: 160, G: 100 });
+  var fim = r - 1;
+  listrar(sh.getRange('B5:J7'));
+  sh.getRange('B5:B' + fim).setHorizontalAlignment('left');
+  sh.getRange('B5:B7').setFontWeight('bold');
+  sh.getRange('C5:C' + fim).setNumberFormat('R$ #,##0.00');
+  sh.getRange('G5:G' + fim).setNumberFormat('R$ #,##0.00');
+  sh.getRange('H5:H' + fim).setNumberFormat('0.00');
+  sh.getRange('I5:I' + fim).setNumberFormat('R$ #,##0.00');
+  sh.getRange('J5:J' + fim).setNumberFormat('0.0%');
+  // Preço e quantidades podem ser editados: ficam destacados
+  for (var k = 5; k <= fim; k++) {
+    if (sh.getRange(k, 2).isPartOfMerge()) continue;
+    sh.getRange(k, 3).setBackground(COR.brilho);
+  }
+  larguras(sh, { B: 240, C: 115, D: 85, E: 100, F: 80, G: 100, H: 85, I: 150, J: 85 });
 }
 
 /* ---------------- Indicadores financeiros ---------------- */
@@ -912,7 +960,7 @@ function montarIndicadores(sh) {
 
   secao(sh, 'B18:G18', 'MARGENS');
   cartao(sh, 'B19:C19', 'LUCRATIVIDADE', { a1: 'B20:C20', f: '=D8/B5' }, P);
-  cartao(sh, 'D19:E19', 'MC MÉDIA DOS SABORES', { a1: 'D20:E20', f: '=AVERAGE(Markup!G5:G7)' }, P);
+  cartao(sh, 'D19:E19', 'MC MÉDIA DOS SABORES', { a1: 'D20:E20', f: '=AVERAGE(Markup!J5:J7)' }, P);
   cartao(sh, 'F19:G19', 'CUSTO MÉDIO POR CAIXINHA', { a1: 'F20:G20', f: "=AVERAGE('Custos Gerais'!I30:I32)" }, R$);
 
   [5, 8, 12, 16, 20].forEach(function (r) { sh.setRowHeight(r, 42); });
@@ -1036,4 +1084,131 @@ function montarManuais(sh, guardados) {
   sh.getRange('Q4:Q2000').setNumberFormat('dd/mm/yyyy hh:mm');
   larguras(sh, { B: 120, C: 95, D: 105, E: 220, F: 110, G: 100, H: 115, I: 140, J: 110, K: 75, L: 90, M: 70, N: 130, O: 110, P: 130, Q: 135, R: 200 });
   botoes(sh, 'B1:R1', ['lancar']);
+}
+
+/* ---------------- 5 Forças de Porter ---------------- */
+
+function montarPorter(sh) {
+  faixaTitulo(sh, 'B1:P1', '5 FORÇAS DE PORTER');
+  var forcas = [
+    ['RIVALIDADE ENTRE OS CONCORRENTES', [
+      ['Existem muitas marcas vendendo doces de chocolate parecidos em Natal?', 'N'],
+      ['O mercado de doces está crescendo rápido?', 'S'],
+      ['A Choc Bites tem um diferencial claro (cubinhos com casquinha, porção para dividir)?', 'S'],
+      ['Os concorrentes brigam por preço baixo e promoções?', 'N'],
+      ['O cliente troca de marca de doce com facilidade?', 'N']]],
+    ['PODER DE NEGOCIAÇÃO DOS CLIENTES', [
+      ['O cliente encontra doces parecidos com facilidade (aplicativos, docerias, mercado)?', 'N'],
+      ['O cliente troca de fornecedor sem custo nenhum?', 'N'],
+      ['O cliente é sensível a preço?', 'N'],
+      ['O cliente compra em grande quantidade de uma vez?', 'N'],
+      ['O cliente volta a comprar e indica a marca?', 'S']]],
+    ['PODER DE NEGOCIAÇÃO DOS FORNECEDORES', [
+      ['A qualidade depende de insumos de marca específica (cobertura Sicao)?', 'N'],
+      ['Existem outros fornecedores que vendem os mesmos insumos?', 'S'],
+      ['Os fornecedores conseguem impor aumento de preço (chocolate)?', 'N'],
+      ['Há falta ou atraso na entrega dos insumos?', 'N'],
+      ['A Choc Bites tem boas condições com os fornecedores?', 'S']]],
+    ['AMEAÇA DE PRODUTOS SUBSTITUTOS', [
+      ['Bombons e barras de supermercado substituem a Choc Bites?', 'N'],
+      ['Doces de aplicativo (brigadeiro, brownie) atendem a mesma vontade?', 'N'],
+      ['Sobremesa feita em casa substitui a compra?', 'N'],
+      ['Os substitutos são mais baratos?', 'N'],
+      ['O formato de cubinhos com casquinha é difícil de achar nas alternativas?', 'S']]],
+    ['AMEAÇA DE NOVOS CONCORRENTES', [
+      ['É preciso muito dinheiro para começar a vender doces?', 'S'],
+      ['Um novo concorrente consegue vender pelo WhatsApp e Instagram com facilidade?', 'N'],
+      ['Leis ou licenças dificultam vender doces caseiros?', 'S'],
+      ['A marca e a rede de clientes da Choc Bites dificultam a entrada?', 'S'],
+      ['Quem entra precisa de grande escala para competir?', 'S']]]
+  ];
+  var pos = [[4, 2], [4, 7], [4, 12], [13, 2], [13, 7]]; // linha, coluna de cada bloco
+  var medias = [];
+  forcas.forEach(function (f, k) {
+    var r0 = pos[k][0], c0 = pos[k][1];
+    sh.getRange(r0, c0, 1, 4).merge().setValue(f[0]);
+    cabecalho(sh.getRange(r0, c0, 1, 4));
+    sh.getRange(r0, c0).setBackground(COR.rosa);
+    sh.getRange(r0 + 1, c0, 1, 4).setValues([['QUESTÕES DETERMINANTES', 'AVALIAÇÃO', 'INVERTE?', 'NOTA']]);
+    cabecalho(sh.getRange(r0 + 1, c0, 1, 4));
+    var corpoQ = f[1].map(function (q) { return [q[0], '', q[1], '']; });
+    sh.getRange(r0 + 2, c0, 5, 4).setValues(corpoQ);
+    corpo(sh.getRange(r0 + 2, c0, 5, 4));
+    sh.getRange(r0 + 2, c0, 5, 1).setHorizontalAlignment('left').setWrap(true);
+    sh.getRange(r0 + 2, c0 + 1, 5, 1).setBackground(COR.claro);
+    sh.getRange(r0 + 2, c0 + 3, 5, 1).setBackground(COR.claro).setFontWeight('bold');
+    var nota = letra(c0 + 3);
+    sh.getRange(r0 + 7, c0, 1, 3).merge().setValue('MÉDIA DA FORÇA');
+    cabecalho(sh.getRange(r0 + 7, c0, 1, 3));
+    var media = sh.getRange(r0 + 7, c0 + 3);
+    media.setFormula(fx('=SUM(' + nota + (r0 + 2) + ':' + nota + (r0 + 6) + ')/5'));
+    corpo(media);
+    media.setFontWeight('bold').setNumberFormat('0.0');
+    medias.push([f[0], nota + (r0 + 7)]);
+    for (var i = 2; i <= 6; i++) sh.setRowHeight(r0 + i, 40);
+  });
+
+  // Resumo das forças
+  var r = 13, c = 12;
+  sh.getRange(r, c, 1, 3).merge().setValue('5 FORÇAS DE PORTER');
+  cabecalho(sh.getRange(r, c, 1, 3));
+  sh.getRange(r, c).setBackground(COR.rosa);
+  sh.getRange(r + 1, c, 1, 3).setValues([['FORÇA', 'MÉDIA', 'INTENSIDADE']]);
+  cabecalho(sh.getRange(r + 1, c, 1, 3));
+  var nomes = ['RIVALIDADE', 'BARGANHA DOS CLIENTES', 'BARGANHA DOS FORNECEDORES', 'PRODUTOS SUBSTITUTOS', 'NOVOS CONCORRENTES'];
+  var sep = separadorArgumentos();
+  medias.forEach(function (m2, i) {
+    var lin = r + 2 + i;
+    sh.getRange(lin, c).setValue(nomes[i]);
+    sh.getRange(lin, c + 1).setFormula(fx('=' + m2[1]));
+    var M = 'M' + lin;
+    // Faixas: abaixo de 1,8 muito baixa; 2,6 baixa; 3,4 média; 4,2 alta; daí para cima muito alta
+    var f = '=IF(' + M + '=0;"";IF(' + M + '*10<18;"MUITO BAIXA";IF(' + M + '*10<26;"BAIXA";IF(' + M + '*10<34;"MÉDIA";IF(' + M + '*10<42;"ALTA";"MUITO ALTA")))))';
+    if (sep) sh.getRange(lin, c + 2).setFormula(f.replace(/;/g, sep));
+  });
+  corpo(sh.getRange(r + 2, c, 5, 3));
+  sh.getRange(r + 2, c, 5, 1).setFontWeight('bold');
+  sh.getRange(r + 2, c + 1, 5, 1).setNumberFormat('0.0');
+  sh.getRange(r + 2, c + 2, 5, 1).setFontWeight('bold');
+  sh.getRange(r + 7, c, 1, 3).merge().setFormula(fx('=AVERAGE(M' + (r + 2) + ':M' + (r + 6) + ')')).setNumberFormat('"Média geral: "0.0');
+  corpo(sh.getRange(r + 7, c, 1, 3));
+  sh.getRange(r + 7, c).setFontWeight('bold').setBackground(COR.brilho);
+
+  // Escalas
+  var e = 23;
+  sh.getRange(e, 2, 1, 3).merge().setValue('ESCALA DE AVALIAÇÃO');
+  cabecalho(sh.getRange(e, 2, 1, 3));
+  sh.getRange(e, 2).setBackground(COR.rosa);
+  sh.getRange(e + 1, 2, 7, 3).setValues([['AVALIAÇÃO', 'NOTA SE N', 'NOTA SE S'],
+    ['MUITO ALTA', 5, 1], ['ALTA', 4, 2], ['MÉDIA', 3, 3], ['BAIXA', 2, 4], ['MUITO BAIXA', 1, 5], ['ZERO', 0, 5]]);
+  cabecalho(sh.getRange(e + 1, 2, 1, 3));
+  corpo(sh.getRange(e + 2, 2, 6, 3));
+  sh.getRange(e + 2, 2, 6, 1).setFontWeight('bold');
+
+  sh.getRange(e, 7, 1, 2).merge().setValue('FAIXAS DE INTENSIDADE');
+  cabecalho(sh.getRange(e, 7, 1, 2));
+  sh.getRange(e, 7).setBackground(COR.rosa);
+  sh.getRange(e + 1, 7, 6, 2).setValues([['MÉDIA DA FORÇA', 'INTENSIDADE'],
+    ['até 1,7', 'MUITO BAIXA'], ['1,8 a 2,5', 'BAIXA'], ['2,6 a 3,3', 'MÉDIA'], ['3,4 a 4,1', 'ALTA'], ['4,2 ou mais', 'MUITO ALTA']]);
+  cabecalho(sh.getRange(e + 1, 7, 1, 2));
+  corpo(sh.getRange(e + 2, 7, 5, 2));
+
+  larguras(sh, { B: 300, C: 100, D: 80, E: 60, F: 20, G: 300, H: 100, I: 80, J: 60, K: 20, L: 300, M: 100, N: 110, O: 60, P: 20 });
+}
+
+function letra(col) { return String.fromCharCode(64 + col); }
+
+// Testa se a planilha aceita ponto e vírgula ou vírgula entre argumentos (só usado na intensidade do Porter)
+function separadorArgumentos() {
+  var sh = SpreadsheetApp.getActive().getSheetByName(ABA.banco);
+  var c = sh.getRange(1, sh.getMaxColumns());
+  var resp = '';
+  [';', ','].some(function (s) {
+    c.setFormula('=IF(1>0' + s + '3' + s + '4)');
+    SpreadsheetApp.flush();
+    if (c.getValue() === 3) { resp = s; return true; }
+    return false;
+  });
+  c.clearContent();
+  return resp;
 }
