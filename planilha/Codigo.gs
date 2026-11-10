@@ -993,16 +993,15 @@ function montarDre(sh, r0) {
     ['(−) Impostos sobre vendas', '', '', 0, 'editavel'],
     ['(−) Taxas de cartão', '', '', 0, 'editavel'],
     ['RECEITA LÍQUIDA', '', '', '=F' + L(0) + '-F' + L(1) + '-F' + L(2), 'total'],
-    ['(−) Custo variável · ao leite', '=SUM(' + BD + 'M3:M400)', '=' + CG + 'D30+' + CG + 'F30', '=D' + L(4) + '*E' + L(4), ''],
-    ['(−) Custo variável · meio amargo', '=SUM(' + BD + 'N3:N400)', '=' + CG + 'D31+' + CG + 'F31', '=D' + L(5) + '*E' + L(5), ''],
-    ['(−) Custo variável · branco', '=SUM(' + BD + 'O3:O400)', '=' + CG + 'D32+' + CG + 'F32', '=D' + L(6) + '*E' + L(6), ''],
-    ['(−) Despesa variável · entregas', '=' + CG + 'D26', '=' + CG + 'F26', '=D' + L(7) + '*E' + L(7), ''],
-    ['MARGEM DE CONTRIBUIÇÃO', '', '', '=F' + L(3) + '-F' + L(4) + '-F' + L(5) + '-F' + L(6) + '-F' + L(7), 'total'],
+    ['(−) Custo variável · ao leite', '=SUM(' + BD + 'M3:M400)', '=' + CG + 'I30', '=D' + L(4) + '*E' + L(4), ''],
+    ['(−) Custo variável · meio amargo', '=SUM(' + BD + 'N3:N400)', '=' + CG + 'I31', '=D' + L(5) + '*E' + L(5), ''],
+    ['(−) Custo variável · branco', '=SUM(' + BD + 'O3:O400)', '=' + CG + 'I32', '=D' + L(6) + '*E' + L(6), ''],
+    ['MARGEM DE CONTRIBUIÇÃO', '', '', '=F' + L(3) + '-F' + L(4) + '-F' + L(5) + '-F' + L(6), 'total'],
     ['(−) Custos fixos', '', '', 0, 'editavel'],
     ['(−) Despesas fixas', '', '', 0, 'editavel'],
-    ['RESULTADO OPERACIONAL', '', '', '=F' + L(8) + '-F' + L(9) + '-F' + L(10), 'total'],
+    ['RESULTADO OPERACIONAL', '', '', '=F' + L(7) + '-F' + L(8) + '-F' + L(9), 'total'],
     ['Lucro pelo caixa', '', '', '=D8', ''],
-    ['Diferença entre caixa e DRE', '', '', '=F' + L(12) + '-F' + L(11), '']
+    ['Diferença entre caixa e DRE', '', '', '=F' + L(11) + '-F' + L(10), '']
   ];
   linhas.forEach(function (l, i) {
     var r = R + i;
@@ -1015,7 +1014,7 @@ function montarDre(sh, r0) {
     if (l[4] === 'editavel') sh.getRange(r, 6).setBackground(COR.brilho);
   });
   var fim = R + linhas.length - 1;
-  sh.getRange(R + 12, 2, 2, 6).setFontWeight('bold');
+  sh.getRange(R + 11, 2, 2, 6).setFontWeight('bold');
   sh.getRange('D' + R + ':D' + fim).setNumberFormat('#,##0');
   sh.getRange('E' + R + ':F' + fim).setNumberFormat('R$ #,##0.00');
   sh.getRange('G' + R + ':G' + fim).setNumberFormat('0.0%');
