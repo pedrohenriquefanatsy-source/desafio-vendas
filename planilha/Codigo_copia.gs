@@ -26,7 +26,8 @@ var ABA = {
   markup: 'Markup',
   indicadores: 'Indicadores Financeiros',
   swot: 'SWOT',
-  banco: 'Banco de dados'
+  banco: 'Banco de dados',
+  manuais: 'Lançamentos da planilha'
 };
 
 var SABORES = ['Ao leite', 'Meio amargo', 'Branco'];
@@ -37,6 +38,7 @@ var NOMES = { 'Gas': 'Gás' };
 
 function onOpen() {
   var menu = SpreadsheetApp.getUi().createMenu('Choc Bites')
+    .addItem('Novo lançamento', 'abrirLancamento')
     .addItem('Atualizar dados agora', 'atualizarDados')
     .addSeparator()
     .addItem('Ligar atualização automática (a cada hora)', 'ligarAtualizacaoAutomatica')
@@ -96,6 +98,7 @@ function atualizarDados() {
   try {
     var d = buscarDados();
     var ss = SpreadsheetApp.getActive();
+    juntarManuais(d);
 
     // Itens do fluxo: quem aparece com entrada e saída ganha o sentido no nome
     var sinais = {};
@@ -184,7 +187,7 @@ function escreverBanco(sh, d) {
   });
   sh.getRange('T5').setValue(Number(d.investimento));
   sh.getRange('T7').setValue(d.atualizado);
-  sh.getRange('T8').setValue(entregas);
+  sh.getRange('T8').setValue(entregas + (d.entregasExtra || 0));
 }
 
 function escreverFluxo(sh, fluxo) {
@@ -317,4 +320,178 @@ function listrar(r) {
     cores.push(linha);
   }
   r.setBackgrounds(cores);
+}
+
+/* ============================================================
+   LANÇAMENTOS PELA PLANILHA (painel HTML)
+   Ficam na aba "Lançamentos da planilha" e entram no fluxo,
+   nas vendas e nos indicadores junto com os dados do sistema.
+   ============================================================ */
+
+var PESSOAS = ['Arthur', 'Lucas', 'Marcela', 'Pedro'];
+var CATEGORIAS = ['Transporte', 'Divulgação', 'Material', 'Alimentação', 'Outros'];
+var PRECO = 10;
+var PROMOS = [
+  { nome: 'Promo 2 por R$ 18', preco: 18, combos: [
+    { nome: '2 ao leite', q: [2, 0, 0] }, { nome: '2 meio amargo', q: [0, 2, 0] }, { nome: '2 branco', q: [0, 0, 2] },
+    { nome: '1 ao leite + 1 meio amargo', q: [1, 1, 0] }, { nome: '1 ao leite + 1 branco', q: [1, 0, 1] },
+    { nome: '1 meio amargo + 1 branco', q: [0, 1, 1] }] },
+  { nome: 'Promo 3 por R$ 25', preco: 25, combos: [
+    { nome: '3 ao leite', q: [3, 0, 0] }, { nome: '3 meio amargo', q: [0, 3, 0] }, { nome: '3 branco', q: [0, 0, 3] },
+    { nome: '2 ao leite + 1 meio amargo', q: [2, 1, 0] }, { nome: '1 ao leite + 2 meio amargo', q: [1, 2, 0] },
+    { nome: '2 ao leite + 1 branco', q: [2, 0, 1] }, { nome: '1 ao leite + 2 branco', q: [1, 0, 2] },
+    { nome: '2 meio amargo + 1 branco', q: [0, 2, 1] }, { nome: '1 meio amargo + 2 branco', q: [0, 1, 2] },
+    { nome: '1 de cada sabor', q: [1, 1, 1] }] }
+];
+// Colunas da aba (a partir da B): ID, Data, Tipo, Item, Categoria, Valor, Movimentação, Forma,
+// Responsável, Ao leite, Meio amargo, Branco, Cliente, Bairro, Situação, Registrado em, Comprovante
+var MAN_COLS = 17, MAN_INI = 4;
+
+function abrirLancamento() {
+  var html = HtmlService.createHtmlOutputFromFile('Lancamento').setWidth(580).setHeight(760);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Novo lançamento');
+}
+
+function lerManuais() {
+  var sh = SpreadsheetApp.getActive().getSheetByName(ABA.manuais);
+  if (!sh) return [];
+  var ult = sh.getLastRow();
+  if (ult < MAN_INI) return [];
+  return sh.getRange(MAN_INI, 2, ult - MAN_INI + 1, MAN_COLS).getValues().filter(function (r) { return r[0] !== ''; });
+}
+
+function isoDe(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+  if (typeof v === 'number') return Utilities.formatDate(new Date(Math.round((v - 25569) * 86400000)), 'UTC', 'yyyy-MM-dd');
+  return String(v).slice(0, 10);
+}
+
+// Junta os lançamentos da planilha aos dados do sistema
+function juntarManuais(d) {
+  lerManuais().forEach(function (r) {
+    var dia = isoDe(r[1]), tipo = r[2], item = r[3], cat = r[4], valor = Number(r[5]) || 0, mov = r[6], forma = r[7];
+    if (mov === 'ENTRADA' || mov === 'SAÍDA') {
+      d.fluxo.push({ id: r[0], dia: dia, item: item, valor: mov === 'ENTRADA' ? valor : -valor, forma: forma || 'Pix' });
+    }
+    if (tipo === 'Venda') {
+      d.pedidos.push({ dia: dia, n: 1 });
+      SABORES.forEach(function (s, i) { if (Number(r[9 + i])) d.vendas.push({ dia: dia, sabor: s, q: Number(r[9 + i]), fat: 0 }); });
+      d.vendas.push({ dia: dia, sabor: '-', q: 0, fat: valor });
+    }
+    if (tipo === 'Aporte') d.investimento = Number(d.investimento) + valor;
+    if (cat === 'Transporte') d.entregasExtra = (d.entregasExtra || 0) + valor;
+  });
+  d.fluxo.sort(function (a, b) { return a.dia < b.dia ? -1 : a.dia > b.dia ? 1 : 0; });
+}
+
+function listasFormulario() {
+  var pend = lerManuais().filter(function (r) { return r[2] === 'Venda' && r[14] === 'pendente'; })
+    .map(function (r) { return { id: r[0], cliente: r[12] || 'Cliente', valor: Number(r[5]) }; });
+  return {
+    pessoas: PESSOAS, formas: ['Pix', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito'],
+    sabores: SABORES, categorias: CATEGORIAS, preco: PRECO, promos: PROMOS, pendentes: pend,
+    hoje: Utilities.formatDate(new Date(), 'America/Fortaleza', 'yyyy-MM-dd')
+  };
+}
+
+function salvarLancamento(d) {
+  var trava = LockService.getDocumentLock();
+  trava.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.getActive();
+    var sh = ss.getSheetByName(ABA.manuais);
+    if (!sh) throw new Error('A aba "' + ABA.manuais + '" não existe. Rode "Montar planilha".');
+    var existentes = lerManuais();
+    if (existentes.some(function (r) { return r[0] === d.id; })) return 'Esse lançamento já foi salvo.';
+
+    var data = paraData(d.data), valor = Math.abs(Number(d.valor) || 0), agora = new Date();
+    var linha = function (tipo, item, cat, v, mov, forma, q, situacao) {
+      q = q || [0, 0, 0];
+      return [d.id, data, tipo, item, cat || '', v, mov, forma || '', d.pessoa || '', q[0], q[1], q[2],
+              d.cliente || '', d.bairro || '', situacao || '', agora, d.nota || ''];
+    };
+    var nova, retorno;
+
+    switch (d.tipo) {
+      case 'venda': {
+        var q = [0, 0, 0], total = 0, produtos = [];
+        (d.itens || []).forEach(function (it) {
+          var n = Number(it.qtd) || 0, i = SABORES.indexOf(it.sabor);
+          if (n > 0 && i >= 0) { q[i] += n; total += n * Number(d.preco || PRECO); produtos.push('Chocobite ' + it.sabor.toLowerCase()); }
+        });
+        (d.pacotes || []).forEach(function (p) {
+          var promo = PROMOS.filter(function (x) { return x.nome === p.promo; })[0];
+          var combo = promo && promo.combos.filter(function (c) { return c.nome === p.combo; })[0];
+          var n = Number(p.qtd) || 0;
+          if (!combo || n <= 0) return;
+          for (var i = 0; i < 3; i++) q[i] += combo.q[i] * n;
+          total += promo.preco * n;
+          produtos.push(promo.nome);
+        });
+        if (!total) throw new Error('Escolha pelo menos uma caixinha ou um pacote.');
+        var unicos = produtos.filter(function (p, i) { return produtos.indexOf(p) === i; });
+        var item = unicos.length === 1 ? unicos[0] : 'Pedido com mais de um produto';
+        nova = linha('Venda', item, d.encomenda ? 'Encomenda' : '', total, d.pago ? 'ENTRADA' : '—', d.forma, q, d.pago ? 'paga' : 'pendente');
+        retorno = d.pago ? 'Venda salva e lançada no caixa.' : 'Venda salva como pendente.';
+        break;
+      }
+      case 'recebimento': {
+        if (!(valor > 0)) throw new Error('Informe o valor recebido.');
+        nova = linha('Recebimento', 'Recebimento de venda', '', valor, 'ENTRADA', d.forma);
+        if (d.vendaId) {
+          var ult = sh.getLastRow();
+          var ids = sh.getRange(MAN_INI, 2, ult - MAN_INI + 1, 1).getValues();
+          ids.forEach(function (r, i) { if (r[0] === d.vendaId) sh.getRange(MAN_INI + i, 16).setValue('paga'); });
+        }
+        retorno = 'Recebimento salvo.';
+        break;
+      }
+      case 'compra': {
+        if (!(valor > 0)) throw new Error('Informe o valor da compra.');
+        var caixa = d.pagoPor === 'Caixa';
+        nova = linha('Compra', (d.item || 'Compra de insumos') + (d.fornecedor ? ' · ' + d.fornecedor : ''), 'Insumos', valor, caixa ? 'SAÍDA' : '—', d.forma, null, caixa ? '' : 'reembolsar ' + d.pagoPor);
+        retorno = caixa ? 'Compra salva e lançada no caixa.' : 'Compra salva. Fica como reembolso para ' + d.pagoPor + '.';
+        break;
+      }
+      case 'despesa': {
+        if (!(valor > 0)) throw new Error('Informe o valor da despesa.');
+        var cx = d.pagoPor === 'Caixa';
+        nova = linha('Despesa', d.descricao || d.categoria, d.categoria, valor, cx ? 'SAÍDA' : '—', d.forma, null, cx ? '' : 'reembolsar ' + d.pagoPor);
+        retorno = 'Despesa salva.';
+        break;
+      }
+      case 'aporte':
+        if (!(valor > 0)) throw new Error('Informe o valor.');
+        nova = linha('Aporte', d.descricao || 'Investimento', '', valor, 'ENTRADA', d.forma);
+        retorno = 'Aporte salvo.';
+        break;
+      case 'reembolso':
+        if (!(valor > 0)) throw new Error('Informe o valor.');
+        nova = linha('Reembolso', 'Reembolso', '', valor, 'SAÍDA', d.forma);
+        retorno = 'Reembolso salvo.';
+        break;
+      case 'ajuste':
+        if (!(valor > 0)) throw new Error('Informe o valor.');
+        nova = linha('Ajuste', 'Ajuste pelo extrato', '', valor, d.sentido === 'Saída' ? 'SAÍDA' : 'ENTRADA', 'Pix');
+        retorno = 'Ajuste salvo.';
+        break;
+      default:
+        throw new Error('Tipo de lançamento desconhecido.');
+    }
+
+    var r = MAN_INI + existentes.length;
+    var rg = sh.getRange(r, 2, 1, MAN_COLS);
+    rg.setValues([nova]);
+    estiloCorpo(rg);
+    rg.setBackground(existentes.length % 2 ? COR.claro : COR.branco);
+    sh.getRange(r, 3).setNumberFormat('dd/mm/yyyy');
+    sh.getRange(r, 7).setNumberFormat('R$ #,##0.00');
+    sh.getRange(r, 17).setNumberFormat('dd/mm/yyyy hh:mm');
+    SpreadsheetApp.flush();
+
+    try { atualizarDados(); } catch (e) { return retorno + ' (A planilha não conseguiu ler o sistema agora; atualize depois.)'; }
+    return retorno;
+  } finally {
+    trava.releaseLock();
+  }
 }

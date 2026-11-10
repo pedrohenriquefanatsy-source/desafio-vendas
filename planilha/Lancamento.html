@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--a:#4F1407;--l:#6F2615;--r:#D5667C;--b:#EBC3B8;--c:#F9F2E0;--w:#FFFBF4}
+*{box-sizing:border-box}
+body{margin:0;font-family:Montserrat,Arial,sans-serif;background:var(--c);color:var(--a);font-size:13px}
+.top{background:var(--a);color:var(--c);padding:14px 18px}
+.top h1{font-family:Fredoka,Arial,sans-serif;font-size:22px;margin:0}
+.top p{margin:4px 0 0;color:var(--b);font-size:12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px 0}
+.tabs button{border:2px solid var(--b);background:var(--w);color:var(--a);border-radius:99px;padding:7px 12px;font:700 12px Montserrat,Arial;cursor:pointer}
+.tabs button.on{background:var(--r);border-color:var(--r);color:#fff}
+form{padding:12px 18px 18px}
+.sec{display:none}.sec.on{display:block}
+label{display:block;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1.5px solid var(--b);border-radius:10px;background:#fff;font:500 13px Montserrat,Arial;color:var(--a)}
+input:focus,select:focus{outline:2px solid var(--r);border-color:var(--r)}
+.row{display:flex;gap:10px}.row>div{flex:1}
+.sab{display:flex;gap:10px;align-items:center;background:var(--w);border-radius:12px;padding:8px 10px;margin-top:6px}
+.sab span{flex:1;font-weight:700}.sab input{width:90px}
+.promos{display:flex;gap:8px;margin-top:6px}
+.promos button{flex:1;border:2px dashed var(--r);background:var(--w);color:var(--a);border-radius:14px;padding:10px 8px;font:700 12px Montserrat,Arial;cursor:pointer}
+.promos button.on{background:var(--r);color:#fff;border-style:solid}
+.promos button small{display:block;font-weight:600;font-size:11px;margin-top:2px}
+.combos{display:none;margin-top:6px;border:2px solid var(--r);border-radius:14px;padding:6px 10px;background:var(--w)}
+.combos.on{display:block}
+.combo{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b)}
+.combo:last-child{border-bottom:0}.combo span{flex:1;font-weight:600}
+.combo button{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--b);background:#fff;font:800 16px Montserrat;color:var(--a);cursor:pointer}
+.combo b{width:26px;text-align:center}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600}
+.chk input{width:auto}
+.total{margin-top:12px;background:var(--a);color:var(--c);border-radius:12px;padding:10px 14px;font-weight:700;display:flex;justify-content:space-between}
+.total b{color:var(--r);font-family:Fredoka,Arial;font-size:18px}
+.dica{font-size:11px;color:var(--l);margin-top:6px}
+.btn{margin-top:16px;width:100%;padding:13px;border:0;border-radius:99px;background:var(--r);color:#fff;font:800 13px Montserrat,Arial;letter-spacing:.1em;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+#msg{margin-top:10px;font-weight:700;min-height:18px}
+#msg.ok{color:#2E7D4F}#msg.erro{color:#B3261E}
+</style>
+</head>
+<body>
+<div class="top"><h1>Novo lançamento</h1></div>
+<div class="tabs" id="tabs"></div>
+<form id="f" onsubmit="enviar(event)">
+  <div class="row"><div><label>Data</label><input type="date" id="data" required></div>
+  <div><label>Responsável</label><select id="pessoa"></select></div></div>
+
+  <div class="sec" data-t="venda">
+    <label>Caixinhas avulsas</label><div id="sabores"></div>
+    <label>Pacotes promocionais</label>
+    <div class="promos" id="promos"></div>
+    <div id="combos"></div>
+    <div class="row"><div><label>Preço da caixinha</label><input type="number" step="0.01" id="preco"></div>
+    <div><label>Forma de pagamento</label><select id="forma_v" class="forma"></select></div></div>
+    <div class="row"><div><label>Cliente</label><input id="cliente"></div><div><label>Bairro</label><input id="bairro"></div></div>
+    <div class="chk"><input type="checkbox" id="pago" checked><span>Já foi pago</span></div>
+    <div class="chk"><input type="checkbox" id="encomenda"><span>É encomenda</span></div>
+    <div class="total"><span>Total da venda</span><b id="totalv">R$ 0,00</b></div>
+  </div>
+
+  <div class="sec" data-t="recebimento">
+    <label>Venda pendente</label><select id="vendaId"></select>
+    <div class="row"><div><label>Valor recebido</label><input type="number" step="0.01" id="valor_r"></div>
+    <div><label>Forma de pagamento</label><select id="forma_r" class="forma"></select></div></div>
+  </div>
+
+  <div class="sec" data-t="compra">
+    <div class="row"><div><label>Fornecedor</label><input id="fornecedor"></div><div><label>Item</label><input id="item" placeholder="Ex.: cobertura Sicao ao leite"></div></div>
+    <div class="row"><div><label>Quantidade</label><input type="number" step="0.01" id="qtd"></div><div><label>Unidade</label><input id="unidade" placeholder="kg, und, g"></div></div>
+    <div class="row"><div><label>Valor total</label><input type="number" step="0.01" id="valor_c"></div><div><label>Pago por</label><select id="pagoPor_c" class="pagoPor"></select></div></div>
+    <label>Link da nota fiscal</label><input id="nota_c" placeholder="Link do arquivo no Drive">
+  </div>
+
+  <div class="sec" data-t="despesa">
+    <div class="row"><div><label>Categoria</label><select id="categoria"></select></div><div><label>Valor</label><input type="number" step="0.01" id="valor_d"></div></div>
+    <label>O que foi</label><input id="descricao_d" placeholder="Ex.: gasolina das entregas, frete 99">
+    <div class="row"><div><label>Pago por</label><select id="pagoPor_d" class="pagoPor"></select></div><div><label>Forma</label><select id="forma_d" class="forma"></select></div></div>
+    <label>Link do comprovante</label><input id="nota_d">
+  </div>
+
+  <div class="sec" data-t="aporte">
+    <label>Valor recebido</label><input type="number" step="0.01" id="valor_a">
+    <label>De onde veio</label><input id="descricao_a" placeholder="Ex.: investimento da Produtiva Júnior">
+  </div>
+
+  <div class="sec" data-t="reembolso">
+    <label>Valor devolvido</label><input type="number" step="0.01" id="valor_rb">
+  </div>
+
+  <div class="sec" data-t="ajuste">
+    <div class="row"><div><label>Sentido</label><select id="sentido"><option>Entrada</option><option>Saída</option></select></div><div><label>Valor</label><input type="number" step="0.01" id="valor_aj"></div></div>
+    <label>Motivo</label><input id="descricao_aj" placeholder="Ex.: diferença encontrada no extrato">
+  </div>
+
+  <button class="btn" id="btn">SALVAR LANÇAMENTO</button>
+  <div id="msg"></div>
+</form>
+
+<script>
+const TIPOS=[['venda','Venda'],['recebimento','Recebimento'],['compra','Compra'],['despesa','Despesa'],['aporte','Aporte'],['reembolso','Reembolso'],['ajuste','Ajuste']];
+let tipo='venda', L=null;
+const $=id=>document.getElementById(id);
+const opt=(sel,arr)=>{sel.innerHTML=arr.map(v=>`<option>${v}</option>`).join('')};
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function abas(){$('tabs').innerHTML=TIPOS.map(([k,n])=>`<button type="button" class="${k===tipo?'on':''}" onclick="ir('${k}')">${n}</button>`).join('');
+ document.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.t===tipo));}
+function ir(k){tipo=k;abas();$('msg').textContent='';}
+const PAC={};
+function total(){let t=0;document.querySelectorAll('.qtd').forEach(i=>t+=(+i.value||0)*(+$('preco').value||0));
+  (L&&L.promos||[]).forEach((p,i)=>p.combos.forEach((c,j)=>t+=(PAC[i+'_'+j]||0)*p.preco));$('totalv').textContent=brl(t);marcarPromos();}
+function abrirPromo(i){document.querySelectorAll('.combos').forEach((c,k)=>c.classList.toggle('on',k===i&&!c.classList.contains('on')));}
+function mudar(i,j,d){const k=i+'_'+j;PAC[k]=Math.max(0,(PAC[k]||0)+d);document.getElementById('q'+k).textContent=PAC[k];total();}
+function marcarPromos(){(L&&L.promos||[]).forEach((p,i)=>{const n=p.combos.reduce((t,c,j)=>t+(PAC[i+'_'+j]||0),0);const b=document.getElementById('pb'+i);if(b){b.classList.toggle('on',n>0);b.querySelector('small').textContent=n?n+' pacote(s)':'escolher sabores';}});}
+function montarPromos(){
+  $('promos').innerHTML=L.promos.map((p,i)=>`<button type="button" id="pb${i}" onclick="abrirPromo(${i})">🏷️ ${p.nome}<small>escolher sabores</small></button>`).join('');
+  $('combos').innerHTML=L.promos.map((p,i)=>`<div class="combos">${p.combos.map((c,j)=>`<div class="combo"><span>${c.nome}</span><button type="button" onclick="mudar(${i},${j},-1)">−</button><b id="q${i}_${j}">0</b><button type="button" onclick="mudar(${i},${j},1)">+</button></div>`).join('')}</div>`).join('');
+}
+google.script.run.withSuccessHandler(l=>{L=l;
+  $('data').value=l.hoje; opt($('pessoa'),l.pessoas);
+  document.querySelectorAll('.forma').forEach(s=>opt(s,l.formas));
+  document.querySelectorAll('.pagoPor').forEach(s=>opt(s,['Caixa'].concat(l.pessoas)));
+  opt($('categoria'),l.categorias); $('preco').value=l.preco;
+  $('sabores').innerHTML=l.sabores.map(s=>`<div class="sab"><span>${s}</span><input type="number" min="0" step="1" class="qtd" data-s="${s}" placeholder="0"></div>`).join('');
+  document.querySelectorAll('.qtd').forEach(i=>i.oninput=total); $('preco').oninput=total; montarPromos();
+  $('vendaId').innerHTML='<option value="">Sem venda da planilha</option>'+l.pendentes.map(p=>`<option value="${p.id}" data-v="${p.valor}">${p.numero?'Nº '+p.numero+' · ':''}${p.cliente||'Cliente'} · ${brl(p.valor)}</option>`).join('');
+  $('vendaId').onchange=e=>{const o=e.target.selectedOptions[0];if(o&&o.dataset.v)$('valor_r').value=o.dataset.v;};
+}).listasFormulario();
+abas();
+function enviar(e){e.preventDefault();
+  const d={tipo,id:'PL-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),data:$('data').value,pessoa:$('pessoa').value};
+  if(tipo==='venda'){d.itens=[...document.querySelectorAll('.qtd')].map(i=>({sabor:i.dataset.s,qtd:+i.value||0}));d.preco=+$('preco').value;d.forma=$('forma_v').value;d.cliente=$('cliente').value;d.bairro=$('bairro').value;d.pago=$('pago').checked;d.encomenda=$('encomenda').checked;
+    d.pacotes=[];L.promos.forEach((p,i)=>p.combos.forEach((c,j)=>{if(PAC[i+'_'+j])d.pacotes.push({promo:p.nome,combo:c.nome,qtd:PAC[i+'_'+j]});}));}
+  if(tipo==='recebimento'){d.vendaId=$('vendaId').value;d.ref=$('vendaId').selectedOptions[0].text;d.valor=$('valor_r').value;d.forma=$('forma_r').value;}
+  if(tipo==='compra'){Object.assign(d,{fornecedor:$('fornecedor').value,item:$('item').value,qtd:$('qtd').value,unidade:$('unidade').value,valor:$('valor_c').value,pagoPor:$('pagoPor_c').value,nota:$('nota_c').value,forma:'Pix'});}
+  if(tipo==='despesa'){Object.assign(d,{categoria:$('categoria').value,valor:$('valor_d').value,descricao:$('descricao_d').value,pagoPor:$('pagoPor_d').value,forma:$('forma_d').value,nota:$('nota_d').value});}
+  if(tipo==='aporte'){d.valor=$('valor_a').value;d.descricao=$('descricao_a').value;}
+  if(tipo==='reembolso'){d.valor=$('valor_rb').value;}
+  if(tipo==='ajuste'){d.valor=$('valor_aj').value;d.sentido=$('sentido').value;d.descricao=$('descricao_aj').value;}
+  if(tipo!=='venda'&&!(+d.valor>0)){msg('Informe um valor maior que zero.',true);return;}
+  $('btn').disabled=true;msg('Salvando…');
+  google.script.run.withSuccessHandler(t=>{msg(t);$('btn').disabled=false;$('f').reset();$('data').value=L.hoje;$('preco').value=L.preco;Object.keys(PAC).forEach(k=>{PAC[k]=0;const e=document.getElementById('q'+k);if(e)e.textContent=0;});total();})
+   .withFailureHandler(err=>{msg(err.message,true);$('btn').disabled=false;}).salvarLancamento(d);
+}
+function msg(t,erro){$('msg').textContent=t;$('msg').className=erro?'erro':'ok';}
+</script>
+</body>
+</html>
