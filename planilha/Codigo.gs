@@ -613,6 +613,7 @@ function montarPlanilha() {
 
   atualizarDados();
   ss.getSheetByName(ABA.banco).hideSheet();
+  ss.getSheetByName(ABA.manuais).hideSheet();
   ss.setActiveSheet(ss.getSheetByName(ABA.fluxo));
   avisar('Planilha montada.');
 }
@@ -970,8 +971,54 @@ function montarIndicadores(sh) {
 
   [5, 8, 12, 16, 20].forEach(function (r) { sh.setRowHeight(r, 42); });
   [4, 7, 11, 15, 19].forEach(function (r) { sh.setRowHeight(r, 26); });
+  montarDre(sh, 22);
   larguras(sh, { B: 115, C: 115, D: 115, E: 115, F: 115, G: 115 });
   botoes(sh, 'B1:G1', ['atualizar']);
+}
+
+// DRE pelo custeio variável: receita − custos e despesas variáveis = margem de contribuição − fixos = resultado
+function montarDre(sh, r0) {
+  secao(sh, 'B' + r0 + ':G' + r0, 'DRE PELO CUSTEIO VARIÁVEL');
+  var h = r0 + 1;
+  sh.getRange(h, 2, 1, 2).merge();
+  sh.getRange(h, 2, 1, 6).setValues([['Conta', '', 'Quantidade', 'Valor unitário', 'Valor', '% da receita']]);
+  cabecalho(sh.getRange(h, 2, 1, 6));
+  sh.setRowHeight(h, 30);
+
+  var BD = "'Banco de dados'!", CG = "'Custos Gerais'!";
+  var R = r0 + 2; // linha da receita bruta
+  var L = function (k) { return R + k; };
+  var linhas = [
+    ['RECEITA BRUTA DE VENDAS', '', '', '=B5', 'total'],
+    ['(−) Impostos sobre vendas', '', '', 0, 'editavel'],
+    ['(−) Taxas de cartão', '', '', 0, 'editavel'],
+    ['RECEITA LÍQUIDA', '', '', '=F' + L(0) + '-F' + L(1) + '-F' + L(2), 'total'],
+    ['(−) Custo variável · ao leite', '=SUM(' + BD + 'M3:M400)', '=' + CG + 'D30+' + CG + 'F30', '=D' + L(4) + '*E' + L(4), ''],
+    ['(−) Custo variável · meio amargo', '=SUM(' + BD + 'N3:N400)', '=' + CG + 'D31+' + CG + 'F31', '=D' + L(5) + '*E' + L(5), ''],
+    ['(−) Custo variável · branco', '=SUM(' + BD + 'O3:O400)', '=' + CG + 'D32+' + CG + 'F32', '=D' + L(6) + '*E' + L(6), ''],
+    ['(−) Despesa variável · entregas', '=' + CG + 'D26', '=' + CG + 'F26', '=D' + L(7) + '*E' + L(7), ''],
+    ['MARGEM DE CONTRIBUIÇÃO', '', '', '=F' + L(3) + '-F' + L(4) + '-F' + L(5) + '-F' + L(6) + '-F' + L(7), 'total'],
+    ['(−) Custos fixos', '', '', 0, 'editavel'],
+    ['(−) Despesas fixas', '', '', 0, 'editavel'],
+    ['RESULTADO OPERACIONAL', '', '', '=F' + L(8) + '-F' + L(9) + '-F' + L(10), 'total'],
+    ['Lucro pelo caixa', '', '', '=D8', ''],
+    ['Diferença entre caixa e DRE', '', '', '=F' + L(12) + '-F' + L(11), '']
+  ];
+  linhas.forEach(function (l, i) {
+    var r = R + i;
+    sh.getRange(r, 2, 1, 2).merge();
+    escrever(sh.getRange(r, 2, 1, 6), [[l[0], '', l[1], l[2], l[3], '=F' + r + '/$F$' + R]]);
+    corpo(sh.getRange(r, 2, 1, 6));
+    sh.getRange(r, 2).setHorizontalAlignment('left');
+    if (l[4] === 'total') sh.getRange(r, 2, 1, 6).setBackground(COR.leite).setFontColor(COR.creme).setFontWeight('bold');
+    else if (i % 2) sh.getRange(r, 2, 1, 6).setBackground(COR.claro);
+    if (l[4] === 'editavel') sh.getRange(r, 6).setBackground(COR.brilho);
+  });
+  var fim = R + linhas.length - 1;
+  sh.getRange(R + 12, 2, 2, 6).setFontWeight('bold');
+  sh.getRange('D' + R + ':D' + fim).setNumberFormat('#,##0');
+  sh.getRange('E' + R + ':F' + fim).setNumberFormat('R$ #,##0.00');
+  sh.getRange('G' + R + ':G' + fim).setNumberFormat('0.0%');
 }
 
 /* ---------------- SWOT quantitativa ---------------- */
