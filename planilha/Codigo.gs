@@ -426,17 +426,18 @@ function montarBanco(sh) {
                 ['G2:I2', ['Insumo', 'Custo por unidade', 'Unidade']],
                 ['K2:P2', ['Data', 'Pedidos', 'Ao leite', 'Meio amargo', 'Branco', 'Faturamento']], ['S2:T2', ['Parâmetro', 'Valor']]];
   blocos.forEach(function (b) { sh.getRange(b[0]).setValues([b[1]]); cabecalho(sh.getRange(b[0])); });
-  sh.getRange('S3:T8').setValues([
-    ['Meta de lucro do grupo', 5000],
-    ['Piso coletivo do PTPJ', 13500],
+  escrever(sh.getRange('S3:T8'), [
+    ['Meta de lucro do grupo', '=T4/3'],
+    ['Meta geral do PTPJ (3 grupos)', 20000],
     ['Investimento recebido', 0],
-    ['Meta de caixinhas por dia', 78],
+    ['Meta de caixinhas por dia', '=T3/AVERAGE(Markup!F5:F6)/8'],
     ['Atualizado em', ''],
     ['Gasto com entregas', 0]
   ]);
   corpo(sh.getRange('S3:T8'));
   sh.getRange('T3:T5').setNumberFormat('R$ #,##0.00');
   sh.getRange('T8').setNumberFormat('R$ #,##0.00');
+  sh.getRange('T6').setNumberFormat('0');
   sh.getRange('H3:H200').setNumberFormat('R$ #,##0.00000');
   sh.getRange('K3:K400').setNumberFormat('dd/mm/yyyy');
   sh.getRange('P3:P400').setNumberFormat('R$ #,##0.00');
@@ -634,7 +635,7 @@ function montarIndicadores(sh) {
   secao(sh, 'B10:G10', 'META');
   cartao(sh, 'B11:C11', 'META DE LUCRO DO GRUPO', { a1: 'B12:C12', f: "='Banco de dados'!T3" }, R$);
   cartao(sh, 'D11:E11', '% DA META', { a1: 'D12:E12', f: '=D8/B12' }, P);
-  cartao(sh, 'F11:G11', '% DO PISO DE R$ 13.500', { a1: 'F12:G12', f: "=D8/'Banco de dados'!T4" }, P);
+  cartao(sh, 'F11:G11', '% DA META GERAL DE R$ 20.000', { a1: 'F12:G12', f: "=D8/'Banco de dados'!T4" }, P);
 
   secao(sh, 'B14:G14', 'VENDAS');
   cartao(sh, 'B15:C15', 'CAIXINHAS VENDIDAS', { a1: 'B16:C16', f: "=SUM('Banco de dados'!M3:O400)" }, N);
